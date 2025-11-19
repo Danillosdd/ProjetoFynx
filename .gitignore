@@ -43,3 +43,23 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Project-specific additions
+# Local sqlite DBs used for development (generated/seeded)
+FynxApi/data/*.db
+FynxApi/data/*.sqlite
+
+# Temporary/debug folders and files
+FynxApi/tmp/
+tmp/
+
+# Editor/project files (additional common IDEs)
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Exported archives / npm packaging artifacts
+*.tgz
+
+# OS files
+desktop.ini
