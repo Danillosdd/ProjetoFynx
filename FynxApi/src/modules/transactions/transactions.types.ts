@@ -20,6 +20,7 @@ export interface Transaction {
   attachments?: string[];
   createdAt: string;
   updatedAt: string;
+  spendingGoalId?: string;
 }
 
 export interface TransactionCategory {
@@ -101,6 +102,7 @@ export interface CreateTransactionRequest {
     frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
     endDate?: string;
   };
+  spendingGoalId?: string;
 }
 
 export interface UpdateTransactionRequest {

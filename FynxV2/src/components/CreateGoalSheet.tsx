@@ -3,6 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 import {
   Sheet,
   SheetClose,
@@ -13,14 +17,21 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Target, Calendar } from "lucide-react"
+import { Target, Calendar as CalendarIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 
 interface CreateGoalSheetProps {
   children: React.ReactNode
   onCreateGoal: (goalData: {
+    goalType: 'saving' | 'spending'
     name: string
+    category?: string
     target_value: number
+    period?: 'monthly' | 'weekly' | 'yearly'
+    start_date?: string
+    end_date?: string
     description?: string
     target_date?: string
   }) => void
@@ -31,6 +42,17 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
   const [targetValue, setTargetValue] = useState("")
   const [description, setDescription] = useState("")
   const [targetDate, setTargetDate] = useState("")
+  const [typedTargetDate, setTypedTargetDate] = useState<string>(() => {
+    return targetDate ? targetDate.split("T")[0].split("-").reverse().join("/") : ''
+  })
+  const [selectedTargetDate, setSelectedTargetDate] = useState<Date | undefined>(() => {
+    if (!targetDate) return undefined
+    const d = new Date(targetDate)
+    return isNaN(d.getTime()) ? undefined : d
+  })
+  const [goalType, setGoalType] = useState<'saving'|'spending'>('saving')
+  const [category, setCategory] = useState('Outros')
+  const [period, setPeriod] = useState<'monthly'|'weekly'|'yearly'>('monthly')
   const [isOpen, setIsOpen] = useState(false)
   const { toast } = useToast()
 
@@ -82,13 +104,47 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
       return
     }
 
-    // Create the goal
-    onCreateGoal({
+    // Additional validation: saving goals require end date (Data Final / Prazo)
+    if (goalType === 'saving') {
+      if (!targetDate) {
+        toast({ title: 'Data final obrigatória', description: 'Para metas de poupança informe a Data Final / Prazo.', variant: 'destructive' })
+        return
+      }
+    }
+
+    // For spending goals, require a reset period
+    if (goalType === 'spending') {
+      if (!period) {
+        toast({ title: 'Período obrigatório', description: 'Para metas de gasto selecione o Período de Reset.', variant: 'destructive' })
+        return
+      }
+    }
+
+    // Create the goal - unify payload and include goalType
+    const payload: any = {
+      goalType,
       name: name.trim(),
       target_value: targetValueNumber,
       description: description.trim() || undefined,
-      target_date: targetDate || undefined
-    })
+      // default category to avoid DB NOT NULL constraints when UI removes category
+      category: category || 'Outros'
+    }
+
+    if (goalType === 'saving') {
+      // For saving goals we keep only the final date (end_date). Period is not relevant in the UI,
+      // but the backend expects a period value — provide a sensible default.
+      payload.period = 'monthly'
+      if (targetDate) {
+        payload.end_date = targetDate
+        // older consumers expect target_date field name in some places — provide both
+        payload.target_date = targetDate
+      }
+    } else {
+      // spending goal: no final date, use reset period
+      payload.period = period
+    }
+
+    onCreateGoal(payload)
     
     toast({
       title: "Meta criada!",
@@ -108,6 +164,9 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
     setTargetValue("")
     setDescription("")
     setTargetDate("")
+    setGoalType('saving')
+    setCategory('Outros')
+    setPeriod('monthly')
   }
 
   return (
@@ -130,6 +189,15 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
         </SheetHeader>
         
         <div className="grid gap-6 py-4">
+          {/* Goal Type selector */}
+          <div className="grid gap-2">
+            <Label>Tipo de Meta</Label>
+            <div className="flex gap-4">
+              <button type="button" className={`py-2 px-3 rounded ${goalType === 'saving' ? 'bg-green-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('saving')}>💰 Meta de Poupança</button>
+              <button type="button" className={`py-2 px-3 rounded ${goalType === 'spending' ? 'bg-red-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('spending')}>💸 Meta de Gasto</button>
+            </div>
+          </div>
+
           {/* Goal Name */}
           <div className="grid gap-2">
             <Label htmlFor="goal-name">Nome da Meta *</Label>
@@ -144,7 +212,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
 
           {/* Target Value */}
           <div className="grid gap-2">
-            <Label htmlFor="target-value">Valor Alvo *</Label>
+            <Label htmlFor="target-value">{goalType === 'saving' ? 'Valor Alvo *' : 'Limite de Gasto *'}</Label>
             <div className="relative">
               <Input
                 id="target-value"
@@ -171,45 +239,89 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
             />
           </div>
 
-          {/* Target Date */}
-          <div className="grid gap-2">
-            <Label htmlFor="target-date" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Data Limite (opcional)
-            </Label>
-            <Input
-              id="target-date"
-              type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-              className="bg-input border-border"
-            />
-          </div>
+          {/* Target Date (only for saving) or Reset Period (only for spending) */}
+          {goalType === 'saving' ? (
+            <div className="grid gap-2">
+              <Label htmlFor="target-date" className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Data Final / Prazo
+              </Label>
+              <div className="relative">
+                <Input
+                  id="target-date"
+                  placeholder="dd/mm/aaaa"
+                  value={typedTargetDate}
+                  onChange={(e) => setTypedTargetDate(e.target.value)}
+                  className="bg-input border-border"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Abrir calendário"
+                      className="absolute right-1 top-1/2 -translate-y-1/2"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      initialFocus
+                      mode="single"
+                      selected={selectedTargetDate}
+                      onSelect={(date) => {
+                        if (!date) return
+                        setSelectedTargetDate(date)
+                        const iso = date.toISOString().split('T')[0]
+                        setTargetDate(iso)
+                        setTypedTargetDate(new Date(date).toLocaleDateString('pt-BR'))
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              <Label>Período de Reset</Label>
+              <Select onValueChange={(v) => setPeriod(v as any)} defaultValue={period}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="yearly">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Preview */}
           {name && targetValue && (
-            <div className="bg-secondary/50 p-4 rounded-lg border border-border">
+            <div className="rounded-lg border border-border bg-card p-4">
               <h4 className="font-medium text-foreground mb-2">Preview da Meta</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Nome:</span>
-                  <span className="font-medium text-foreground">{name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Valor:</span>
-                  <span className="font-medium text-accent">
-                    {formatCurrency(targetValue)}
-                  </span>
-                </div>
-                {targetDate && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Data:</span>
-                    <span className="font-medium text-foreground">
-                      {new Date(targetDate).toLocaleDateString('pt-BR')}
-                    </span>
+              <Card className="w-full">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium">
+                      {goalType === 'saving' ? '💰' : '💸'} {name}
+                    </CardTitle>
+                    <Badge variant={goalType === 'saving' ? 'default' : 'destructive'}>{category || 'Categoria'}</Badge>
                   </div>
-                )}
-              </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="text-2xl font-bold">
+                    R$ 0,00 / R$ {Number(targetValue || 0).toLocaleString('pt-BR')}
+                  </div>
+                  <Progress value={0} className="h-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {goalType === 'saving' ? (targetDate ? new Date(targetDate).toLocaleDateString('pt-BR') : 'Prazo não definido') : (period === 'weekly' ? 'Semanal' : period === 'monthly' ? 'Mensal' : 'Anual')}
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>

@@ -20,6 +20,9 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateSpendingGoal } from "@/hooks/useGoals"
 import { useToast } from "@/hooks/use-toast"
+import { useList } from '@refinedev/core'
+import { api } from '@/lib/apiClient'
+import ManageCategoriesModal from './ManageCategoriesModal'
 
 interface AddSpendingGoalSheetProps {
   children: React.ReactNode
@@ -40,12 +43,15 @@ const categoryOptions = [
 export function AddSpendingGoalSheet({ children }: AddSpendingGoalSheetProps) {
   const [open, setOpen] = React.useState(false)
   const [category, setCategory] = React.useState("")
+  // customCategoryName removed: creating categories should be done in the manager
+  const [goalName, setGoalName] = React.useState("")
   const [limit, setLimit] = React.useState("")
   const [description, setDescription] = React.useState("")
   const { toast } = useToast()
   const createSpendingGoal = useCreateSpendingGoal()
+  const { data: customCategories } = useList({ resource: 'categories/custom', queryOptions: { enabled: true } })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!category || !limit) {
@@ -57,8 +63,17 @@ export function AddSpendingGoalSheet({ children }: AddSpendingGoalSheetProps) {
       return
     }
 
+    // Determine resolved category name when selecting existing custom category
+    let resolvedCategory = category
+    if (String(category).startsWith('custom:')) {
+      const id = String(category).split(':')[1]
+      const found = customCategories?.data?.find((c: any) => String(c.id) === id)
+      if (found) resolvedCategory = found.name
+    }
+
     const selectedCategoryOption = categoryOptions.find(opt => opt.value === category)
-    const goalTitle = `Meta de ${selectedCategoryOption?.label || category}`
+    // Goal title comes from user input (goalName). If not provided, fall back to a generated title
+    const finalGoalTitle = goalName.trim() || `Meta de ${selectedCategoryOption?.label || resolvedCategory}`
     
     // Calculate dates for monthly period
     const now = new Date()
@@ -66,26 +81,27 @@ export function AddSpendingGoalSheet({ children }: AddSpendingGoalSheetProps) {
     const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
 
     const payload = {
-      title: goalTitle,
-      category: category,
+      title: finalGoalTitle,
+      category: resolvedCategory,
       targetAmount: parseFloat(limit),
       period: 'monthly' as const,
       startDate,
       endDate,
-      description: description || `Limite de gasto para ${selectedCategoryOption?.label || category}`
+      description: description || `Limite de gasto para ${selectedCategoryOption?.label || resolvedCategory}`
     }
 
     createSpendingGoal.mutate(payload, {
       onSuccess: () => {
         toast({
           title: "Meta criada!",
-          description: `Meta de gasto para ${selectedCategoryOption?.label || category} foi criada com sucesso`,
+          description: `Meta "${finalGoalTitle}" criada com sucesso para ${selectedCategoryOption?.label || resolvedCategory}`,
         })
         
-        // Reset form and close sheet
-        setCategory("")
+  // Reset form and close sheet
+  setCategory("")
         setLimit("")
         setDescription("")
+        setGoalName("")
         setOpen(false)
       },
       onError: () => {
@@ -115,6 +131,11 @@ export function AddSpendingGoalSheet({ children }: AddSpendingGoalSheetProps) {
         
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
           <div className="space-y-2">
+            <Label htmlFor="goalName">Nome da meta</Label>
+            <Input id="goalName" value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="Ex: Gastos com Pet" />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="category">Categoria</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger>
@@ -129,8 +150,31 @@ export function AddSpendingGoalSheet({ children }: AddSpendingGoalSheetProps) {
                     </div>
                   </SelectItem>
                 ))}
+
+                {customCategories?.data && customCategories.data.length > 0 && (
+                  <>
+                    <div className="px-3 py-2 text-xs text-muted-foreground">Suas categorias</div>
+                    {customCategories.data.filter((c: any) => c.type === 'expense' && c.isActive).map((c: any) => (
+                      <SelectItem key={`custom:${c.id}`} value={`custom:${c.id}`}>
+                        <div className="flex items-center gap-2">
+                          <span>🔖</span>
+                          <span>{c.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* If user needs a custom category, use the manager (do not auto-create on goal creation) */}
+          {category === 'outros' && (
+            <div className="text-sm text-muted-foreground">Se deseja uma categoria personalizada, crie-a em "Gerenciar categorias" antes de vincular à meta.</div>
+          )}
+
+          <div className="flex justify-end">
+            <ManageCategoriesModal />
           </div>
 
           <div className="space-y-2">

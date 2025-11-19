@@ -15,6 +15,7 @@ import type { Database } from 'sqlite3';
 interface SpendingGoalRow {
   id: number;
   title: string;
+  goal_type?: string;
   category: string;
   target_amount: number;
   current_amount: number;
@@ -75,6 +76,7 @@ const formatSpendingGoalFromDB = (row: SpendingGoalRow): SpendingGoal => {
   const goal: SpendingGoal = {
     id: row.id.toString(),
     title: row.title,
+    goalType: (row.goal_type as 'spending' | 'saving') || 'spending',
     category: row.category,
     targetAmount: row.target_amount,
     currentAmount: row.current_amount,
@@ -170,28 +172,63 @@ export class GoalsService {
     const now = new Date().toISOString();
     
     try {
-      const result = await db.run(`
-        INSERT INTO spending_goals (
-          title, category, target_amount, current_amount, period, 
-          start_date, end_date, status, description, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        data.title,
-        data.category,
-        data.targetAmount,
-        0, // currentAmount starts at 0
-        data.period,
-        data.startDate,
-        data.endDate,
-        'active',
-        data.description || null,
-        now,
-        now
-      ]);
-      
-      // Get the created goal
-      const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [result.lastID]);
-      return formatSpendingGoalFromDB(row as SpendingGoalRow);
+      const userId = (data as any).userId ? parseInt((data as any).userId) : 1;
+      const goalType = (data as any).goalType || 'spending';
+
+      if (goalType === 'spending') {
+        // Se for uma meta de gastos (limite), não exigir start_date/end_date
+        const result = await db.run(
+          `INSERT INTO spending_goals (
+            user_id, title, goal_type, category, target_amount, current_amount, period, 
+            status, description, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            userId,
+            data.title,
+            'spending',
+            data.category,
+            data.targetAmount,
+            0,
+            data.period,
+            'active',
+            data.description || null,
+            now,
+            now,
+          ],
+        );
+
+        const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [result.lastID]);
+        return formatSpendingGoalFromDB(row as SpendingGoalRow);
+      } else {
+        // Se for uma meta de poupança, validar e incluir start_date e end_date
+        if (!data.startDate || !data.endDate) {
+          throw new Error('Metas de poupança precisam de startDate e endDate');
+        }
+        
+        const result = await db.run(`
+          INSERT INTO spending_goals (
+            user_id, title, goal_type, category, target_amount, current_amount, period, 
+            start_date, end_date, status, description, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          userId,
+          data.title,
+          'saving',
+          data.category,
+          data.targetAmount,
+          0, // currentAmount começa em 0
+          data.period,
+          data.startDate,
+          data.endDate,
+          'active',
+          data.description || null,
+          now,
+          now
+        ]);
+        
+        const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [result.lastID]);
+        return formatSpendingGoalFromDB(row as SpendingGoalRow);
+      }
     } catch (error) {
       throw error;
     }
@@ -209,6 +246,10 @@ export class GoalsService {
       if (data.title !== undefined) {
         updateFields.push('title = ?');
         updateValues.push(data.title);
+      }
+      if ((data as any).goalType !== undefined) {
+        updateFields.push('goal_type = ?');
+        updateValues.push((data as any).goalType);
       }
       if (data.category !== undefined) {
         updateFields.push('category = ?');
@@ -318,11 +359,11 @@ export class GoalsService {
       
       const goal = formatSpendingGoalFromDB(row as SpendingGoalRow);
       let newCurrentAmount = goal.currentAmount;
-      
-      // Para metas financeiras: somar receitas e subtrair despesas
-      if (transactionType === 'income') {
-        newCurrentAmount += amount;
-      } else if (transactionType === 'expense') {
+
+      // Para metas de gasto: despesas aumentam o currentAmount, receitas (se houver) podem reduzir
+      if (transactionType === 'expense') {
+        newCurrentAmount = newCurrentAmount + amount;
+      } else if (transactionType === 'income') {
         newCurrentAmount = Math.max(0, newCurrentAmount - amount);
       }
       
@@ -370,12 +411,15 @@ export class GoalsService {
     const now = new Date().toISOString();
     
     try {
+      const userId = (data as any).userId ? parseInt((data as any).userId) : 1;
+
       const result = await db.run(`
         INSERT INTO budgets (
-          category, allocated_amount, spent_amount, remaining_amount, 
+          user_id, category, allocated_amount, spent_amount, remaining_amount, 
           period, start_date, end_date, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
+        userId,
         data.category,
         data.allocatedAmount,
         0, // spentAmount starts at 0

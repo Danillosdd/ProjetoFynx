@@ -46,11 +46,21 @@ export class GoalsController {
   static async createSpendingGoal(req: Request, res: Response) {
     try {
       const goalData = req.body;
+      console.log('📥 Payload recebido (createSpendingGoal):', JSON.stringify(goalData, null, 2));
+      console.log('🔍 Goal type:', goalData.goalType || goalData.goal_type);
+
       const newGoal = await GoalsService.createSpendingGoal(goalData);
+      console.log('✅ Meta criada com sucesso:', JSON.stringify(newGoal, null, 2));
       res.status(201).json(newGoal);
     } catch (error) {
-      console.error('Error creating spending goal:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('❌ ERRO AO CRIAR META:', error && (error as any).message ? (error as any).message : error);
+      console.error('Stack:', (error && (error as any).stack) || error);
+      console.error('Payload that caused error:', JSON.stringify(req.body, null, 2));
+      res.status(500).json({ 
+        error: (error && (error as any).message) || 'Internal server error',
+        details: (error && (error as any).stack) || null,
+        payload: req.body
+      });
     }
   }
 

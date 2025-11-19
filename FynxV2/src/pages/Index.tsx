@@ -5,10 +5,11 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { AddTransactionSheet } from "@/components/AddTransactionSheet"
+import { AddTransactionSheet, InitialTransactionData } from "@/components/AddTransactionSheet"
+import { CreateGoalSheet } from "@/components/CreateGoalSheet"
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 import { useList, useInvalidate } from "@refinedev/core"
 import { useDashboard, useDeleteTransaction } from "@/hooks/useDashboard"
-import { AddSpendingGoalSheet } from "@/components/AddSpendingGoalSheet"
 import { 
   Eye, TrendingUp, TrendingDown, Users, 
   ArrowUpRight, ArrowDownRight, Plus, 
@@ -35,6 +36,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DashboardData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
+import { useGoals, useCreateSpendingGoal } from '@/hooks/useGoals'
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Checkbox } from "@/components/ui/checkbox"
 import { api } from "@/lib/apiClient"
@@ -88,13 +90,17 @@ const Index = () => {
   const [chartView, setChartView] = React.useState<"income" | "expense">("income")
   const [monthlyTimeRange, setMonthlyTimeRange] = React.useState("12m")
   const [isAddTransactionOpen, setIsAddTransactionOpen] = React.useState(false)
+  const [initialTransactionData, setInitialTransactionData] = React.useState<InitialTransactionData | null>(null);
   const { data: dashboardData } = useDashboard()
   // const { data: transactionHistory } = useTransactionHistory()
-  const { data: goalsData, isLoading: goalsLoading, error: goalsError } = useList({
-    resource: "goals/spending-goals",
-  })
-  const data = dashboardData as DashboardData
+  const { data: goalsData, isLoading: goalsLoading, error: goalsError } = useGoals()
+  // Extract goals list from useGoals() hook
+  const goalsFromOverview = goalsData?.spendingGoals ?? []
+  const spendingGoals = goalsFromOverview.filter((g: any) => (g.goalType || 'spending') === 'spending')
+  const savingGoals = goalsFromOverview.filter((g: any) => (g.goalType || 'spending') === 'saving')
+  const dashboard = dashboardData as DashboardData
   const { toast } = useToast()
+  const createGoal = useCreateSpendingGoal()
   const { mutate: deleteTransaction } = useDeleteTransaction()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [deleteTargetId, setDeleteTargetId] = React.useState<number | string | null>(null)
@@ -191,7 +197,7 @@ React.useEffect(() => {
   const [listWidth, setListWidth] = React.useState<number>(900)
 
   const recentTransactionsSorted = React.useMemo(() => {
-    const arr = data?.recentTransactions ?? []
+    const arr = dashboard?.recentTransactions ?? []
     return [...arr].sort((a: any, b: any) => {
       const timeA = new Date(a.date).getTime()
       const timeB = new Date(b.date).getTime()
@@ -200,7 +206,7 @@ React.useEffect(() => {
       const idB = Number(b.id) || 0
       return idB - idA
     })
-  }, [data?.recentTransactions])
+  }, [dashboard?.recentTransactions])
 
   const availableCategories = React.useMemo(() => {
     const set = new Set<string>()
@@ -386,27 +392,33 @@ React.useEffect(() => {
     }
   }
 
+  const handleOpenTransactionSheet = (data: InitialTransactionData | null) => {
+    setInitialTransactionData(data);
+    setIsAddTransactionOpen(true);
+  };
+
   // Backend-driven datasets
   const incomePalette = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#14b8a6", "#22c55e", "#6366f1"]
   const expensePalette = ["#ef4444", "#f97316", "#8b5cf6", "#06b6d4", "#10b981", "#6b7280", "#eab308"]
 
-  const incomeChartData = (data?.incomeByCategory ?? []).map((item, index) => ({
+  const incomeChartData = (dashboard?.incomeByCategory ?? []).map((item, index) => ({
     category: item.category,
     value: item.value,
     fill: incomePalette[index % incomePalette.length],
   }))
-  const expenseChartData = (data?.spendingByCategory ?? []).map((item, index) => ({
+  const expenseChartData = (dashboard?.spendingByCategory ?? []).map((item, index) => ({
     category: item.category,
     value: item.value,
     fill: expensePalette[index % expensePalette.length],
   }))
 
-  const dailyDataBackend = (data?.dailyPerformance ?? []).map((item) => ({
+  const dailyDataBackend = (dashboard?.dailyPerformance ?? []).map((item) => ({
     date: item.date,
     receitas: item.income,
     despesas: item.expense,
   }))
-  const monthlyDataBackend = (data?.monthlyPerformance ?? []).map((item) => ({
+
+  const monthlyDataBackend = (dashboard?.monthlyPerformance ?? []).map((item) => ({
     month: item.month,
     receitas: item.income,
     despesas: item.expense,
@@ -441,7 +453,7 @@ React.useEffect(() => {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {(data?.overview || []).map((item, index) => (
+  {(dashboard?.overview || []).map((item, index) => (
           <Card key={index} className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -1016,19 +1028,24 @@ React.useEffect(() => {
         </Card>
       </div>
 
-      {/* Metas de Gastos */}
+      {/* Metas de Gastos - Carousel Vertical */}
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
-            <CardTitle className="text-lg font-semibold">Metas de Gastos</CardTitle>
-            <p className="text-sm text-muted-foreground">Defina limites de gastos por categoria e acompanhe seu progresso</p>
+            <CardTitle className="text-lg font-semibold">💸 Metas de Gasto</CardTitle>
+            <p className="text-sm text-muted-foreground">Limites recorrentes por categoria</p>
           </div>
-          <AddSpendingGoalSheet>
+          <CreateGoalSheet onCreateGoal={(payload: any) => {
+            createGoal.mutate(payload, {
+              onSuccess: () => toast({ title: 'Meta criada', description: 'Sua meta foi criada com sucesso.' }),
+              onError: () => toast({ title: 'Erro', description: 'Não foi possível criar a meta.', variant: 'destructive' })
+            })
+          }}>
             <Button size="sm" className="h-8 gap-1">
               <Plus className="h-4 w-4" />
-              Adicionar Meta
+              + Adicionar Meta
             </Button>
-          </AddSpendingGoalSheet>
+          </CreateGoalSheet>
         </CardHeader>
         <CardContent className="space-y-4">
           {goalsLoading ? (
@@ -1039,100 +1056,275 @@ React.useEffect(() => {
             <div className="text-center py-8">
               <p className="text-destructive">Erro ao carregar metas</p>
             </div>
-          ) : goalsData?.data && goalsData.data.length > 0 ? (
-            <>
-              <div className="flex flex-wrap justify-center gap-4">
-                {goalsData.data.map((goal) => {
-                  const percentage = (goal.currentAmount / goal.targetAmount) * 100;
-                  const isOverLimit = goal.currentAmount > goal.targetAmount;
-                  
-                  return (
-                    <div key={goal.id} className="space-y-3 p-4 rounded-lg border border-border bg-card/50 w-64 flex-shrink-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{goal.category}</span>
+          ) : spendingGoals && spendingGoals.length > 0 ? (
+            <div className="flex items-start">
+              <Carousel orientation="vertical" className="w-full max-w-xs">
+                <CarouselContent className="-mt-1 h-[300px]">
+                  {spendingGoals.map((goal: any) => (
+                    <CarouselItem key={goal.id} className="pt-1">
+                      <div className="space-y-3 p-4 rounded-lg border border-border bg-card/50 w-64">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-foreground">{goal.title}</div>
+                            <div className="text-xs text-muted-foreground">{goal.category}</div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenTransactionSheet({ type: 'expense', spendingLimitId: String(goal.id) })}
+                          >
+                            Adicionar Gasto
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Gasto</span>
+                            <span className={`font-semibold ${
+                              goal.currentAmount > goal.targetAmount ? 'text-destructive' : 'text-foreground'
+                            }`}>
+                              R$ {goal.currentAmount.toLocaleString()}
+                            </span>
+                          </div>
+                          <Progress value={Math.min((goal.currentAmount/goal.targetAmount)*100, 100)} className="h-2" />
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-muted-foreground">Limite: R$ {goal.targetAmount.toLocaleString()}</span>
+                            <span className="font-medium text-muted-foreground">{Math.round((goal.currentAmount/goal.targetAmount)*100)}%</span>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-muted-foreground">Gasto</span>
-                          <span className={`font-semibold ${
-                            isOverLimit ? 'text-destructive' : 'text-foreground'
-                          }`}>
-                            R$ {goal.currentAmount.toLocaleString()}
-                          </span>
-                        </div>
-                        
-                        <Progress 
-                          value={Math.min(percentage, 100)} 
-                          className={`h-2 ${
-                            isOverLimit ? '[&>div]:bg-destructive' : '[&>div]:bg-primary'
-                          }`}
-                        />
-                        
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-muted-foreground">Limite: R$ {goal.targetAmount.toLocaleString()}</span>
-                          <span className={`font-medium ${
-                            isOverLimit ? 'text-destructive' : 'text-muted-foreground'
-                          }`}>
-                            {percentage.toFixed(0)}%
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs text-muted-foreground">{goal.description}</p>
-                      
-                      {isOverLimit && (
-                        <div className="flex items-center gap-1 text-xs text-destructive bg-destructive/10 p-2 rounded">
-                          <AlertCircle className="h-3 w-3" />
-                          <span>Excedido em R$ {(goal.currentAmount - goal.targetAmount).toLocaleString()}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              
-              <div className="pt-4 border-t border-border">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total gasto este mês</p>
-                  <p className="text-xl font-bold text-foreground">
-                    R$ {goalsData.data.reduce((total, goal) => total + goal.currentAmount, 0).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+            </div>
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Nenhuma meta de gasto encontrada</p>
-              <p className="text-sm text-muted-foreground mt-2">Adicione uma meta para começar a acompanhar seus gastos</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Botão Flutuante - Add Transaction (expansão dinâmica) */}
-      <AddTransactionSheet open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
-        <Button
-          className="group fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full group-hover:rounded-lg bg-violet-600 text-white hover:bg-violet-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out flex items-center justify-center hover:w-[200px]"
-          aria-label="Adicionar Transação"
-        >
-          {/* Ícone + central no estado compacto; desloca para a esquerda quando expande */}
-          <Plus
-            className="h-6 w-6 text-white transition-all duration-300 ease-out group-hover:mr-2"
-          />
+            {/* Metas de Poupança - Carousel Vertical */}
 
-          {/* Texto que aparece no hover */}
-          <span
-            className="text-sm font-medium whitespace-nowrap opacity-0 max-w-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:max-w-[150px]"
-          >
-            Adicionar Transação
-          </span>
-        </Button>
-      </AddTransactionSheet>
-    </div>
-  );
-};
+            <Card className="bg-card border-border">
+
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+
+                <div>
+
+                  <CardTitle className="text-lg font-semibold">💰 Metas de Poupança</CardTitle>
+
+                  <p className="text-sm text-muted-foreground">Objetivos com prazo definido</p>
+
+                </div>
+
+                <CreateGoalSheet onCreateGoal={(payload: any) => {
+
+                  createGoal.mutate(payload, {
+
+                    onSuccess: () => toast({ title: 'Meta criada', description: 'Sua meta foi criada com sucesso.' }),
+
+                    onError: () => toast({ title: 'Erro', description: 'Não foi possível criar a meta.', variant: 'destructive' })
+
+                  })
+
+                }}>
+
+                  <Button size="sm" className="h-8 gap-1">
+
+                    <Plus className="h-4 w-4" />
+
+                    + Adicionar Meta
+
+                  </Button>
+
+                </CreateGoalSheet>
+
+              </CardHeader>
+
+              <CardContent>
+
+                {savingGoals && savingGoals.length > 0 ? (
+
+                  <Carousel orientation="vertical" className="w-full max-w-xs">
+
+                    <CarouselContent className="-mt-1 h-[300px]">
+
+                      {savingGoals.map((goal: any) => (
+
+                        <CarouselItem key={goal.id} className="pt-1">
+
+                          <div className="space-y-3 p-4 rounded-lg border border-border bg-card/50 w-64">
+
+                            <div className="flex items-center justify-between">
+
+                              <div>
+
+                                <div className="font-medium text-foreground">{goal.title}</div>
+
+                                <div className="text-xs text-muted-foreground">{goal.category}</div>
+
+                              </div>
+
+                              <Button
+
+                                variant="outline"
+
+                                size="sm"
+
+                                onClick={() => handleOpenTransactionSheet({ type: 'income', goalId: String(goal.id) })}
+
+                              >
+
+                                Adicionar Fundos
+
+                              </Button>
+
+                            </div>
+
+                            <div className="space-y-2">
+
+                              <div className="flex justify-between items-center text-sm">
+
+                                <span className="text-muted-foreground">Atual</span>
+
+                                <span className="font-semibold text-foreground">R$ {goal.currentAmount.toLocaleString()}</span>
+
+                              </div>
+
+                              <Progress value={Math.min((goal.currentAmount/goal.targetAmount)*100, 100)} className="h-2" />
+
+                              <div className="flex justify-between items-center text-xs">
+
+                                <span className="text-muted-foreground">Meta: R$ {goal.targetAmount.toLocaleString()}</span>
+
+                                <span className="font-medium text-muted-foreground">{Math.round((goal.currentAmount/goal.targetAmount)*100)}%</span>
+
+                              </div>
+
+                            </div>
+
+                          </div>
+
+                        </CarouselItem>
+
+                      ))}
+
+                    </CarouselContent>
+
+                    <CarouselPrevious />
+
+                    <CarouselNext />
+
+                  </Carousel>
+
+                ) : (
+
+                  <div className="text-center py-8">
+
+                    <p className="text-muted-foreground">Nenhuma meta de poupança encontrada</p>
+
+                  </div>
+
+                )}
+
+              </CardContent>
+
+            </Card>
+
+      
+
+                  {/* Botão Flutuante - Add Transaction (expansão dinâmica) */}
+
+      
+
+                  <AddTransactionSheet open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen} initialData={initialTransactionData}>
+
+      
+
+                    <Button
+
+      
+
+                      onClick={() => handleOpenTransactionSheet(null)}
+
+      
+
+                      className="group fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full group-hover:rounded-lg bg-violet-600 text-white hover:bg-violet-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out flex items-center justify-center hover:w-[200px]"
+
+      
+
+                      aria-label="Adicionar Transação"
+
+      
+
+                    >
+
+      
+
+                      {/* Ícone + central no estado compacto; desloca para a esquerda quando expande */}
+
+      
+
+                      <Plus
+
+      
+
+                        className="h-6 w-6 text-white transition-all duration-300 ease-out group-hover:mr-2"
+
+      
+
+                      />
+
+      
+
+            
+
+      
+
+                      {/* Texto que aparece no hover */}
+
+      
+
+                      <span
+
+      
+
+                        className="text-sm font-medium whitespace-nowrap opacity-0 max-w-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:max-w-[150px]"
+
+      
+
+                      >
+
+      
+
+                        Adicionar Transação
+
+      
+
+                      </span>
+
+      
+
+                    </Button>
+
+      
+
+                  </AddTransactionSheet>
+
+      
+
+                </div>
+
+      
+
+              );
+
+      
+
+            };
 
 export default Index;

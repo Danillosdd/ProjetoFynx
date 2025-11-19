@@ -1,6 +1,7 @@
 export interface SpendingGoal {
   id: string;
   title: string;
+  goalType?: 'spending' | 'saving';
   category: string;
   targetAmount: number;
   currentAmount: number;
@@ -50,15 +51,18 @@ export interface GoalsData {
 export interface CreateSpendingGoalRequest {
   title: string;
   category: string;
+  goalType?: 'spending' | 'saving';
   targetAmount: number;
   period: 'monthly' | 'weekly' | 'yearly';
   startDate: string;
   endDate: string;
   description?: string;
+  userId?: number;
 }
 
 export interface UpdateSpendingGoalRequest {
   title?: string;
+  goalType?: 'spending' | 'saving';
   category?: string;
   targetAmount?: number;
   period?: 'monthly' | 'weekly' | 'yearly';
@@ -74,6 +78,7 @@ export interface CreateBudgetRequest {
   period: 'monthly' | 'weekly' | 'yearly';
   startDate: string;
   endDate: string;
+  userId?: number;
 }
 
 export interface UpdateBudgetRequest {

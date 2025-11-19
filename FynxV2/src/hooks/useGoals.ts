@@ -4,6 +4,7 @@ import { api } from '@/lib/apiClient';
 export interface SpendingGoal {
   id: string;
   title: string;
+  goalType?: 'spending' | 'saving';
   category: string;
   targetAmount: number;
   currentAmount: number;
@@ -53,6 +54,7 @@ export interface GoalsData {
 export interface CreateSpendingGoalRequest {
   title: string;
   category: string;
+  goalType?: 'spending' | 'saving';
   targetAmount: number;
   period: 'monthly' | 'weekly' | 'yearly';
   startDate: string;

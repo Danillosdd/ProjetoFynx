@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,18 +42,26 @@ import {
   useInvalidate,
   useList,
 } from "@refinedev/core"
+import { useGoals } from '@/hooks/useGoals'
+import ManageCategoriesModal from './ManageCategoriesModal'
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { format, parse, isValid } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
+// Define the type for the initial data
+export interface InitialTransactionData {
+  type: "income" | "expense";
+  goalId?: string;
+  spendingLimitId?: string;
+}
+
 interface AddTransactionSheetProps {
   children: React.ReactNode;
-  goalId?: string;
-  goalName?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  initialData?: InitialTransactionData | null;
 }
 
 const transactionFormSchema = z.object({
@@ -65,31 +73,33 @@ const transactionFormSchema = z.object({
   category: z.string().min(1, "Categoria é obrigatória"),
   date: z.string().min(1, "Data é obrigatória"),
   isRecurring: z.boolean().default(false),
-  spendingLimitId: z.string().optional(),
+  spendingGoalId: z.string().optional(),
+  savingGoalId: z.string().optional(),
+  // customCategoryName removed: custom categories must be created via manager
 });
 
 type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 const categories = {
   income: [
-    "Salary",
-    "Freelance",
-    "Investment",
-    "Business",
-    "Gift",
-    "Other Income",
+    'Salário',
+    'Freelance',
+    'Investimentos',
+    'Negócios',
+    'Presente',
+    'Outros Ganhos',
   ],
   expense: [
-    "Housing",
-    "Food",
-    "Transportation",
-    "Healthcare",
-    "Entertainment",
-    "Shopping",
-    "Bills",
-    "Education",
-    "Travel",
-    "Other Expense",
+    'Moradia',
+    'Alimentação',
+    'Transporte',
+    'Saúde',
+    'Entretenimento',
+    'Compras',
+    'Contas',
+    'Educação',
+    'Viagem',
+    'Outros',
   ],
 };
 
@@ -97,10 +107,12 @@ export function AddTransactionSheet({
   children,
   open,
   onOpenChange,
+  initialData,
 }: AddTransactionSheetProps) {
   const { toast } = useToast();
   const invalidate = useInvalidate();
   const [linkToSpendingLimit, setLinkToSpendingLimit] = useState(false);
+  const [linkToSavingGoal, setLinkToSavingGoal] = useState(false);
   const queryClient = useQueryClient();
 
   const form = useForm<TransactionFormValues>({
@@ -170,21 +182,78 @@ export function AddTransactionSheet({
   const { mutate: createTransaction, isLoading } = useCreate({
     resource: "transactions",
   });
-
-  const { data: spendingLimits } = useList({
-    resource: "spending-limits",
+  const { data: spendingGoals } = useList({
+    resource: "goals/spending-goals",
     queryOptions: {
       enabled: transactionType === "expense" && linkToSpendingLimit,
     },
   });
 
+  // Fetch goals overview (includes goalType) to filter by type when linking transactions
+  const { data: goalsOverview } = useGoals();
+  const allGoals = goalsOverview?.spendingGoals ?? [];
+  const availableGoalsForTransaction = transactionType === 'income'
+    ? allGoals.filter((g: any) => g.goalType === 'saving')
+    : allGoals.filter((g: any) => g.goalType === 'spending')
+
+  const { data: customCategories } = useList({
+    resource: 'categories/custom',
+    queryOptions: { enabled: true },
+  });
+
+  useEffect(() => {
+    if (open && initialData) {
+      form.setValue("type", initialData.type);
+      if (initialData.type === "expense" && initialData.spendingLimitId) {
+        setLinkToSpendingLimit(true);
+        form.setValue("spendingGoalId", initialData.spendingLimitId);
+      }
+      if (initialData.type === "income" && initialData.goalId) {
+        setLinkToSavingGoal(true);
+        form.setValue("savingGoalId", initialData.goalId);
+      }
+    } else if (!open) {
+      // Reset form and state when sheet closes
+      form.reset({
+        isRecurring: false,
+        date: new Date().toISOString().split('T')[0],
+      });
+      setTypedAmount("");
+      setLinkToSpendingLimit(false);
+      setLinkToSavingGoal(false);
+      const d = parse(new Date().toISOString().split('T')[0], "yyyy-MM-dd", new Date())
+      setTypedDate(format(d, "dd/MM/yyyy"))
+    }
+  }, [open, initialData, form]);
+
   const onSubmit = (values: TransactionFormValues) => {
-    createTransaction(
-      {
-        values,
-      },
-      {
-        onSuccess: () => {
+    (async () => {
+      try {
+        let finalCategory = values.category;
+
+        // Do NOT auto-create categories when adding a transaction.
+        // Custom categories should be created via the "Gerenciar categorias" modal.
+        if (values.category === 'Outros') {
+          toast({ title: 'Categoria personalizada', description: 'Crie a categoria em "Gerenciar categorias" antes de usá-la.', });
+          return;
+        }
+
+        // If user selected an existing custom category (value like 'custom:ID'), resolve its name
+        if (String(values.category).startsWith('custom:')) {
+          const id = String(values.category).split(':')[1];
+          const found = customCategories?.data?.find((c: any) => String(c.id) === id);
+          if (found) finalCategory = found.name;
+        }
+
+        // Build payload with resolved category
+        const payload = { ...values, category: finalCategory };
+
+        createTransaction(
+          {
+            values: payload,
+          },
+          {
+            onSuccess: () => {
           toast({
             title: "Transação adicionada",
             description: "Sua transação foi adicionada com sucesso.",
@@ -210,8 +279,10 @@ export function AddTransactionSheet({
           // Garantir refetch das queries do React Query usadas no dashboard
           queryClient.invalidateQueries({ queryKey: ["dashboard"] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        },
-        onError: (error) => {
+      // Also refetch goals so linked goals reflect updated progress immediately
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+            },
+            onError: (error) => {
           toast({
             title: "Erro ao adicionar transação",
             description: "Ocorreu um erro ao tentar adicionar a transação.",
@@ -219,8 +290,12 @@ export function AddTransactionSheet({
           });
           console.error("Erro ao criar transação:", error);
         },
+          }
+        );
+      } catch (err) {
+        console.error('Erro no fluxo de criação de transação:', err);
       }
-    );
+    })();
   };
 
   return (
@@ -347,18 +422,36 @@ export function AddTransactionSheet({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {transactionType &&
-                        categories[transactionType].map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
+                          {transactionType &&
+                            categories[transactionType].map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category}
+                              </SelectItem>
+                            ))}
+
+                          {/* Custom categories (user-defined) */}
+                          {customCategories?.data && customCategories.data.length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs text-muted-foreground">Suas categorias</div>
+                              {customCategories.data
+                                .filter((c: any) => c.type === transactionType && c.isActive)
+                                .map((c: any) => (
+                                  <SelectItem key={`custom:${c.id}`} value={`custom:${c.id}`}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))}
+                            </>
+                          )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+                  <div className="flex justify-end">
+                    <ManageCategoriesModal />
+                  </div>
 
             <FormField
               control={form.control}
@@ -464,26 +557,38 @@ export function AddTransactionSheet({
               </div>
             )}
 
+            {transactionType === "income" && (
+              <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel>Vincular a meta de poupança</FormLabel>
+                </div>
+                <Switch
+                  checked={linkToSavingGoal}
+                  onCheckedChange={setLinkToSavingGoal}
+                />
+              </div>
+            )}
+
             {transactionType === "expense" && linkToSpendingLimit && (
               <FormField
                 control={form.control}
-                name="spendingLimitId"
+                name="spendingGoalId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Limite de Gasto</FormLabel>
+                    <FormLabel>Meta de Gasto</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione um limite" />
+                          <SelectValue placeholder="Selecione uma meta" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {spendingLimits?.data?.map((limit) => (
-                          <SelectItem key={limit.id} value={String(limit.id)}>
-                            {limit.name}
+                        {availableGoalsForTransaction.map((goal: any) => (
+                          <SelectItem key={goal.id} value={String(goal.id)}>
+                            {goal.title || goal.category}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -492,6 +597,46 @@ export function AddTransactionSheet({
                   </FormItem>
                 )}
               />
+            )}
+
+            {transactionType === "income" && linkToSavingGoal && (
+              <FormField
+                control={form.control}
+                name="savingGoalId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Meta de Poupança</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma meta" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableGoalsForTransaction.map((goal: any) => (
+                          <SelectItem key={goal.id} value={String(goal.id)}>
+                            {goal.title || goal.category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* If user selected 'Outros', prompt to use category manager (do not auto-create) */}
+            {form.watch('category') === 'Outros' && (
+              <div className="p-3 rounded bg-muted/50 text-sm">
+                Para usar uma categoria personalizada, primeiro crie-a em "Gerenciar categorias" e então selecione-a aqui.
+                <div className="mt-2">
+                  <ManageCategoriesModal />
+                </div>
+              </div>
             )}
 
             <Button type="submit" disabled={isLoading}>

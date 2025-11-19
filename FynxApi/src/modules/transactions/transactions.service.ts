@@ -10,6 +10,7 @@ import type {
   BulkTransactionOperation 
 } from './transactions.types.js';
 import { database } from '../../database/database.js';
+import { GoalsService } from '../goals/goals.service.js';
 
 export class TransactionsService {
   // Get all transactions with filters and pagination
@@ -118,11 +119,14 @@ export class TransactionsService {
 
   // Create new transaction
   static async createTransaction(data: CreateTransactionRequest, userId: number = 1): Promise<Transaction> {
+    // Make the insert + optional goal update atomic using a DB transaction
     try {
+      await database.run('BEGIN TRANSACTION');
+
       const result = await database.run(
         `INSERT INTO transactions (
-          user_id, amount, description, category, date, type, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          user_id, amount, description, category, date, type, notes, spending_goal_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           data.amount,
@@ -130,7 +134,8 @@ export class TransactionsService {
           data.category,
           data.date,
           data.type,
-          data.notes || null
+          data.notes || null,
+          data.spendingGoalId ? parseInt(data.spendingGoalId) : null
         ]
       );
 
@@ -140,12 +145,26 @@ export class TransactionsService {
       );
 
       if (!newTransaction) {
+        await database.run('ROLLBACK');
         throw new Error('Erro ao criar transação');
       }
 
-      return this.formatTransactionFromDB(newTransaction);
+      const formatted = this.formatTransactionFromDB(newTransaction);
+
+      // If the transaction is linked to a spending goal, update goal progress
+      if (newTransaction.spending_goal_id) {
+        await GoalsService.updateGoalProgressByTransaction(newTransaction.spending_goal_id.toString(), formatted.amount, formatted.type);
+      }
+
+      await database.run('COMMIT');
+      return formatted;
     } catch (error) {
-      console.error('Erro ao criar transação:', error);
+      try {
+        await database.run('ROLLBACK');
+      } catch (rbErr) {
+        console.error('Erro durante ROLLBACK:', rbErr);
+      }
+      console.error('Erro ao criar transação (atomic):', error);
       throw new Error('Erro ao criar transação');
     }
   }
@@ -339,6 +358,7 @@ export class TransactionsService {
       date: dbTransaction.date,
       paymentMethod: 'credit_card', // Default value, can be added to DB later
       notes: dbTransaction.notes,
+      spendingGoalId: dbTransaction.spending_goal_id ? dbTransaction.spending_goal_id.toString() : undefined,
       createdAt: dbTransaction.created_at,
       updatedAt: dbTransaction.updated_at
     };

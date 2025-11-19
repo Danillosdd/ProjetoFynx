@@ -101,9 +101,11 @@ class Database {
           date DATE NOT NULL,
           type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
           notes TEXT,
+          spending_goal_id INTEGER,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (user_id) REFERENCES users (id)
+          FOREIGN KEY (user_id) REFERENCES users (id),
+          FOREIGN KEY (spending_goal_id) REFERENCES spending_goals (id)
         )
       `);
 
@@ -132,8 +134,8 @@ class Database {
           target_amount DECIMAL(10,2) NOT NULL,
           current_amount DECIMAL(10,2) DEFAULT 0,
           period TEXT NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
-          start_date DATE NOT NULL,
-          end_date DATE NOT NULL,
+          start_date DATE,
+          end_date DATE,
           status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'paused')),
           description TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -160,6 +162,22 @@ class Database {
       `);
 
       // Tabela de orçamentos
+      // Ensure custom_categories table exists for user-defined categories
+      try {
+        await this.run(`
+          CREATE TABLE IF NOT EXISTS custom_categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+          )
+        `);
+      } catch (err) {
+        console.error('Erro ao criar tabela custom_categories:', err);
+      }
       await this.run(`
         CREATE TABLE IF NOT EXISTS budgets (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,6 +235,86 @@ class Database {
       
       // Inserir dados iniciais
       await this.seedInitialData();
+      
+      // Ensure migrations: add spending_goal_id column to transactions if missing
+      try {
+        const tableInfo = await this.get("PRAGMA table_info('transactions')");
+        // tableInfo may be a single row or array depending on sqlite3 wrapper; fetch list instead
+        const columns = await this.all("PRAGMA table_info('transactions')");
+        const hasSpendingGoal = columns.some((col: any) => col.name === 'spending_goal_id');
+        if (!hasSpendingGoal) {
+          console.log('Applying migration: adding spending_goal_id to transactions');
+          await this.run('ALTER TABLE transactions ADD COLUMN spending_goal_id INTEGER');
+        }
+      } catch (err) {
+        // If migration fails, log but continue
+        console.error('Erro ao aplicar migração de coluna spending_goal_id:', err);
+      }
+      // Ensure migrations: add goal_type column to spending_goals if missing
+      try {
+        const spendingCols = await this.all("PRAGMA table_info('spending_goals')");
+        const hasGoalType = spendingCols.some((col: any) => col.name === 'goal_type');
+        if (!hasGoalType) {
+          console.log('Applying migration: adding goal_type to spending_goals');
+          await this.run("ALTER TABLE spending_goals ADD COLUMN goal_type TEXT DEFAULT 'spending'");
+        }
+
+        // Also ensure start_date and end_date are nullable for spending_goals
+        try {
+          // PRAGMA table_info returns an array of column infos, with `notnull` flag
+          const startCol = spendingCols.find((col: any) => col.name === 'start_date');
+          const endCol = spendingCols.find((col: any) => col.name === 'end_date');
+
+          const startNotNull = startCol ? Boolean(startCol.notnull) : false;
+          const endNotNull = endCol ? Boolean(endCol.notnull) : false;
+
+          // If either column has NOT NULL constraint, perform a safe table migration to make them nullable
+          if (startNotNull || endNotNull) {
+            console.log('Applying migration: making start_date and/or end_date nullable in spending_goals');
+
+            // Create new table with nullable start_date/end_date and goal_type column
+            await this.run(`
+              CREATE TABLE IF NOT EXISTS spending_goals_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL,
+                goal_type TEXT DEFAULT 'spending',
+                target_amount DECIMAL(10,2) NOT NULL,
+                current_amount DECIMAL(10,2) DEFAULT 0,
+                period TEXT NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
+                start_date DATE,
+                end_date DATE,
+                status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'paused')),
+                description TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+              )
+            `);
+
+            // Copy data from old table into new table. If goal_type doesn't exist in old table, coalesce to 'spending'.
+            // Use column names that should exist in the original table; this preserves existing data.
+            await this.run(`
+              INSERT INTO spending_goals_new (id, user_id, title, category, goal_type, target_amount, current_amount, period, start_date, end_date, status, description, created_at, updated_at)
+              SELECT id, user_id, title, category, COALESCE(goal_type, 'spending') as goal_type, target_amount, current_amount, period, start_date, end_date, status, description, created_at, updated_at
+              FROM spending_goals
+            `);
+
+            // Replace old table
+            await this.run('ALTER TABLE spending_goals RENAME TO spending_goals_old');
+            await this.run('ALTER TABLE spending_goals_new RENAME TO spending_goals');
+            // drop old table if exists
+            await this.run('DROP TABLE IF EXISTS spending_goals_old');
+
+            console.log('Migration completed: spending_goals start_date/end_date are now nullable.');
+          }
+        } catch (innerErr) {
+          console.error('Erro ao aplicar migração para tornar start_date/end_date nullable:', innerErr);
+        }
+      } catch (err) {
+        console.error('Erro ao aplicar migração de coluna goal_type em spending_goals:', err);
+      }
       
     } catch (error) {
       console.error('Erro ao inicializar tabelas:', error);
