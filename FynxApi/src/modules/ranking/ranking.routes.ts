@@ -30,4 +30,7 @@ router.get('/achievements/:userId', RankingController.getUserAchievements);
 // GET /api/v1/ranking/badges/:userId - Get user badges
 router.get('/badges/:userId', RankingController.getUserBadges);
 
+// POST /api/v1/ranking/reset-season - Reset season scores
+router.post('/reset-season', RankingController.resetSeason);
+
 export default router;

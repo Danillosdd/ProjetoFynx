@@ -106,3 +106,13 @@ export function useUpdateGoalProgressByTransaction() {
     },
   });
 }
+
+export function useDeleteGoal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/goals/spending-goals/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+    },
+  });
+}

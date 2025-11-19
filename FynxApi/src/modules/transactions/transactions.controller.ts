@@ -9,11 +9,11 @@ export class TransactionsController {
       const userId = parseInt(req.query.userId as string) || 1;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      
+
       // Parâmetros de ordenação
       const sortBy = req.query.sortBy as string || 'date';
       const sortOrder = req.query.sortOrder as 'asc' | 'desc' || 'desc';
-      
+
       const filters: TransactionFilters = {
         ...(req.query.type && { type: req.query.type as 'income' | 'expense' | 'all' }),
         ...(req.query.category && { category: req.query.category as string }),
@@ -35,7 +35,7 @@ export class TransactionsController {
       });
 
       const transactionsData = await TransactionsService.getTransactions(userId, filters, page, limit, sortBy, sortOrder);
-      
+
       // Formato compatível com Refine
       res.status(200).json({
         data: transactionsData.transactions || [],
@@ -56,23 +56,23 @@ export class TransactionsController {
     try {
       const { id } = req.params;
       const userId = parseInt(req.query.userId as string) || 1;
-      
+
       if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID da transação é obrigatório'
         });
       }
-      
+
       const transaction = await TransactionsService.getTransactionById(id, userId);
-      
+
       if (!transaction) {
         return res.status(404).json({
           success: false,
           message: 'Transação não encontrada'
         });
       }
-      
+
       // Formato compatível com Refine
       res.status(200).json({
         data: transaction
@@ -89,11 +89,13 @@ export class TransactionsController {
   // POST /api/v1/transactions - Create new transaction
   static async createTransaction(req: Request, res: Response) {
     try {
-      const userId = parseInt(req.body.userId) || 1;
-      const transactionData: CreateTransactionRequest = req.body;
-      
+      // Refine sends data in req.body.values, but direct API calls send it in req.body
+      const bodyData = req.body.values || req.body;
+      const userId = parseInt(bodyData.userId || req.body.userId) || 1;
+      const transactionData: CreateTransactionRequest = bodyData;
+
       const newTransaction = await TransactionsService.createTransaction(transactionData, userId);
-      
+
       // Formato compatível com Refine
       res.status(201).json({
         data: newTransaction
@@ -113,23 +115,23 @@ export class TransactionsController {
       const { id } = req.params;
       const userId = parseInt(req.body.userId) || 1;
       const updateData: UpdateTransactionRequest = req.body;
-      
+
       if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID da transação é obrigatório'
         });
       }
-      
+
       const updatedTransaction = await TransactionsService.updateTransaction(id, updateData, userId);
-      
+
       if (!updatedTransaction) {
         return res.status(404).json({
           success: false,
           message: 'Transação não encontrada'
         });
       }
-      
+
       // Formato compatível com Refine
       res.status(200).json({
         data: updatedTransaction
@@ -148,23 +150,23 @@ export class TransactionsController {
     try {
       const { id } = req.params;
       const userId = parseInt(req.query.userId as string) || 1;
-      
+
       if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID da transação é obrigatório'
         });
       }
-      
+
       const deleted = await TransactionsService.deleteTransaction(id, userId);
-      
+
       if (!deleted) {
         return res.status(404).json({
           success: false,
           message: 'Transação não encontrada'
         });
       }
-      
+
       // Formato compatível com Refine
       res.status(200).json({
         data: { id }
@@ -183,9 +185,9 @@ export class TransactionsController {
     try {
       const userId = parseInt(req.body.userId) || 1;
       const operation: BulkTransactionOperation = req.body;
-      
+
       const result = await TransactionsService.bulkOperation(operation, userId);
-      
+
       res.status(200).json({
         success: true,
         data: result,
@@ -204,7 +206,7 @@ export class TransactionsController {
   static async getCategories(req: Request, res: Response) {
     try {
       const categories = await TransactionsService.getCategories();
-      
+
       res.status(200).json({
         success: true,
         data: categories
@@ -222,9 +224,9 @@ export class TransactionsController {
   static async getTransactionsSummary(req: Request, res: Response) {
     try {
       const userId = parseInt(req.query.userId as string) || 1;
-      
+
       const summary = await TransactionsService.getTransactionsSummary(userId);
-      
+
       res.status(200).json({
         success: true,
         data: summary
@@ -242,9 +244,9 @@ export class TransactionsController {
   static async getTransactionsStats(req: Request, res: Response) {
     try {
       const userId = parseInt(req.query.userId as string) || 1;
-      
+
       const stats = await TransactionsService.getTransactionsStats(userId);
-      
+
       res.status(200).json({
         success: true,
         data: stats

@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button"
 import { Plus, Target } from "lucide-react"
 import { CreateGoalSheet } from "@/components/CreateGoalSheet"
 import { AddTransactionSheet, InitialTransactionData } from "@/components/AddTransactionSheet"
-import { useGoals, useCreateSpendingGoal, CreateSpendingGoalRequest } from "@/hooks/useGoals"
+import { useGoals, useCreateSpendingGoal, CreateSpendingGoalRequest, useDeleteGoal } from '@/hooks/useGoals'
 import { useToast } from "@/hooks/use-toast"
 import { GoalSection } from "@/components/GoalSection"
 
 const Goals = () => {
   const { data, isLoading } = useGoals()
   const createGoal = useCreateSpendingGoal()
+  const deleteGoal = useDeleteGoal()
   const { toast } = useToast()
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [initialTransactionData, setInitialTransactionData] = useState<InitialTransactionData | null>(null);
@@ -18,6 +19,17 @@ const Goals = () => {
     setInitialTransactionData(data);
     setIsAddTransactionOpen(true);
   };
+
+  const handleDeleteGoal = (id: string) => {
+    deleteGoal.mutate(id, {
+      onSuccess: () => {
+        toast({ title: 'Meta excluída', description: 'A meta foi excluída com sucesso.' })
+      },
+      onError: () => {
+        toast({ title: 'Erro', description: 'Não foi possível excluir a meta.', variant: 'destructive' })
+      }
+    })
+  }
 
   const goals = useMemo(() => data?.spendingGoals ?? [], [data])
   const spendingGoals = useMemo(() => (data?.spendingGoals ?? []).filter((g: any) => (g.goalType || 'spending') === 'spending'), [data])
@@ -87,7 +99,7 @@ const Goals = () => {
             Defina seus objetivos financeiros e acompanhe seu progresso de forma visual e organizada.
           </p>
         </div>
-        
+
         <CreateGoalSheet onCreateGoal={addNewGoal}>
           <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Plus className="h-5 w-5 mr-2" />
@@ -113,8 +125,8 @@ const Goals = () => {
           </CreateGoalSheet>
         </div>
 
-        <GoalSection title="💸 Limites de Gasto" goals={spendingGoals} onAddTransaction={handleOpenTransactionSheet} />
-        <GoalSection title="💰 Metas de Poupança" goals={savingGoals} onAddTransaction={handleOpenTransactionSheet} />
+        <GoalSection title="💸 Limites de Gasto" goals={spendingGoals} onAddTransaction={handleOpenTransactionSheet} onDelete={handleDeleteGoal} />
+        <GoalSection title="💰 Metas de Poupança" goals={savingGoals} onAddTransaction={handleOpenTransactionSheet} onDelete={handleDeleteGoal} />
 
       </main>
       <AddTransactionSheet open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen} initialData={initialTransactionData}>

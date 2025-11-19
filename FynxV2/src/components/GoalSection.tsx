@@ -11,16 +11,17 @@ type Goal = {
   currentAmount: number;
   targetAmount: number;
   description?: string;
-  goalType: 'spending' | 'saving';
+  goalType?: 'spending' | 'saving';
 };
 
 interface GoalSectionProps {
   title: string;
   goals: Goal[];
   onAddTransaction: (data: InitialTransactionData) => void;
+  onDelete?: (id: string) => void;
 }
 
-export const GoalSection = ({ title, goals, onAddTransaction }: GoalSectionProps) => {
+export const GoalSection = ({ title, goals, onAddTransaction, onDelete }: GoalSectionProps) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [showAll, setShowAll] = useState(false);
 
@@ -31,7 +32,7 @@ export const GoalSection = ({ title, goals, onAddTransaction }: GoalSectionProps
   const renderGrid = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {goals.map((goal) => (
-        <GoalCard key={goal.id} goal={goal} onAddTransaction={onAddTransaction} />
+        <GoalCard key={goal.id} goal={goal} onAddTransaction={onAddTransaction} onDelete={onDelete} />
       ))}
     </div>
   );
@@ -42,7 +43,7 @@ export const GoalSection = ({ title, goals, onAddTransaction }: GoalSectionProps
         <CarouselContent className="-ml-2 md:-ml-4">
           {goals.map((goal) => (
             <CarouselItem key={goal.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/4">
-              <GoalCard goal={goal} onAddTransaction={onAddTransaction} />
+              <GoalCard goal={goal} onAddTransaction={onAddTransaction} onDelete={onDelete} />
             </CarouselItem>
           ))}
         </CarouselContent>

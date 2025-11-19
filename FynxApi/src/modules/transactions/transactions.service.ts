@@ -1,13 +1,13 @@
-import type { 
-  Transaction, 
-  TransactionCategory, 
-  TransactionFilters, 
-  TransactionSummary, 
-  TransactionStats, 
-  TransactionsData, 
-  CreateTransactionRequest, 
+import type {
+  Transaction,
+  TransactionCategory,
+  TransactionFilters,
+  TransactionSummary,
+  TransactionStats,
+  TransactionsData,
+  CreateTransactionRequest,
   UpdateTransactionRequest,
-  BulkTransactionOperation 
+  BulkTransactionOperation
 } from './transactions.types.js';
 import { database } from '../../database/database.js';
 import { GoalsService } from '../goals/goals.service.js';
@@ -125,8 +125,8 @@ export class TransactionsService {
 
       const result = await database.run(
         `INSERT INTO transactions (
-          user_id, amount, description, category, date, type, notes, spending_goal_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          user_id, amount, description, category, date, type, notes, spending_goal_id, saving_goal_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           data.amount,
@@ -135,7 +135,8 @@ export class TransactionsService {
           data.date,
           data.type,
           data.notes || null,
-          data.spendingGoalId ? parseInt(data.spendingGoalId) : null
+          data.spendingGoalId ? parseInt(data.spendingGoalId) : null,
+          data.savingGoalId ? parseInt(data.savingGoalId) : null
         ]
       );
 
@@ -154,6 +155,11 @@ export class TransactionsService {
       // If the transaction is linked to a spending goal, update goal progress
       if (newTransaction.spending_goal_id) {
         await GoalsService.updateGoalProgressByTransaction(newTransaction.spending_goal_id.toString(), formatted.amount, formatted.type);
+      }
+
+      // If the transaction is linked to a saving goal, update goal progress
+      if (newTransaction.saving_goal_id) {
+        await GoalsService.updateGoalProgressByTransaction(newTransaction.saving_goal_id.toString(), formatted.amount, formatted.type);
       }
 
       await database.run('COMMIT');
@@ -299,7 +305,7 @@ export class TransactionsService {
   static async getCategories(): Promise<TransactionCategory[]> {
     try {
       const categories = await database.all('SELECT * FROM categories ORDER BY name');
-      
+
       return categories.map(cat => ({
         id: cat.id.toString(),
         name: cat.name,
@@ -359,6 +365,7 @@ export class TransactionsService {
       paymentMethod: 'credit_card', // Default value, can be added to DB later
       notes: dbTransaction.notes,
       spendingGoalId: dbTransaction.spending_goal_id ? dbTransaction.spending_goal_id.toString() : undefined,
+      savingGoalId: dbTransaction.saving_goal_id ? dbTransaction.saving_goal_id.toString() : undefined,
       createdAt: dbTransaction.created_at,
       updatedAt: dbTransaction.updated_at
     };
@@ -418,7 +425,7 @@ export class TransactionsService {
     const weeklyAverage = dailyAverage * 7;
     const monthlyAverage = dailyAverage * 30;
 
-    const mostExpensiveTransaction = transactions.reduce((max, t) => 
+    const mostExpensiveTransaction = transactions.reduce((max, t) =>
       t.amount > max.amount ? t : max, transactions[0] || {} as Transaction);
 
     // Most frequent category
@@ -427,7 +434,7 @@ export class TransactionsService {
       categoryCount.set(t.category, (categoryCount.get(t.category) || 0) + 1);
     });
     const mostFrequentCategory = Array.from(categoryCount.entries())
-      .sort(([,a], [,b]) => b - a)[0]?.[0] || '';
+      .sort(([, a], [, b]) => b - a)[0]?.[0] || '';
 
     // Payment method breakdown - simplified
     const paymentMethodBreakdown = [

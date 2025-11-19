@@ -21,6 +21,7 @@ export interface Transaction {
   createdAt: string;
   updatedAt: string;
   spendingGoalId?: string;
+  savingGoalId?: string;
 }
 
 export interface TransactionCategory {
@@ -103,6 +104,7 @@ export interface CreateTransactionRequest {
     endDate?: string;
   };
   spendingGoalId?: string;
+  savingGoalId?: string;
 }
 
 export interface UpdateTransactionRequest {

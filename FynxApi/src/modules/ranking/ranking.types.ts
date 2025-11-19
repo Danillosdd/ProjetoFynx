@@ -6,6 +6,7 @@ export interface UserRanking {
   position: number;
   score: number;
   level: number;
+  league: string;
   badges: Badge[];
   achievements: Achievement[];
   monthlyScore: number;
@@ -22,8 +23,9 @@ export interface Badge {
   name: string;
   description: string;
   icon: string;
-  color: string;
-  earnedAt: string;
+  color?: string;
+  earnedAt?: string;
+  unlockedAt?: string;
   category: 'savings' | 'goals' | 'streak' | 'spending' | 'special';
 }
 
@@ -36,8 +38,8 @@ export interface Achievement {
   target: number;
   completed: boolean;
   completedAt?: string;
-  category: 'savings' | 'goals' | 'streak' | 'spending' | 'social';
-  reward: {
+  category?: 'savings' | 'goals' | 'streak' | 'spending' | 'social';
+  reward?: {
     points: number;
     badge?: Badge;
   };

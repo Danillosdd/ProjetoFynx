@@ -18,8 +18,9 @@ export interface Badge {
   name: string;
   description: string;
   icon: string;
-  color: string;
+  color?: string;
   earnedAt?: string;
+  unlockedAt?: string;
   category: string;
 }
 
@@ -32,8 +33,8 @@ export interface Achievement {
   target: number;
   completed: boolean;
   completedAt?: string;
-  category: string;
-  reward: {
+  category?: string;
+  reward?: {
     points: number;
     badge?: Badge;
   };
@@ -47,6 +48,7 @@ export interface UserRanking {
   position: number;
   score: number;
   level: number;
+  league: string; // Added league field
   badges: Badge[];
   achievements: Achievement[];
   monthlyScore: number;
@@ -92,6 +94,7 @@ export function useRanking() {
           position: 0,
           score: 0,
           level: 0,
+          league: 'Bronze', // Default
           badges: [],
           achievements: [],
           monthlyScore: 0,
@@ -124,6 +127,7 @@ export function useRanking() {
       return {
         userRanking: {
           ...raw.userRanking,
+          league: raw.userRanking?.league || 'Bronze', // Map league
           badges: raw.userRanking?.badges ?? [],
           achievements: raw.userRanking?.achievements ?? [],
           monthlyScore: raw.userRanking?.monthlyScore ?? 0,

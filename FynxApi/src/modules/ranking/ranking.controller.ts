@@ -7,7 +7,7 @@ export class RankingController {
     try {
       const userId = parseInt(req.query.userId as string) || 1;
       const rankingData = await RankingService.getRankingData(userId);
-      
+
       res.status(200).json({
         success: true,
         data: rankingData
@@ -25,7 +25,7 @@ export class RankingController {
   static async getGlobalLeaderboard(req: Request, res: Response) {
     try {
       const leaderboard = await RankingService.getGlobalLeaderboard();
-      
+
       res.status(200).json({
         success: true,
         data: leaderboard
@@ -44,7 +44,7 @@ export class RankingController {
     try {
       const userId = parseInt(req.query.userId as string) || 1;
       const leaderboard = await RankingService.getFriendsLeaderboard(userId);
-      
+
       res.status(200).json({
         success: true,
         data: leaderboard
@@ -62,7 +62,7 @@ export class RankingController {
   static async getCategoryLeaderboards(req: Request, res: Response) {
     try {
       const leaderboards = await RankingService.getCategoryLeaderboards();
-      
+
       res.status(200).json({
         success: true,
         data: leaderboards
@@ -88,14 +88,14 @@ export class RankingController {
         return res.status(400).json({ error: 'Valid User ID parameter is required' });
       }
       const userRanking = await RankingService.getUserRanking(userId);
-      
+
       if (!userRanking) {
         return res.status(404).json({
           success: false,
           message: 'Usuário não encontrado'
         });
       }
-      
+
       res.status(200).json({
         success: true,
         data: userRanking
@@ -121,7 +121,7 @@ export class RankingController {
         return res.status(400).json({ error: 'Valid User ID parameter is required' });
       }
       const scoreCalculation = await RankingService.calculateScore(userId);
-      
+
       res.status(200).json({
         success: true,
         data: scoreCalculation
@@ -147,16 +147,16 @@ export class RankingController {
         return res.status(400).json({ error: 'Valid User ID parameter is required' });
       }
       const scoreData = req.body;
-      
+
       const updatedRanking = await RankingService.updateUserScore(userId, scoreData);
-      
+
       if (!updatedRanking) {
         return res.status(404).json({
           success: false,
           message: 'Usuário não encontrado'
         });
       }
-      
+
       res.status(200).json({
         success: true,
         data: updatedRanking,
@@ -183,7 +183,7 @@ export class RankingController {
         return res.status(400).json({ error: 'Valid User ID parameter is required' });
       }
       const achievements = await RankingService.getAchievements(userId);
-      
+
       res.status(200).json({
         success: true,
         data: achievements
@@ -209,7 +209,7 @@ export class RankingController {
         return res.status(400).json({ error: 'Valid User ID parameter is required' });
       }
       const badges = await RankingService.getBadges(userId);
-      
+
       res.status(200).json({
         success: true,
         data: badges
@@ -218,6 +218,26 @@ export class RankingController {
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar badges do usuário',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+  // POST /api/v1/ranking/reset-season - Reset season scores
+  static async resetSeason(req: Request, res: Response) {
+    try {
+      const result = await RankingService.resetSeason();
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        data: {
+          usersUpdated: result.usersUpdated
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao reiniciar temporada',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

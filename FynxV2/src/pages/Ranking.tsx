@@ -77,17 +77,17 @@ const processContributionData = (contributionData?: any) => {
     // Se não há dados do backend, retorna um objeto vazio
     return {}
   }
-  
+
   // Se os dados já estão no formato correto (objeto com datas como chaves)
   if (typeof contributionData === 'object' && !Array.isArray(contributionData)) {
     return contributionData
   }
-  
+
   // Se é um array, converte para o formato esperado
   if (Array.isArray(contributionData)) {
     return convertToCalendarData(contributionData)
   }
-  
+
   return {}
 }
 
@@ -97,9 +97,9 @@ const convertToCalendarData = (contributionData: number[][]) => {
   const today = new Date()
   const startDate = new Date(today)
   startDate.setDate(today.getDate() - (52 * 7)) // 52 semanas atrás
-  
+
   let currentDate = new Date(startDate)
-  
+
   for (let week = 0; week < contributionData.length; week++) {
     for (let day = 0; day < contributionData[week].length; day++) {
       const dateStr = currentDate.toISOString().split('T')[0]
@@ -107,7 +107,7 @@ const convertToCalendarData = (contributionData: number[][]) => {
       currentDate.setDate(currentDate.getDate() + 1)
     }
   }
-  
+
   return values
 }
 
@@ -213,8 +213,8 @@ const Ranking = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {globalLeaderboard.map((entry) => (
-                <div 
-                  key={entry.userId} 
+                <div
+                  key={entry.userId}
                   className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors"
                 >
                   <div className="flex items-center gap-4">
@@ -276,12 +276,12 @@ const Ranking = () => {
             <CardContent>
               <div className="text-center mb-4">
                 <div className="flex justify-center mb-2">
-                  {getLeagueIcon((user?.level ?? 0) >= 5 ? 'diamante' : 'ouro')}
+                  {getLeagueIcon(normalizeLeague(user?.league) as League)}
                 </div>
                 {(() => {
-                  const userLeague = (user?.level ?? 0) >= 5 ? 'diamante' : 'ouro'
+                  const userLeague = normalizeLeague(user?.league || 'Bronze')
                   return (
-                    <Badge className={`${getLeagueColor(normalizeLeague(userLeague))} text-lg px-3 py-1`}>
+                    <Badge className={`${getLeagueColor(userLeague)} text-lg px-3 py-1`}>
                       {localizeLeagueLabel(userLeague).toUpperCase()}
                     </Badge>
                   )
@@ -292,8 +292,8 @@ const Ranking = () => {
                   <span className="text-muted-foreground">Progresso</span>
                   <span className="text-foreground">{user?.monthlyScore ?? 0} / {(data?.rankingStats?.topScore ?? 0)}</span>
                 </div>
-                <Progress 
-                  value={((user?.monthlyScore ?? 0) / (data?.rankingStats?.topScore ?? 1)) * 100} 
+                <Progress
+                  value={((user?.monthlyScore ?? 0) / (data?.rankingStats?.topScore ?? 1)) * 100}
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground text-center">
@@ -316,11 +316,11 @@ const Ranking = () => {
                 <div className="text-3xl font-bold text-orange-500 mb-1">{user?.streakDays ?? 0}</div>
                 <div className="text-sm text-muted-foreground">dias consecutivos</div>
               </div>
-              
+
               {/* GitHub-style contribution calendar */}
               <div className="space-y-2">
                 <div className="text-xs text-muted-foreground">Atividade dos últimos 12 meses</div>
-                <Calendar 
+                <Calendar
                   values={contributionData}
                   until={new Date().toISOString().split('T')[0]}
                   panelColors={[

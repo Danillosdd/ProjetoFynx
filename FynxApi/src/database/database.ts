@@ -40,7 +40,7 @@ class Database {
   // Promisificar métodos do SQLite para usar async/await
   run(sql: string, params: any[] = []): Promise<RunResult> {
     return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function(this: RunResult, err: Error | null) {
+      this.db.run(sql, params, function (this: RunResult, err: Error | null) {
         if (err) reject(err);
         else resolve(this);
       });
@@ -225,17 +225,50 @@ class Database {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL UNIQUE,
           total_score INTEGER DEFAULT 0,
+          carry_over_score INTEGER DEFAULT 0,
           level INTEGER DEFAULT 1,
+          league TEXT DEFAULT 'Bronze',
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id)
         )
       `);
 
       console.log('Tabelas do banco de dados inicializadas com sucesso.');
-      
+
       // Inserir dados iniciais
       await this.seedInitialData();
-      
+
+      // Migrations for user_scores
+      try {
+        const userScoresCols = await this.all("PRAGMA table_info('user_scores')");
+        const hasLeague = userScoresCols.some((col: any) => col.name === 'league');
+        const hasCarryOver = userScoresCols.some((col: any) => col.name === 'carry_over_score');
+
+        if (!hasLeague) {
+          console.log('Applying migration: adding league to user_scores');
+          await this.run("ALTER TABLE user_scores ADD COLUMN league TEXT DEFAULT 'Bronze'");
+        }
+        if (!hasCarryOver) {
+          console.log('Applying migration: adding carry_over_score to user_scores');
+          await this.run("ALTER TABLE user_scores ADD COLUMN carry_over_score INTEGER DEFAULT 0");
+        }
+      } catch (err) {
+        console.error('Error applying user_scores migrations:', err);
+      }
+
+      // Migration for transactions table - add saving_goal_id if not exists
+      try {
+        const transactionsCols = await this.all("PRAGMA table_info('transactions')");
+        const hasSavingGoalId = transactionsCols.some((col: any) => col.name === 'saving_goal_id');
+
+        if (!hasSavingGoalId) {
+          console.log('Applying migration: adding saving_goal_id to transactions');
+          await this.run("ALTER TABLE transactions ADD COLUMN saving_goal_id INTEGER REFERENCES spending_goals(id)");
+        }
+      } catch (err) {
+        console.error('Error applying transactions migrations:', err);
+      }
+
       // Ensure migrations: add spending_goal_id column to transactions if missing
       try {
         const tableInfo = await this.get("PRAGMA table_info('transactions')");
@@ -315,7 +348,7 @@ class Database {
       } catch (err) {
         console.error('Erro ao aplicar migração de coluna goal_type em spending_goals:', err);
       }
-      
+
     } catch (error) {
       console.error('Erro ao inicializar tabelas:', error);
     }
@@ -325,7 +358,7 @@ class Database {
     try {
       // Verificar se já existem categorias
       const existingCategories = await this.get('SELECT COUNT(*) as count FROM categories');
-      
+
       if (existingCategories.count === 0) {
         // Inserir categorias padrão
         const categories = [
@@ -355,7 +388,7 @@ class Database {
 
       // Verificar se já existe um usuário padrão
       const existingUser = await this.get('SELECT COUNT(*) as count FROM users');
-      
+
       if (existingUser.count === 0) {
         // Inserir usuário padrão
         await this.run(
@@ -374,7 +407,7 @@ class Database {
 
       // Inserir conquistas padrão
       const existingAchievements = await this.get('SELECT COUNT(*) as count FROM achievements');
-      
+
       if (existingAchievements.count === 0) {
         const achievements = [
           { name: 'Primeira Transação', description: 'Registrou sua primeira transação', icon: '🎯', points: 10 },

@@ -1,9 +1,9 @@
-import type { 
-  SpendingGoal, 
-  Budget, 
-  GoalProgress, 
-  GoalsData, 
-  CreateSpendingGoalRequest, 
+import type {
+  SpendingGoal,
+  Budget,
+  GoalProgress,
+  GoalsData,
+  CreateSpendingGoalRequest,
   UpdateSpendingGoalRequest,
   CreateBudgetRequest,
   UpdateBudgetRequest
@@ -46,19 +46,19 @@ interface BudgetRow {
 const calculateGoalProgress = (goal: SpendingGoal): GoalProgress => {
   const progressPercentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
   const remainingAmount = Math.max(goal.targetAmount - goal.currentAmount, 0);
-  
+
   const startDate = new Date(goal.startDate);
   const endDate = new Date(goal.endDate);
   const today = new Date();
-  
+
   const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   const daysRemaining = Math.max(Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)), 0);
-  
+
   const dailyTargetAmount = goal.targetAmount / totalDays;
   const expectedAmount = dailyTargetAmount * (totalDays - daysRemaining);
   const isOnTrack = goal.currentAmount >= expectedAmount;
-  
-  const projectedCompletion: string = isOnTrack ? goal.endDate : 
+
+  const projectedCompletion: string = isOnTrack ? goal.endDate :
     new Date(today.getTime() + (remainingAmount / dailyTargetAmount) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] || goal.endDate;
 
   return {
@@ -87,11 +87,11 @@ const formatSpendingGoalFromDB = (row: SpendingGoalRow): SpendingGoal => {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
-  
+
   if (row.description) {
     goal.description = row.description;
   }
-  
+
   return goal;
 };
 
@@ -114,7 +114,7 @@ export class GoalsService {
   // Get all goals data
   static async getGoalsData(): Promise<GoalsData> {
     const db = database;
-    
+
     try {
       // Get spending goals
       const goalRows = await db.all('SELECT * FROM spending_goals ORDER BY created_at DESC', []);
@@ -147,7 +147,7 @@ export class GoalsService {
   // Spending Goals CRUD
   static async getSpendingGoals(): Promise<SpendingGoal[]> {
     const db = database;
-    
+
     try {
       const rows = await db.all('SELECT * FROM spending_goals ORDER BY created_at DESC', []);
       return rows.map(formatSpendingGoalFromDB);
@@ -158,7 +158,7 @@ export class GoalsService {
 
   static async getSpendingGoalById(id: string): Promise<SpendingGoal | null> {
     const db = database;
-    
+
     try {
       const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [parseInt(id)]);
       return row ? formatSpendingGoalFromDB(row as SpendingGoalRow) : null;
@@ -170,7 +170,7 @@ export class GoalsService {
   static async createSpendingGoal(data: CreateSpendingGoalRequest): Promise<SpendingGoal> {
     const db = database;
     const now = new Date().toISOString();
-    
+
     try {
       const userId = (data as any).userId ? parseInt((data as any).userId) : 1;
       const goalType = (data as any).goalType || 'spending';
@@ -204,7 +204,7 @@ export class GoalsService {
         if (!data.startDate || !data.endDate) {
           throw new Error('Metas de poupança precisam de startDate e endDate');
         }
-        
+
         const result = await db.run(`
           INSERT INTO spending_goals (
             user_id, title, goal_type, category, target_amount, current_amount, period, 
@@ -225,7 +225,7 @@ export class GoalsService {
           now,
           now
         ]);
-        
+
         const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [result.lastID]);
         return formatSpendingGoalFromDB(row as SpendingGoalRow);
       }
@@ -237,12 +237,12 @@ export class GoalsService {
   static async updateSpendingGoal(id: string, data: UpdateSpendingGoalRequest): Promise<SpendingGoal | null> {
     const db = database;
     const now = new Date().toISOString();
-    
+
     try {
       // Build dynamic update query
       const updateFields: string[] = [];
       const updateValues: any[] = [];
-      
+
       if (data.title !== undefined) {
         updateFields.push('title = ?');
         updateValues.push(data.title);
@@ -279,24 +279,24 @@ export class GoalsService {
         updateFields.push('description = ?');
         updateValues.push(data.description);
       }
-      
+
       if (updateFields.length === 0) {
         // No fields to update, return current goal
         return await this.getSpendingGoalById(id);
       }
-      
+
       updateFields.push('updated_at = ?');
       updateValues.push(now);
       updateValues.push(parseInt(id));
-      
+
       const query = `UPDATE spending_goals SET ${updateFields.join(', ')} WHERE id = ?`;
-      
+
       const result = await db.run(query, updateValues);
-      
+
       if (result.changes === 0) {
         return null;
       }
-      
+
       // Get the updated goal
       const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [parseInt(id)]);
       return formatSpendingGoalFromDB(row as SpendingGoalRow);
@@ -307,7 +307,7 @@ export class GoalsService {
 
   static async deleteSpendingGoal(id: string): Promise<boolean> {
     const db = database;
-    
+
     try {
       const result = await db.run('DELETE FROM spending_goals WHERE id = ?', [parseInt(id)]);
       return result.changes > 0;
@@ -319,24 +319,24 @@ export class GoalsService {
   static async updateGoalProgress(id: string, amount: number): Promise<SpendingGoal | null> {
     const db = database;
     const now = new Date().toISOString();
-    
+
     try {
       // First get the current goal to check target amount
       const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [parseInt(id)]);
-      
+
       if (!row) {
         return null;
       }
-      
+
       const goal = formatSpendingGoalFromDB(row as SpendingGoalRow);
       const newStatus = amount >= goal.targetAmount ? 'completed' : goal.status;
-      
+
       // Update the goal
       await db.run(
         'UPDATE spending_goals SET current_amount = ?, status = ?, updated_at = ? WHERE id = ?',
         [amount, newStatus, now, parseInt(id)]
       );
-      
+
       // Get the updated goal
       const updatedRow = await db.get('SELECT * FROM spending_goals WHERE id = ?', [parseInt(id)]);
       return updatedRow ? formatSpendingGoalFromDB(updatedRow as SpendingGoalRow) : null;
@@ -348,33 +348,45 @@ export class GoalsService {
   static async updateGoalProgressByTransaction(id: string, amount: number, transactionType: 'income' | 'expense'): Promise<SpendingGoal | null> {
     const db = database;
     const now = new Date().toISOString();
-    
+
     try {
       // First get the current goal
       const row = await db.get('SELECT * FROM spending_goals WHERE id = ?', [parseInt(id)]);
-      
+
       if (!row) {
         return null;
       }
-      
+
       const goal = formatSpendingGoalFromDB(row as SpendingGoalRow);
       let newCurrentAmount = goal.currentAmount;
 
-      // Para metas de gasto: despesas aumentam o currentAmount, receitas (se houver) podem reduzir
-      if (transactionType === 'expense') {
-        newCurrentAmount = newCurrentAmount + amount;
-      } else if (transactionType === 'income') {
-        newCurrentAmount = Math.max(0, newCurrentAmount - amount);
+      // Handle progress update based on goal type
+      const goalType = goal.goalType || 'spending';
+
+      if (goalType === 'spending') {
+        // Para metas de GASTO: despesas aumentam o progresso, receitas diminuem
+        if (transactionType === 'expense') {
+          newCurrentAmount = newCurrentAmount + amount;
+        } else if (transactionType === 'income') {
+          newCurrentAmount = Math.max(0, newCurrentAmount - amount);
+        }
+      } else if (goalType === 'saving') {
+        // Para metas de POUPANÇA: receitas aumentam o progresso, despesas diminuem
+        if (transactionType === 'income') {
+          newCurrentAmount = newCurrentAmount + amount;
+        } else if (transactionType === 'expense') {
+          newCurrentAmount = Math.max(0, newCurrentAmount - amount);
+        }
       }
-      
+
       const newStatus = newCurrentAmount >= goal.targetAmount ? 'completed' : goal.status;
-      
+
       // Update the goal
       await db.run(
         'UPDATE spending_goals SET current_amount = ?, status = ?, updated_at = ? WHERE id = ?',
         [newCurrentAmount, newStatus, now, parseInt(id)]
       );
-      
+
       // Get the updated goal
       const updatedRow = await db.get('SELECT * FROM spending_goals WHERE id = ?', [parseInt(id)]);
       return updatedRow ? formatSpendingGoalFromDB(updatedRow as SpendingGoalRow) : null;
@@ -386,7 +398,7 @@ export class GoalsService {
   // Budgets CRUD
   static async getBudgets(): Promise<Budget[]> {
     const db = database;
-    
+
     try {
       const rows = await db.all('SELECT * FROM budgets ORDER BY created_at DESC', []);
       return rows.map((row: any) => formatBudgetFromDB(row as BudgetRow));
@@ -397,7 +409,7 @@ export class GoalsService {
 
   static async getBudgetById(id: string): Promise<Budget | null> {
     const db = database;
-    
+
     try {
       const row = await db.get('SELECT * FROM budgets WHERE id = ?', [parseInt(id)]);
       return row ? formatBudgetFromDB(row as BudgetRow) : null;
@@ -409,7 +421,7 @@ export class GoalsService {
   static async createBudget(data: CreateBudgetRequest): Promise<Budget> {
     const db = database;
     const now = new Date().toISOString();
-    
+
     try {
       const userId = (data as any).userId ? parseInt((data as any).userId) : 1;
 
@@ -431,7 +443,7 @@ export class GoalsService {
         now,
         now
       ]);
-      
+
       // Get the created budget
       const row = await db.get('SELECT * FROM budgets WHERE id = ?', [result.lastID]);
       return formatBudgetFromDB(row as BudgetRow);
@@ -443,12 +455,12 @@ export class GoalsService {
   static async updateBudget(id: string, data: UpdateBudgetRequest): Promise<Budget | null> {
     const db = database;
     const now = new Date().toISOString();
-    
+
     try {
       // Build dynamic update query
       const updateFields: string[] = [];
       const updateValues: any[] = [];
-      
+
       if (data.category !== undefined) {
         updateFields.push('category = ?');
         updateValues.push(data.category);
@@ -473,41 +485,41 @@ export class GoalsService {
         updateFields.push('status = ?');
         updateValues.push(data.status);
       }
-      
+
       if (updateFields.length === 0) {
         // No fields to update, return current budget
         return await this.getBudgetById(id);
       }
-      
+
       updateFields.push('updated_at = ?');
       updateValues.push(now);
       updateValues.push(parseInt(id));
-      
+
       const query = `UPDATE budgets SET ${updateFields.join(', ')} WHERE id = ?`;
-      
+
       const result = await db.run(query, updateValues);
-      
+
       if (result.changes === 0) {
         return null;
       }
-      
+
       // If allocated amount changed, recalculate remaining amount and status
       if (data.allocatedAmount !== undefined) {
         const row = await db.get('SELECT * FROM budgets WHERE id = ?', [parseInt(id)]);
-        
+
         if (!row) {
           return null;
         }
-        
+
         const budget = formatBudgetFromDB(row as BudgetRow);
         const newRemainingAmount = budget.allocatedAmount - budget.spentAmount;
         const newStatus = newRemainingAmount < 0 ? 'exceeded' : 'active';
-        
+
         await db.run(
           'UPDATE budgets SET remaining_amount = ?, status = ? WHERE id = ?',
           [newRemainingAmount, newStatus, parseInt(id)]
         );
-        
+
         // Get the final updated budget
         const finalRow = await db.get('SELECT * FROM budgets WHERE id = ?', [parseInt(id)]);
         return finalRow ? formatBudgetFromDB(finalRow as BudgetRow) : null;
@@ -523,7 +535,7 @@ export class GoalsService {
 
   static async deleteBudget(id: string): Promise<boolean> {
     const db = database;
-    
+
     try {
       const result = await db.run('DELETE FROM budgets WHERE id = ?', [parseInt(id)]);
       return result.changes > 0;
@@ -535,25 +547,25 @@ export class GoalsService {
   static async updateBudgetSpending(id: string, spentAmount: number): Promise<Budget | null> {
     const db = database;
     const now = new Date().toISOString();
-    
+
     try {
       // First get the current budget to calculate remaining amount
       const row = await db.get('SELECT * FROM budgets WHERE id = ?', [parseInt(id)]);
-      
+
       if (!row) {
         return null;
       }
-      
+
       const budget = formatBudgetFromDB(row as BudgetRow);
       const remainingAmount = budget.allocatedAmount - spentAmount;
       const status = remainingAmount < 0 ? 'exceeded' : 'active';
-      
+
       // Update the budget
       await db.run(
         'UPDATE budgets SET spent_amount = ?, remaining_amount = ?, status = ?, updated_at = ? WHERE id = ?',
         [spentAmount, remainingAmount, status, now, parseInt(id)]
       );
-      
+
       // Get the updated budget
       const updatedRow = await db.get('SELECT * FROM budgets WHERE id = ?', [parseInt(id)]);
       return updatedRow ? formatBudgetFromDB(updatedRow as BudgetRow) : null;
