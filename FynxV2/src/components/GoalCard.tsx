@@ -61,6 +61,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
               size="icon"
               className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
               onClick={() => onAddTransaction({ type: 'income', goalId: goal.id })}
+              data-tour="add-to-goal-btn"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -71,6 +72,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                    data-tour="delete-goal-btn"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -111,7 +113,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
             </div>
           </div>
 
-          <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary" data-tour="goal-progress-bar">
             <div
               className="h-full bg-blue-500 transition-all duration-500 ease-out"
               style={{ width: `${percentage}%` }}
@@ -150,6 +152,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
             size="icon"
             className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => onAddTransaction({ type: 'expense', spendingLimitId: goal.id })}
+            data-tour="add-to-goal-btn"
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -160,6 +163,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                  data-tour="delete-goal-btn"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -200,7 +204,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
           </div>
         </div>
 
-        <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
+        <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary" data-tour="goal-progress-bar">
           <div
             className={`h-full ${progressColor} transition-all duration-500 ease-out`}
             style={{ width: `${percentage}%` }}

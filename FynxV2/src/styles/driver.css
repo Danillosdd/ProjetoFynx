@@ -1,0 +1,91 @@
+/* Import default driver styles if not already imported in JS */
+@import "driver.js/dist/driver.css";
+
+/* Custom Theme for Fynx */
+.fynx-driver-popover {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    font-family: var(--font-sans);
+    padding: 16px;
+    max-width: 350px;
+}
+
+.fynx-driver-popover .driver-popover-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: hsl(var(--foreground));
+}
+
+.fynx-driver-popover .driver-popover-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 16px;
+}
+
+.fynx-driver-popover .driver-popover-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.fynx-driver-popover button {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.fynx-driver-popover button:hover {
+    opacity: 0.9;
+}
+
+.fynx-driver-popover button.driver-prev-btn {
+    background-color: transparent;
+    color: hsl(var(--muted-foreground));
+    border: 1px solid hsl(var(--border));
+}
+
+.fynx-driver-popover button.driver-prev-btn:hover {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--foreground));
+}
+
+/* Skip Button Style */
+.fynx-skip-btn {
+    background: none;
+    border: none;
+    color: hsl(var(--muted-foreground));
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 8px;
+    margin-right: auto;
+    /* Push other buttons to the right */
+}
+
+.fynx-skip-btn:hover {
+    color: hsl(var(--foreground));
+}
+
+/* Overlay */
+.driver-overlay {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    /* Darker overlay */
+}
+
+/* Highlighted Element */
+.driver-active-element {
+    box-shadow: 0 0 0 4px rgba(var(--primary), 0.3) !important;
+    /* Glow effect */
+}

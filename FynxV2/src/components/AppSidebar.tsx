@@ -65,6 +65,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
             <NavLink
               key={item.title}
               to={item.url}
+              data-tour={item.url === '/ranking' ? 'ranking-link' : undefined}
               className={({ isActive }) =>
                 `flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-start gap-3 px-3 py-2'} rounded-lg transition-colors ${
                   isActive

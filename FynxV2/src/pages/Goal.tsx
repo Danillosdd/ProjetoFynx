@@ -125,8 +125,29 @@ const Goals = () => {
           </CreateGoalSheet>
         </div>
 
-        <GoalSection title="💸 Limites de Gasto" goals={spendingGoals} onAddTransaction={handleOpenTransactionSheet} onDelete={handleDeleteGoal} />
-        <GoalSection title="💰 Metas de Poupança" goals={savingGoals} onAddTransaction={handleOpenTransactionSheet} onDelete={handleDeleteGoal} />
+        <div className="space-y-6" data-tour="spending-goals-section">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-foreground">💸 Limites de Gasto</h2>
+            <CreateGoalSheet onCreateGoal={addNewGoal}>
+              <Button data-tour="create-spending-goal-btn">
+                + Novo Limite
+              </Button>
+            </CreateGoalSheet>
+          </div>
+          <GoalSection title="" goals={spendingGoals} onAddTransaction={handleOpenTransactionSheet} onDelete={handleDeleteGoal} />
+        </div>
+
+        <div className="space-y-6" data-tour="saving-goals-section">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-foreground">💰 Metas de Poupança</h2>
+            <CreateGoalSheet onCreateGoal={addNewGoal}>
+              <Button data-tour="create-saving-goal-btn">
+                + Nova Meta
+              </Button>
+            </CreateGoalSheet>
+          </div>
+          <GoalSection title="" goals={savingGoals} onAddTransaction={handleOpenTransactionSheet} onDelete={handleDeleteGoal} />
+        </div>
 
       </main>
       <AddTransactionSheet open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen} initialData={initialTransactionData}>

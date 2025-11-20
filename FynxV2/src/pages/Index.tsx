@@ -44,6 +44,9 @@ import { api } from "@/lib/apiClient"
 import { useQueryClient } from "@tanstack/react-query"
 import { List as VirtualList } from "react-window"
 import { X } from "lucide-react"
+import { TourButton } from '@/components/TourButton'
+import { useTour } from '@/hooks/useTour'
+import { dashboardSteps } from '@/tours/dashboardTour'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -239,6 +242,21 @@ const Index = () => {
   }, [hasMore, isFetchingTx, isExpandedOpen])
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = React.useState(false)
   const queryClient = useQueryClient()
+
+  // Tour integration
+  const { startTour, isFirstVisit } = useTour();
+
+  // Auto-start tour for first-time visitors
+  React.useEffect(() => {
+    if (isFirstVisit) {
+      // Small delay to ensure page is fully loaded
+      const timer = setTimeout(() => {
+        startTour(dashboardSteps);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstVisit, startTour]);
+
   const invalidate = useInvalidate()
   const [listHeight, setListHeight] = React.useState(500)
   const [listWidth, setListWidth] = React.useState<number>(900)
@@ -500,35 +518,47 @@ const Index = () => {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {(dashboard?.overview || []).map((item, index) => (
-          <Card key={index} className="bg-card border-border">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-muted-foreground">{item.title}</h3>
-                {overviewIconMap[item.title] ? (
-                  React.createElement(overviewIconMap[item.title], { className: "h-5 w-5 text-muted-foreground" })
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <p className="text-2xl font-bold text-foreground">{item.value}</p>
-                <p className={`text-sm flex items-center ${item.trend === "up" ? "text-success" : "text-destructive"
-                  }`}>
-                  {item.trend === "up" ? (
-                    <ArrowUpRight className="h-4 w-4 mr-1" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 mr-1" />
-                  )}
-                  {item.change}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {(dashboard?.overview || []).map((item, index) => {
+          const title = String(item.title || '').toLowerCase();
+          const getTourKey = (t: string) => {
+            if (t.includes('balance')) return 'balance-card';
+            if (t.includes('income')) return 'income-card';
+            if (t.includes('expense') || t.includes('expenses')) return 'expenses-card';
+            if (t.includes('saving') || t.includes('savings')) return 'savings-card';
+            return undefined;
+          };
+          const tourKey = getTourKey(title);
+          const tourAttr = tourKey ? ({ ['data-tour']: tourKey } as any) : {};
+
+          return (
+            <Card key={index} {...tourAttr} className="bg-card border-border">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-muted-foreground">{item.title}</h3>
+                  {overviewIconMap[item.title] ? (
+                    React.createElement(overviewIconMap[item.title], { className: "h-5 w-5 text-muted-foreground" })
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-2xl font-bold text-foreground">{item.value}</p>
+                  <p className={`text-sm flex items-center ${item.trend === "up" ? "text-success" : "text-destructive"}`}>
+                    {item.trend === "up" ? (
+                      <ArrowUpRight className="h-4 w-4 mr-1" />
+                    ) : (
+                      <ArrowDownRight className="h-4 w-4 mr-1" />
+                    )}
+                    {item.change}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Daily Comparison Chart */}
-        <Card className="lg:col-span-2 bg-card border-border">
+        <Card data-tour="revenue-chart" className="lg:col-span-2 bg-card border-border">
           <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
             <div className="grid flex-1 gap-1">
               <CardTitle className="text-lg font-semibold">Comparação Diária</CardTitle>
@@ -677,7 +707,7 @@ const Index = () => {
         </AlertDialog>
 
         {/* Category Breakdown Chart */}
-        <Card className="bg-card border-border">
+        <Card data-tour="category-chart" className="bg-card border-border">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-2">
             <div className="flex-1">
               <CardTitle className="text-lg font-semibold">Breakdown por Categoria</CardTitle>
@@ -749,7 +779,7 @@ const Index = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Transactions */}
-        <Card className="lg:col-span-2 bg-card border-border">
+        <Card data-tour="recent-transactions" className="lg:col-span-2 bg-card border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold">Recent Transactions</CardTitle>
           </CardHeader>
@@ -1354,6 +1384,7 @@ const Index = () => {
 
 
 
+          data-tour="add-transaction-btn"
           onClick={() => handleOpenTransactionSheet(null)}
 
 
