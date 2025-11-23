@@ -58,6 +58,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { WalletGoalsWidget } from "@/components/WalletGoalsWidget"
 
 // Map overview titles to icons from lucide-react
 const overviewIconMap: Record<string, React.ComponentType<any>> = {
@@ -541,7 +542,8 @@ const Index = () => {
                 </div>
                 <div className="space-y-2">
                   <p className="text-2xl font-bold text-foreground">{item.value}</p>
-                  <p className={`text-sm flex items-center ${item.trend === "up" ? "text-success" : "text-destructive"}`}>
+                  <p className={`text-sm flex items-center ${item.trend === "up" ? "text-success" : "text-destructive"
+                    }`}>
                     {item.trend === "up" ? (
                       <ArrowUpRight className="h-4 w-4 mr-1" />
                     ) : (
@@ -556,8 +558,78 @@ const Index = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Daily Comparison Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Category Breakdown Chart - First (1/4) */}
+        <Card data-tour="category-chart" className="bg-card border-border col-span-1">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-2">
+            <div className="flex-1">
+              <CardTitle className="text-lg font-semibold">Breakdown por Categoria</CardTitle>
+              <p className="text-sm text-muted-foreground">Visualize suas entradas e saídas</p>
+            </div>
+            <Select value={chartView} onValueChange={(value: "income" | "expense") => setChartView(value)}>
+              <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="income">Entradas</SelectItem>
+                <SelectItem value="expense">Saídas</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardHeader>
+          <CardContent>
+            <div className="relative h-[250px] sm:h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartView === "income" ? incomeChartData : expenseChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="40%"
+                    outerRadius="75%"
+                    paddingAngle={0}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {(chartView === "income" ? incomeChartData : expenseChartData).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+
+              {/* Center Text */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <p className="text-xs sm:text-sm text-muted-foreground text-center">
+                  {chartView === "income" ? "Total Entradas" : "Total Saídas"}
+                </p>
+                <p className="text-lg sm:text-2xl font-bold text-center">
+                  R$ {(chartView === "income"
+                    ? incomeChartData.reduce((sum, item) => sum + item.value, 0)
+                    : expenseChartData.reduce((sum, item) => sum + item.value, 0)
+                  ).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {(chartView === "income" ? incomeChartData : expenseChartData).map((item, index) => (
+                <div key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: item.fill }}
+                  />
+                  <span className="text-sm text-muted-foreground truncate flex-1">{item.category}</span>
+                  <span className="text-sm font-medium whitespace-nowrap">
+                    R$ {item.value.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Daily Comparison Chart - Second (2/4) */}
         <Card data-tour="revenue-chart" className="lg:col-span-2 bg-card border-border">
           <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
             <div className="grid flex-1 gap-1">
@@ -706,75 +778,15 @@ const Index = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Category Breakdown Chart */}
-        <Card data-tour="category-chart" className="bg-card border-border">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-2">
-            <div className="flex-1">
-              <CardTitle className="text-lg font-semibold">Breakdown por Categoria</CardTitle>
-              <p className="text-sm text-muted-foreground">Visualize suas entradas e saídas</p>
-            </div>
-            <Select value={chartView} onValueChange={(value: "income" | "expense") => setChartView(value)}>
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income">Entradas</SelectItem>
-                <SelectItem value="expense">Saídas</SelectItem>
-              </SelectContent>
-            </Select>
-          </CardHeader>
-          <CardContent>
-            <div className="relative h-[250px] sm:h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartView === "income" ? incomeChartData : expenseChartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="40%"
-                    outerRadius="75%"
-                    paddingAngle={0}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {(chartView === "income" ? incomeChartData : expenseChartData).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-
-              {/* Center Text */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                  {chartView === "income" ? "Total Entradas" : "Total Saídas"}
-                </p>
-                <p className="text-lg sm:text-2xl font-bold text-center">
-                  R$ {(chartView === "income"
-                    ? incomeChartData.reduce((sum, item) => sum + item.value, 0)
-                    : expenseChartData.reduce((sum, item) => sum + item.value, 0)
-                  ).toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {(chartView === "income" ? incomeChartData : expenseChartData).map((item, index) => (
-                <div key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: item.fill }}
-                  />
-                  <span className="text-sm text-muted-foreground truncate flex-1">{item.category}</span>
-                  <span className="text-sm font-medium whitespace-nowrap">
-                    R$ {item.value.toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Wallet Goals Widget - Third (1/4) */}
+        <div className="col-span-1 h-full">
+          <WalletGoalsWidget
+            spendingGoals={spendingGoals}
+            savingGoals={savingGoals}
+            onAddTransaction={handleOpenTransactionSheet}
+            onDeleteGoal={handleDeleteGoal}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1102,273 +1114,8 @@ const Index = () => {
         </Card>
       </div>
 
-      {/* Metas de Gastos - Carousel Vertical */}
-      {/* Metas de Gastos - Carousel Vertical */}
-      <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-border/50">
-          <div>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <span className="p-1.5 rounded-md bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                <TrendingDown className="h-4 w-4" />
-              </span>
-              Metas de Gasto
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">Controle seus limites mensais</p>
-          </div>
-          <CreateGoalSheet onCreateGoal={addNewGoal}>
-            <Button size="sm" className="h-9 gap-1.5 bg-primary/10 text-primary hover:bg-primary/20 border-0">
-              <Plus className="h-4 w-4" />
-              Nova Meta
-            </Button>
-          </CreateGoalSheet>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {goalsLoading ? (
-            <div className="flex flex-col items-center justify-center py-8 space-y-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-              <p className="text-sm text-muted-foreground">Carregando metas...</p>
-            </div>
-          ) : goalsError ? (
-            <div className="text-center py-8">
-              <p className="text-destructive font-medium">Erro ao carregar metas</p>
-            </div>
-          ) : spendingGoals && spendingGoals.length > 0 ? (
-            <div className="flex justify-center">
-              <Carousel orientation="vertical" className="w-full max-w-sm">
-                <CarouselContent className="-mt-1 h-[320px]">
-                  {spendingGoals.map((goal: any) => {
-                    const percentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100)
-                    const isOverLimit = goal.currentAmount > goal.targetAmount
-                    const progressColor = isOverLimit ? "bg-destructive" : percentage > 80 ? "bg-yellow-500" : "bg-emerald-500"
 
-                    return (
-                      <CarouselItem key={goal.id} className="pt-4 basis-auto">
-                        <div className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card to-secondary/30 p-5 transition-all hover:border-primary/50">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h4 className="font-semibold text-foreground tracking-tight">{goal.title}</h4>
-                              <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground mt-1">
-                                {goal.category}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleOpenTransactionSheet({ type: 'expense', spendingLimitId: String(goal.id) })}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Excluir Meta</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Tem certeza que deseja excluir a meta "{goal.title}"? Esta ação não pode ser desfeita.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteGoal(goal.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Excluir
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </div>
 
-                          <div className="space-y-3">
-                            <div className="flex items-end justify-between">
-                              <div>
-                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Gasto Atual</p>
-                                <p className={`text-2xl font-bold ${isOverLimit ? 'text-destructive' : 'text-foreground'}`}>
-                                  R$ {goal.currentAmount.toLocaleString()}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs text-muted-foreground font-medium">Limite</p>
-                                <p className="text-sm font-semibold">R$ {goal.targetAmount.toLocaleString()}</p>
-                              </div>
-                            </div>
-
-                            <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
-                              <div
-                                className={`h-full ${progressColor} transition-all duration-500 ease-out`}
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-
-                            <div className="flex justify-between text-xs font-medium">
-                              <span className={isOverLimit ? "text-destructive" : "text-emerald-600"}>
-                                {isOverLimit ? "Limite Excedido" : "Dentro do limite"}
-                              </span>
-                              <span className="text-muted-foreground">{Math.round(percentage)}% usado</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CarouselItem>
-                    )
-                  })}
-                </CarouselContent>
-                <div className="flex justify-center gap-2 mt-2">
-                  <CarouselPrevious className="static translate-y-0" />
-                  <CarouselNext className="static translate-y-0" />
-                </div>
-              </Carousel>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-muted rounded-xl">
-              <div className="p-3 rounded-full bg-muted mb-3">
-                <TargetIcon className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground font-medium">Nenhuma meta de gasto</p>
-              <p className="text-xs text-muted-foreground/70 max-w-[200px] mt-1">Defina limites para controlar melhor suas despesas.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Metas de Poupança - Carousel Vertical */}
-      <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-border/50">
-          <div>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <span className="p-1.5 rounded-md bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                <PiggyBank className="h-4 w-4" />
-              </span>
-              Metas de Poupança
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">Sonhos e objetivos futuros</p>
-          </div>
-          <CreateGoalSheet onCreateGoal={addNewGoal}>
-            <Button size="sm" className="h-9 gap-1.5 bg-primary/10 text-primary hover:bg-primary/20 border-0">
-              <Plus className="h-4 w-4" />
-              Nova Meta
-            </Button>
-          </CreateGoalSheet>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {savingGoals && savingGoals.length > 0 ? (
-            <div className="flex justify-center">
-              <Carousel orientation="vertical" className="w-full max-w-sm">
-                <CarouselContent className="-mt-1 h-[320px]">
-                  {savingGoals.map((goal: any) => {
-                    const percentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100)
-
-                    return (
-                      <CarouselItem key={goal.id} className="pt-4 basis-auto">
-                        <div className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card to-blue-50/5 dark:to-blue-900/10 p-5 transition-all hover:border-blue-500/30">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h4 className="font-semibold text-foreground tracking-tight">{goal.title}</h4>
-                              <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300 mt-1">
-                                {goal.category}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                                onClick={() => handleOpenTransactionSheet({ type: 'income', goalId: String(goal.id) })}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Excluir Meta</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Tem certeza que deseja excluir a meta "{goal.title}"? Esta ação não pode ser desfeita.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteGoal(goal.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Excluir
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <div className="flex items-end justify-between">
-                              <div>
-                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Acumulado</p>
-                                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                  R$ {goal.currentAmount.toLocaleString()}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs text-muted-foreground font-medium">Objetivo</p>
-                                <p className="text-sm font-semibold">R$ {goal.targetAmount.toLocaleString()}</p>
-                              </div>
-                            </div>
-
-                            <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
-                              <div
-                                className="h-full bg-blue-500 transition-all duration-500 ease-out"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-
-                            <div className="flex justify-between text-xs font-medium">
-                              <span className="text-blue-600 dark:text-blue-400">
-                                {percentage >= 100 ? "Meta Atingida! 🎉" : "Em progresso"}
-                              </span>
-                              <span className="text-muted-foreground">{Math.round(percentage)}% concluído</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CarouselItem>
-                    )
-                  })}
-                </CarouselContent>
-                <div className="flex justify-center gap-2 mt-2">
-                  <CarouselPrevious className="static translate-y-0" />
-                  <CarouselNext className="static translate-y-0" />
-                </div>
-              </Carousel>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-muted rounded-xl">
-              <div className="p-3 rounded-full bg-muted mb-3">
-                <PiggyBank className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground font-medium">Nenhuma meta de poupança</p>
-              <p className="text-xs text-muted-foreground/70 max-w-[200px] mt-1">Comece a planejar seus sonhos hoje mesmo.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
 
 

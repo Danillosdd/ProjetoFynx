@@ -8,7 +8,11 @@ let driverObj: ReturnType<typeof driver> | null = null;
 export const createDriver = (steps: DriveStep[]) => {
     // Destroy existing instance if any
     if (driverObj) {
-        driverObj.destroy();
+        try {
+            driverObj.destroy();
+        } catch (e) {
+            console.error('Error destroying previous driver instance:', e);
+        }
         driverObj = null;
     }
 
@@ -21,31 +25,79 @@ export const createDriver = (steps: DriveStep[]) => {
         overlayColor: "rgba(0,0,0,0.7)",
         stagePadding: 8,
         popoverClass: "fynx-driver-popover",
+        showButtons: ['next', 'previous', 'close'],
         progressText: "{{current}} de {{total}}",
         nextBtnText: "Próximo",
         prevBtnText: "Anterior",
         doneBtnText: "Concluir",
+
+        // Hook for the Close (X) button
+        onCloseClick: () => {
+            console.log('Close button clicked via onCloseClick hook');
+            if (driverObj) {
+                driverObj.destroy();
+                driverObj = null;
+            }
+        },
+
+        // Hook for Next/Finish button
+        onNextClick: (element, step, { state }) => {
+            if (driverObj) {
+                const isLastStep = state.activeIndex === steps.length - 1;
+
+                if (isLastStep) {
+                    console.log('Finish button clicked (onNextClick)');
+                    localStorage.setItem('fynx-tour-completed', 'true');
+                    driverObj.destroy();
+                    driverObj = null;
+                } else {
+                    driverObj.moveNext();
+                }
+            }
+        },
+
         onDestroyStarted: () => {
-            // Ensure we clean up the instance reference
-            driverObj = null;
+            console.log('onDestroyStarted triggered');
+
+            // Check if we are on the last step to mark as completed
+            if (driverObj) {
+                const activeIndex = driverObj.getActiveIndex();
+                // If we are at the last step, mark as completed
+                if (typeof activeIndex === 'number' && activeIndex === steps.length - 1) {
+                    console.log('Tour completed naturally');
+                    localStorage.setItem('fynx-tour-completed', 'true');
+                }
+            }
+
+            // Allow destruction to proceed
             return true;
         },
+
         onPopoverRender: (popover, { config, state }) => {
             // Add Skip Button to the footer
             const footer = popover.footerButtons;
-            const skipBtn = document.createElement("button");
-            skipBtn.innerText = "Pular";
-            skipBtn.className = "fynx-skip-btn";
 
-            // Insert as the first child of the footer to be on the left
-            footer.insertBefore(skipBtn, footer.firstChild);
+            if (footer) {
+                // Handle Skip Button
+                if (!footer.querySelector('.fynx-skip-btn')) {
+                    const skipBtn = document.createElement("button");
+                    skipBtn.innerText = "Pular";
+                    skipBtn.className = "fynx-skip-btn";
+                    footer.insertBefore(skipBtn, footer.firstChild);
 
-            skipBtn.addEventListener("click", () => {
-                if (driverObj) {
-                    driverObj.destroy();
-                    localStorage.setItem('fynx-tour-skipped', 'true');
+                    skipBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Skip button clicked');
+
+                        localStorage.setItem('fynx-tour-skipped', 'true');
+                        if (driverObj) {
+                            driverObj.destroy();
+                            driverObj = null;
+                        }
+                    });
                 }
-            });
+            }
         }
     };
 

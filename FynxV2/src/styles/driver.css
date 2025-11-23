@@ -11,6 +11,8 @@
     font-family: var(--font-sans);
     padding: 16px;
     max-width: 350px;
+    pointer-events: auto;
+    z-index: 100000000 !important;
 }
 
 .fynx-driver-popover .driver-popover-title {
@@ -32,6 +34,8 @@
     justify-content: space-between;
     align-items: center;
     margin-top: 12px;
+    gap: 8px;
+    /* Added gap for better spacing */
 }
 
 .fynx-driver-popover button {
@@ -44,6 +48,8 @@
     font-weight: 500;
     cursor: pointer;
     transition: opacity 0.2s;
+    flex: 1;
+    /* Ensure buttons take equal width if needed, or remove if not desired */
 }
 
 .fynx-driver-popover button:hover {
@@ -61,27 +67,71 @@
     color: hsl(var(--foreground));
 }
 
+/* Close Button Style */
+.fynx-driver-popover .driver-popover-close-btn {
+    color: hsl(var(--muted-foreground));
+    transition: color 0.2s;
+    padding: 4px;
+    /* Ensure hit area is decent */
+}
+
+.fynx-driver-popover .driver-popover-close-btn:hover {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--muted));
+    /* Optional: add background on hover */
+    border-radius: 4px;
+}
+
+/* Progress Text Style */
+.fynx-driver-popover .driver-popover-progress-text {
+    color: hsl(var(--muted-foreground));
+    font-size: 12px;
+    margin-right: auto;
+    /* Push to left if flex container allows */
+}
+
+/* Arrow Styles to match Popover Background */
+.fynx-driver-popover .driver-popover-arrow-side-left.driver-popover-arrow {
+    border-left-color: hsl(var(--popover));
+}
+
+.fynx-driver-popover .driver-popover-arrow-side-right.driver-popover-arrow {
+    border-right-color: hsl(var(--popover));
+}
+
+.fynx-driver-popover .driver-popover-arrow-side-top.driver-popover-arrow {
+    border-top-color: hsl(var(--popover));
+}
+
+.fynx-driver-popover .driver-popover-arrow-side-bottom.driver-popover-arrow {
+    border-bottom-color: hsl(var(--popover));
+}
+
 /* Skip Button Style */
 .fynx-skip-btn {
-    background: none;
-    border: none;
-    color: hsl(var(--muted-foreground));
+    background: none !important;
+    /* Override default button bg */
+    border: none !important;
+    color: hsl(var(--muted-foreground)) !important;
     font-size: 12px;
     cursor: pointer;
     text-decoration: underline;
     padding: 4px 8px;
     margin-right: auto;
     /* Push other buttons to the right */
+    flex: 0 0 auto !important;
+    /* Don't stretch */
 }
 
 .fynx-skip-btn:hover {
-    color: hsl(var(--foreground));
+    color: hsl(var(--foreground)) !important;
 }
 
 /* Overlay */
 .driver-overlay {
     background-color: rgba(0, 0, 0, 0.7) !important;
     /* Darker overlay */
+    z-index: 99999999 !important;
 }
 
 /* Highlighted Element */

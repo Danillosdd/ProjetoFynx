@@ -1,4 +1,4 @@
-import { 
+import {
   BarChart3, Trophy, Target, Settings, Zap, Menu, X
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
@@ -10,7 +10,6 @@ const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Ranking", url: "/ranking", icon: Trophy },
   { title: "Goals", url: "/goals", icon: Target },
-  { title: "Settings", url: "/settings", icon: Settings },
 ]
 
 interface AppSidebarProps {
@@ -67,10 +66,9 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
               to={item.url}
               data-tour={item.url === '/ranking' ? 'ranking-link' : undefined}
               className={({ isActive }) =>
-                `flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-start gap-3 px-3 py-2'} rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                `flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-start gap-3 px-3 py-2'} rounded-lg transition-colors ${isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`
               }
               title={isCollapsed ? item.title : undefined}
@@ -82,31 +80,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
         </nav>
       </div>
 
-      {/* Pro Section */}
-      <div className={`${isCollapsed ? 'p-2' : 'p-4'} mt-auto`}>
-        <div className={`bg-gradient-to-r from-purple-500 to-lime-500 ${isCollapsed ? 'p-2' : 'p-4'} rounded-lg`}>
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'mb-2'}`}>
-            <Zap className={`h-5 w-5 text-white ${isCollapsed ? '' : 'mr-2'}`} />
-            {!isCollapsed && (
-              <span className="text-sm font-medium text-white">Get Pro Now</span>
-            )}
-          </div>
-          {!isCollapsed && (
-            <>
-              <p className="text-xs text-white/90 mb-3">
-                Unlock premium features
-              </p>
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="w-full bg-white text-purple-600 hover:bg-white/90"
-              >
-                Upgrade Now
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+
     </div>
   )
 }

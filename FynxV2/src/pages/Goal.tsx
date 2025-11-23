@@ -118,11 +118,6 @@ const Goals = () => {
             <h1 className="text-3xl font-bold tracking-tight">Minhas Metas</h1>
             <p className="text-muted-foreground">Acompanhe o progresso dos seus objetivos financeiros</p>
           </div>
-          <CreateGoalSheet onCreateGoal={addNewGoal}>
-            <Button>
-              + Nova Meta
-            </Button>
-          </CreateGoalSheet>
         </div>
 
         <div className="space-y-6" data-tour="spending-goals-section">
