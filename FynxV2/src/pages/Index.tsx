@@ -926,7 +926,7 @@ const Index = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label>Filtrar por tipo</Label>
+                  <Label>Filtro</Label>
                   <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
                     <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                       <SelectValue placeholder="Tipo" />
@@ -939,7 +939,7 @@ const Index = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label>Filtrar por categoria</Label>
+                  <Label>Filtro</Label>
                   <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v)}>
                     <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                       <SelectValue placeholder="Categoria" />
