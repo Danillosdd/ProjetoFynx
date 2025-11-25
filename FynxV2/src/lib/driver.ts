@@ -47,7 +47,7 @@ export const createDriver = (steps: DriveStep[]) => {
         progressText: "{{current}} de {{total}}",
         nextBtnText: "→",
         prevBtnText: "←",
-        doneBtnText: "Concluir",
+        doneBtnText: "→",
 
         // Hook for the Close (X) button
         onCloseClick: () => {
@@ -105,6 +105,7 @@ export const createDriver = (steps: DriveStep[]) => {
                 }
                 const nextBtn = footer.querySelector('button.driver-next-btn');
                 if (nextBtn) {
+                    // Sempre mostra só a seta →, nunca texto
                     nextBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
                     // Move o botão "próximo" para ser o primeiro botão focável no footer
                     const closeBtn = footer.querySelector('button.driver-popover-close-btn');
