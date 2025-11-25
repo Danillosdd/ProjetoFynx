@@ -60,7 +60,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent hover:text-accent-foreground"
               onClick={() => onAddTransaction({ type: 'income', goalId: goal.id })}
               data-tour="add-to-goal-btn"
             >
@@ -72,7 +72,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-accent hover:text-accent-foreground"
                     data-tour="delete-goal-btn"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -151,7 +151,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent hover:text-accent-foreground"
             onClick={() => onAddTransaction({ type: 'expense', spendingLimitId: goal.id })}
             data-tour="add-to-goal-btn"
           >
@@ -163,7 +163,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-accent hover:text-accent-foreground"
                   data-tour="delete-goal-btn"
                 >
                   <Trash2 className="h-4 w-4" />
