@@ -86,6 +86,15 @@ export const createDriver = (steps: DriveStep[]) => {
             const footer = popover.footerButtons;
 
             if (footer) {
+                // Remove SVGs duplicados e garante apenas o caractere da seta
+                const prevBtn = footer.querySelector('button.driver-prev-btn');
+                if (prevBtn) {
+                    prevBtn.innerHTML = '←';
+                }
+                const nextBtn = footer.querySelector('button.driver-next-btn');
+                if (nextBtn) {
+                    nextBtn.innerHTML = '→';
+                }
                 // Force footer layout
                 footer.style.cssText = `
                     display: flex !important;
@@ -111,17 +120,17 @@ export const createDriver = (steps: DriveStep[]) => {
                         flex-shrink: 0 !important;
                         align-items: center !important;
                     `;
-                    
+
                     // Move all buttons to wrapper
                     allButtons.forEach(btn => {
                         buttonWrapper.appendChild(btn);
                     });
-                    
+
                     // Create Skip button
                     const skipBtn = document.createElement("button");
                     skipBtn.innerText = "Pular";
                     skipBtn.className = "fynx-skip-btn";
-                    
+
                     skipBtn.addEventListener("click", (e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -131,39 +140,46 @@ export const createDriver = (steps: DriveStep[]) => {
                             driverObj = null;
                         }
                     });
-                    
-                    // Apply same styling pattern as navigation buttons
+
+
+                    // Estilo idêntico ao botão 'Ver Mais Transações'
                     skipBtn.style.cssText = `
-                        background-color: transparent !important;
+                        background-color: var(--background) !important;
                         border: 1px solid hsl(var(--border)) !important;
-                        color: hsl(var(--foreground)) !important;
-                        font-size: 12px !important;
-                        font-weight: 500 !important;
+                        color: hsl(var(--primary-foreground)) !important;
+                        font-size: 13px !important;
+                        font-weight: 700 !important;
                         cursor: pointer !important;
-                        padding: 6px 12px !important;
-                        border-radius: var(--radius) !important;
-                        height: 32px !important;
-                        transition: all 0.2s !important;
+                        padding: 0 1.25rem !important;
+                        border-radius: 0.375rem !important;
+                        height: 2rem !important;
+                        line-height: 2rem !important;
                         margin: 0 !important;
                         white-space: nowrap !important;
                         flex-shrink: 0 !important;
+                        box-shadow: none !important;
+                        transition: background 0.2s, color 0.2s, border 0.2s !important;
+                        letter-spacing: 0.01em !important;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
                     `;
-                    
+                    skipBtn.classList.add('hover:bg-accent', 'hover:text-accent-foreground', 'h-8', 'text-xs');
+
                     skipBtn.addEventListener('mouseenter', () => {
                         skipBtn.style.backgroundColor = 'hsl(var(--accent))';
                         skipBtn.style.color = 'hsl(var(--accent-foreground))';
                         skipBtn.style.borderColor = 'hsl(var(--accent))';
+                        skipBtn.style.fontWeight = '700';
                     });
-                    
                     skipBtn.addEventListener('mouseleave', () => {
-                        skipBtn.style.backgroundColor = 'transparent';
-                        skipBtn.style.color = 'hsl(var(--foreground))';
+                        skipBtn.style.backgroundColor = 'var(--background)';
+                        skipBtn.style.color = 'hsl(var(--primary-foreground))';
                         skipBtn.style.borderColor = 'hsl(var(--border))';
+                        skipBtn.style.fontWeight = '700';
                     });
-                    
+
                     // Add skip button to wrapper after navigation buttons
                     buttonWrapper.appendChild(skipBtn);
-                    
+
                     // Insert wrapper at the beginning of footer
                     footer.insertBefore(buttonWrapper, footer.firstChild);
                 }
@@ -182,6 +198,8 @@ export const createDriver = (steps: DriveStep[]) => {
                 const applyButtonStyles = (btn: HTMLElement) => {
                     if (!btn) return;
                     
+                    // Não manipula filhos nem força conteúdo, deixa o driver.js renderizar normalmente
+
                     btn.style.cssText = `
                         border-radius: 50% !important;
                         width: 32px !important;
@@ -192,16 +210,22 @@ export const createDriver = (steps: DriveStep[]) => {
                         max-height: 32px !important;
                         padding: 0 !important;
                         margin: 0 !important;
-                        display: inline-flex !important;
+                        display: flex !important;
                         align-items: center !important;
                         justify-content: center !important;
                         background-color: transparent !important;
-                        border: 1px solid hsl(var(--border)) !important;
+                        border: none !important;
                         color: hsl(var(--foreground)) !important;
-                        transition: all 0.2s !important;
-                        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+                        transition: none !important;
                         flex-shrink: 0 !important;
+                        font-size: 28px !important;
+                        line-height: 1 !important;
+                        vertical-align: middle !important;
+                        box-shadow: none !important;
+                        outline: none !important;
                     `;
+                    // Remove pseudo-elementos se houver (via CSS)
+                    btn.classList.add('no-pseudo');
 
                     btn.addEventListener('mouseenter', () => {
                         btn.style.backgroundColor = 'hsl(var(--accent))';
