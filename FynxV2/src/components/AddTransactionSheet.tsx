@@ -116,6 +116,7 @@ export function AddTransactionSheet({
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
+      type: 'income',
       isRecurring: false,
       date: new Date().toISOString().split('T')[0], // Data de hoje no formato YYYY-MM-DD
     },
@@ -213,6 +214,7 @@ export function AddTransactionSheet({
     } else if (!open) {
       // Reset form and state when sheet closes
       form.reset({
+        type: 'income',
         isRecurring: false,
         date: new Date().toISOString().split('T')[0],
       });
