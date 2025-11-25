@@ -972,8 +972,8 @@ const Index = () => {
 
               {/* Lista expandida de transações */}
               <div className="space-y-2 overflow-x-auto">
-                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px] border-b border-border" style={{ gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr' }}>
-                  <div className="flex flex-col gap-1 border-r border-border pr-4">
+                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px] border-b border-border" style={{ gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr' }}>
+                  <div className="flex flex-col gap-1 items-center border-r border-border pr-4">
                     <span>Selecionar</span>
                     <Checkbox 
                       checked={allSelected} 
@@ -1001,7 +1001,7 @@ const Index = () => {
                       // Sentinel na última linha para scroll infinito
                       if (index === items.length) {
                         return (
-                          <div style={{ ...style, display: 'grid', gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', minWidth: '900px' }} {...ariaAttributes}>
+                          <div style={{ ...style, display: 'grid', gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', minWidth: '900px' }} {...ariaAttributes}>
                             <div ref={sentinelRef} style={{ gridColumn: '1 / -1' }} className="flex items-center justify-center py-2">
                               {hasMore ? (
                                 <span className="text-sm text-muted-foreground">{isFetchingTx ? "Carregando mais..." : "Role para carregar mais"}</span>
@@ -1019,7 +1019,7 @@ const Index = () => {
                       const typeLabel = transaction.type === 'income' ? 'Entrada' : 'Saída'
                       const checked = selectedIds.has(Number(transaction.id))
                       return (
-                        <div style={{ ...style, display: 'grid', gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', alignItems: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem', minWidth: '900px' }} {...ariaAttributes}>
+                        <div style={{ ...style, display: 'grid', gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', alignItems: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem', minWidth: '900px' }} {...ariaAttributes}>
                           <div className="flex items-center border-r border-border pr-4">
                             <Checkbox checked={checked} onCheckedChange={() => toggleSelect(Number(transaction.id))} />
                           </div>
