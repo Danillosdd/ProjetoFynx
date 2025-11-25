@@ -289,7 +289,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
             <div className="grid gap-2">
               <Label>Período de Reset</Label>
               <Select onValueChange={(v) => setPeriod(v as any)} defaultValue={period}>
-                <SelectTrigger>
+                <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

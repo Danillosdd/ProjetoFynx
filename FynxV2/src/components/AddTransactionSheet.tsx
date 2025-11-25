@@ -462,7 +462,7 @@ export function AddTransactionSheet({
                   <FormLabel>Categoria *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                         <SelectValue placeholder="Selecione uma categoria" />
                       </SelectTrigger>
                     </FormControl>
