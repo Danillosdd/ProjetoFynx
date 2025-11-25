@@ -32,6 +32,22 @@ export function ManageCategoriesModal() {
   const [pendingCategoryId, setPendingCategoryId] = React.useState<string | null>(null)
   const [pendingCounts, setPendingCounts] = React.useState<{ transactions: number; goals: number } | null>(null)
 
+  const listResult = useList({ 
+    resource: 'categories/custom', 
+    queryOptions: { 
+      enabled: open,
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
+    } 
+  });
+  // Normalize different possible shapes: refine useList may return { data: { data: [...] } } or { data: [...] }
+  const categories: any[] = Array.isArray(listResult.data?.data)
+    ? listResult.data!.data
+    : Array.isArray(listResult.data)
+    ? listResult.data
+    : [];
+  const listError = listResult.error;
+
   const create = async () => {
     if (!name.trim()) return
     if (name.length > 50) return
@@ -39,7 +55,8 @@ export function ManageCategoriesModal() {
     try {
       await api.post('/categories/custom', { name: name.trim(), type })
       setName('')
-      queryClient.invalidateQueries({ queryKey: ['categories/custom'] })
+      await queryClient.invalidateQueries({ queryKey: ['categories/custom'] })
+      await listResult.refetch()
       toast({ title: 'Categoria criada', description: 'Categoria criada com sucesso.' })
     } catch (err: any) {
       console.error('Erro ao criar categoria:', err)
@@ -112,14 +129,13 @@ export function ManageCategoriesModal() {
     }
   }
 
-  const listResult = useList({ resource: 'categories/custom', queryOptions: { enabled: open } });
-  // Normalize different possible shapes: refine useList may return { data: { data: [...] } } or { data: [...] }
-  const categories: any[] = Array.isArray(listResult.data?.data)
-    ? listResult.data!.data
-    : Array.isArray(listResult.data)
-    ? listResult.data
-    : [];
-  const listError = listResult.error;
+  // Limpar campos ao fechar o modal
+  React.useEffect(() => {
+    if (!open) {
+      setName('')
+      setType('income')
+    }
+  }, [open])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -134,7 +150,7 @@ export function ManageCategoriesModal() {
         <div className="space-y-4 mt-4">
           <div>
             <Label>Nome *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Café" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Café" className="bg-input border-border" />
           </div>
           <div>
             <Label>Tipo</Label>
@@ -174,7 +190,7 @@ export function ManageCategoriesModal() {
               <div key={c.id} className="flex items-center justify-between py-2 border-b">
                 <div>
                   <div className="font-medium">{c.name}</div>
-                  <div className="text-sm text-muted-foreground">{c.type}</div>
+                  <div className="text-sm text-muted-foreground">{c.type === 'income' ? 'Entrada' : 'Saída'}</div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="ghost" onClick={() => onRequestArchiveCategory(String(c.id))}>Arquivar</Button>
