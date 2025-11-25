@@ -849,7 +849,7 @@ const Index = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-destructive"
+                        className="text-destructive hover:bg-accent hover:text-accent-foreground"
                         onClick={() => handleDelete(transaction.id)}
                         aria-label="Remover transação"
                       >
