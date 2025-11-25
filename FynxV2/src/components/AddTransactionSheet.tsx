@@ -366,7 +366,7 @@ export function AddTransactionSheet({
                 <FormItem>
                   <FormLabel>Descrição *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Salário, Supermercado" {...field} />
+                    <Input placeholder="Ex: Salário, Supermercado" {...field} className="bg-input border-border" />
                   </FormControl>
                 </FormItem>
               )}
@@ -384,6 +384,7 @@ export function AddTransactionSheet({
                       inputMode="decimal"
                       placeholder="R$ 0,00"
                       value={typedAmount}
+                      className="bg-input border-border"
                       onChange={(e) => {
                         const val = e.target.value
                         // Permite apenas dígitos e vírgula; remove pontos para recalcular formatação
@@ -422,6 +423,9 @@ export function AddTransactionSheet({
                       }}
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Digite apenas números. Ex: 15000 para R$ 15.000
+                  </p>
                 </FormItem>
               )}
             />
@@ -513,6 +517,7 @@ export function AddTransactionSheet({
                           placeholder="dd/mm/yyyy"
                           inputMode="numeric"
                           value={typedDate}
+                          className="bg-input border-border"
                           onChange={(e) => {
                             const masked = maskDateOnInput(e.target.value)
                             setTypedDate(masked)
