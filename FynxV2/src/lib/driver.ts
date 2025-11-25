@@ -33,8 +33,8 @@ export const createDriver = (steps: DriveStep[]) => {
         popoverClass: "fynx-driver-popover",
         showButtons: ['next', 'previous', 'close'],
         progressText: "{{current}} de {{total}}",
-        nextBtnText: "Próximo",
-        prevBtnText: "Anterior",
+        nextBtnText: "→",
+        prevBtnText: "←",
         doneBtnText: "Concluir",
 
         // Hook for the Close (X) button
@@ -106,6 +106,64 @@ export const createDriver = (steps: DriveStep[]) => {
                         }
                     });
                 }
+
+                // Force styles on navigation buttons
+                const prevBtn = footer.querySelector('.driver-prev-btn, button[aria-label*="previous"], button[aria-label*="Previous"]') as HTMLElement;
+                const nextBtn = footer.querySelector('.driver-next-btn, button[aria-label*="next"], button[aria-label*="Next"]') as HTMLElement;
+                
+                // Try to find by index if selectors don't work
+                const allButtons = Array.from(footer.querySelectorAll('button')).filter(btn => 
+                    !btn.classList.contains('fynx-skip-btn') && 
+                    !btn.classList.contains('driver-popover-close-btn')
+                );
+                
+                const firstBtn = allButtons[0] as HTMLElement;
+                const secondBtn = allButtons[1] as HTMLElement;
+
+                const applyButtonStyles = (btn: HTMLElement) => {
+                    if (!btn) return;
+                    
+                    // Force inline styles with !important equivalent (direct style object)
+                    btn.style.cssText = `
+                        border-radius: 50% !important;
+                        width: 32px !important;
+                        height: 32px !important;
+                        min-width: 32px !important;
+                        min-height: 32px !important;
+                        max-width: 32px !important;
+                        max-height: 32px !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        background-color: transparent !important;
+                        border: 1px solid hsl(var(--border)) !important;
+                        color: hsl(var(--foreground)) !important;
+                        transition: all 0.2s !important;
+                        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+                    `;
+
+                    // Add hover effect
+                    btn.addEventListener('mouseenter', () => {
+                        btn.style.backgroundColor = 'hsl(var(--accent))';
+                        btn.style.color = 'hsl(var(--accent-foreground))';
+                        btn.style.borderColor = 'hsl(var(--accent))';
+                        btn.style.transform = 'scale(1.05)';
+                    });
+
+                    btn.addEventListener('mouseleave', () => {
+                        btn.style.backgroundColor = 'transparent';
+                        btn.style.color = 'hsl(var(--foreground))';
+                        btn.style.borderColor = 'hsl(var(--border))';
+                        btn.style.transform = 'scale(1)';
+                    });
+                };
+
+                if (prevBtn) applyButtonStyles(prevBtn);
+                if (nextBtn) applyButtonStyles(nextBtn);
+                if (firstBtn) applyButtonStyles(firstBtn);
+                if (secondBtn) applyButtonStyles(secondBtn);
             }
         },
 
