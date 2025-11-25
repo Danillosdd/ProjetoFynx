@@ -813,7 +813,7 @@ const Index = () => {
           <CardContent>
             <div className="space-y-4">
               {/* Table Header */}
-              <div className="grid grid-cols-6 gap-4 text-sm font-medium text-muted-foreground pb-2">
+              <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2" style={{ gridTemplateColumns: '2fr 1fr 1.2fr 1.2fr 1.2fr 0.6fr' }}>
                 <span>Descrição</span>
                 <span>Tipo</span>
                 <span>Valor</span>
@@ -826,11 +826,11 @@ const Index = () => {
               {recentTransactionsSorted.map((transaction: any) => {
                 const isBackend = typeof transaction.amount === 'number'
                 const color = (transaction.type === 'income' || transaction.type === 'Income') ? 'success' : 'destructive'
-                const amountStr = isBackend ? `R$ ${Number(transaction.amount).toLocaleString()}` : transaction.amount
+                const amountStr = isBackend ? `R$ ${Number(transaction.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : transaction.amount
                 const dateStr = isBackend ? format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR }) : transaction.date
                 const typeLabel = isBackend ? (transaction.type === 'income' ? 'Entrada' : 'Saída') : transaction.type
                 return (
-                  <div key={transaction.id} className="grid grid-cols-6 gap-4 items-center py-3 border-b border-border last:border-0">
+                  <div key={transaction.id} className="grid gap-4 items-center py-3 border-b border-border last:border-0" style={{ gridTemplateColumns: '2fr 1fr 1.2fr 1.2fr 1.2fr 0.6fr' }}>
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${color === 'success' ? 'bg-success' :
                         color === 'destructive' ? 'bg-destructive' :
