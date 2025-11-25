@@ -15,7 +15,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen w-full">
       <AppSidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />
       <div className="flex-1 flex flex-col">
-        <header className="border-b border-border bg-background px-6 py-3">
+        <header className="border-b border-border bg-background px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <h1 className="text-lg font-semibold">
               {location.pathname === '/dashboard' && 'Dashboard'}

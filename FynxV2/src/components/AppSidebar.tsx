@@ -32,7 +32,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
   return (
     <div className={`${isCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 ease-in-out bg-card border-r border-border flex flex-col h-full`}>
       {/* Header */}
-      <div className={`relative ${isCollapsed ? 'p-4' : 'p-6'} border-b border-border flex items-center`}>
+      <div className={`relative ${isCollapsed ? 'px-4 py-4' : 'px-6 py-4'} border-b border-border flex items-center`}>
         {isCollapsed ? (
           <Button
             variant="ghost"
