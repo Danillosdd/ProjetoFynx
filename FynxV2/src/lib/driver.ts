@@ -98,7 +98,7 @@ export const createDriver = (steps: DriveStep[]) => {
             const footer = popover.footerButtons;
 
             if (footer) {
-                // Substitui as setas por SVGs para alinhamento perfeito
+                // Sempre reaplica SVG nas setas para garantir centralização, mesmo após hover/focus ou rerender do driver.js
                 const prevBtn = footer.querySelector('button.driver-prev-btn');
                 if (prevBtn) {
                     prevBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
