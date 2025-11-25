@@ -122,23 +122,25 @@ button.driver-next-btn {
     min-height: 44px !important;
     max-width: 44px !important;
     max-height: 44px !important;
-    padding: 0 !important;
     margin: 0 !important;
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
     font-size: 28px !important;
-    line-height: 1 !important;
     flex: 0 0 auto !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     transition: all 0.2s !important;
+    /* Remove line-height e padding-top para centralizar */
 }
 
 /* Aumenta o tamanho do ícone SVG das setas de navegação */
 button.driver-prev-btn svg,
 button.driver-next-btn svg {
-    width: 24px !important;
-    height: 24px !important;
+    width: 22px !important;
+    height: 22px !important;
+    display: block !important;
+    margin: 2px auto 0 auto !important;
+    vertical-align: middle !important;
 }
 
 .driver-popover-footer button.driver-prev-btn:hover,
