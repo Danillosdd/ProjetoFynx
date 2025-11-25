@@ -887,16 +887,19 @@ const Index = () => {
             </DialogClose>
             <div className="flex flex-col gap-4">
               {/* Controles de busca, ordenação e filtros */}
+              {/* Campo de busca em linha separada */}
+              <div>
+                <Label>Buscar</Label>
+                <Input
+                  placeholder="Buscar por descrição, categoria, data..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-input border-border"
+                />
+              </div>
+
+              {/* Demais filtros alinhados na mesma linha */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="md:col-span-2">
-                  <Label>Buscar</Label>
-                  <Input
-                    placeholder="Buscar por descrição, categoria, data..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-input border-border"
-                  />
-                </div>
                 <div>
                   <Label>Ordenar por</Label>
                   <Select value={sortField} onValueChange={(v) => setSortField(v as any)}>
@@ -922,9 +925,6 @@ const Index = () => {
                   </SelectContent>
                 </Select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <Label>Tipo</Label>
                   <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
