@@ -139,15 +139,14 @@ export function ManageCategoriesModal() {
           <div>
             <Label>Tipo</Label>
             <div className="flex gap-2 mt-2">
-              <Button variant={type === 'expense' ? 'default' : 'outline'} onClick={() => setType('expense')}>Despesa</Button>
-              <Button variant={type === 'income' ? 'default' : 'outline'} onClick={() => setType('income')}>Receita</Button>
+              <Button variant={type === 'income' ? 'default' : 'outline'} onClick={() => setType('income')}>Entrada</Button>
+              <Button variant={type === 'expense' ? 'default' : 'outline'} onClick={() => setType('expense')}>Saída</Button>
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={create} disabled={loading || !name.trim()}>Criar</Button>
-            <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
-          </div>
+          <Button onClick={create} disabled={loading || !name.trim()} className="w-full">
+            Salvar categoria personalizada
+          </Button>
 
           <div className="mt-4">
             <h4 className="mb-2">Suas categorias</h4>
