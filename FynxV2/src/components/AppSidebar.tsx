@@ -55,7 +55,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
               size="sm"
               onClick={onToggle}
               aria-label="Colapsar navbar"
-              className="ml-auto text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="ml-auto opacity-70 hover:opacity-100 hover:bg-accent hover:text-accent-foreground transition-opacity"
             >
               <X className="h-4 w-4" />
             </Button>

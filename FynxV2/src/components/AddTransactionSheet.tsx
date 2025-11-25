@@ -65,13 +65,11 @@ interface AddTransactionSheetProps {
 }
 
 const transactionFormSchema = z.object({
-  description: z.string().min(1, "Descrição é obrigatória"),
-  amount: z.coerce.number().min(0.01, "O valor deve ser maior que zero"),
-  type: z.enum(["income", "expense"], {
-    required_error: "O tipo da transação é obrigatório",
-  }),
-  category: z.string().min(1, "Categoria é obrigatória"),
-  date: z.string().min(1, "Data é obrigatória"),
+  description: z.string().optional(),
+  amount: z.coerce.number().optional(),
+  type: z.enum(["income", "expense"]).optional(),
+  category: z.string().optional(),
+  date: z.string().optional(),
   isRecurring: z.boolean().default(false),
   spendingGoalId: z.string().optional(),
   savingGoalId: z.string().optional(),
@@ -229,6 +227,52 @@ export function AddTransactionSheet({
   const onSubmit = (values: TransactionFormValues) => {
     (async () => {
       try {
+        // Validação manual dos campos obrigatórios
+        if (!values.description || values.description.trim() === '') {
+          toast({
+            title: "Campo obrigatório",
+            description: "A descrição é obrigatória",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.amount || values.amount <= 0) {
+          toast({
+            title: "Campo obrigatório",
+            description: "O valor deve ser maior que zero",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.type) {
+          toast({
+            title: "Campo obrigatório",
+            description: "O tipo da transação é obrigatório",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.category || values.category.trim() === '') {
+          toast({
+            title: "Campo obrigatório",
+            description: "A categoria é obrigatória",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.date || values.date.trim() === '') {
+          toast({
+            title: "Campo obrigatório",
+            description: "A data é obrigatória",
+            variant: "destructive"
+          });
+          return;
+        }
+
         let finalCategory = values.category;
 
         // Do NOT auto-create categories when adding a transaction.
@@ -322,7 +366,6 @@ export function AddTransactionSheet({
                   <FormControl>
                     <Input placeholder="Ex: Salário, Supermercado" {...field} />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -377,7 +420,6 @@ export function AddTransactionSheet({
                       }}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -408,7 +450,6 @@ export function AddTransactionSheet({
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -448,7 +489,6 @@ export function AddTransactionSheet({
                           )}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -523,7 +563,6 @@ export function AddTransactionSheet({
                         </PopoverContent>
                       </Popover>
                     </div>
-                    <FormMessage />
                   </FormItem>
                 )
               }}
@@ -598,7 +637,6 @@ export function AddTransactionSheet({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -628,11 +666,11 @@ export function AddTransactionSheet({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
             )}
+
 
             {/* If user selected 'Outros', prompt to use category manager (do not auto-create) */}
             {form.watch('category') === 'Outros' && (

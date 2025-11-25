@@ -195,8 +195,8 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
           <div className="grid gap-2">
             <Label>Tipo de Meta</Label>
             <div className="flex gap-4">
+              <button type="button" className={`flex-1 py-2 px-3 rounded ${goalType === 'spending' ? 'bg-red-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('spending')}>💸 Limite de Gasto</button>
               <button type="button" className={`flex-1 py-2 px-3 rounded ${goalType === 'saving' ? 'bg-green-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('saving')}>💰 Meta de Poupança</button>
-              <button type="button" className={`flex-1 py-2 px-3 rounded ${goalType === 'spending' ? 'bg-red-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('spending')}>💸 Meta de Gasto</button>
             </div>
           </div>
 
@@ -244,8 +244,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
           {/* Target Date (only for saving) or Reset Period (only for spending) */}
           {goalType === 'saving' ? (
             <div className="grid gap-2">
-              <Label htmlFor="target-date" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
+              <Label htmlFor="target-date">
                 Data Final / Prazo
               </Label>
               <div className="relative">
