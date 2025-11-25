@@ -568,7 +568,7 @@ const Index = () => {
                   <CardTitle className="text-lg font-semibold">Detalhamento por Categoria</CardTitle>
                 </div>
                 <Select value={chartView} onValueChange={(value: "income" | "expense") => setChartView(value)}>
-                  <SelectTrigger className="w-[120px] flex-shrink-0">
+                  <SelectTrigger className="w-[120px] flex-shrink-0 hover:bg-accent hover:text-accent-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1064,7 +1064,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground">Visualize o fluxo de caixa mensal</p>
             </div>
             <Select value={monthlyTimeRange} onValueChange={setMonthlyTimeRange}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px] hover:bg-accent hover:text-accent-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
