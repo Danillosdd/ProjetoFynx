@@ -502,13 +502,14 @@ export function AddTransactionSheet({
                             variant="ghost"
                             size="icon"
                             aria-label="Abrir calendário"
-                            className="absolute right-1 top-1/2 -translate-y-1/2"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity"
                           >
                             <CalendarIcon className="h-4 w-4" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
+                        <PopoverContent className="w-auto p-0" align="end" sideOffset={8} avoidCollisions={false}>
                           <Calendar
+                            locale={ptBR}
                             initialFocus
                             mode="single"
                             selected={selectedDate}

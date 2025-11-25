@@ -668,7 +668,7 @@ const Index = () => {
                     <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
+                <PopoverContent className="w-auto p-0" align="end" sideOffset={8} avoidCollisions={false}>
                   <Calendar
                     initialFocus
                     mode="range"
@@ -734,7 +734,15 @@ const Index = () => {
                   content={
                     <ChartTooltipContent
                       indicator="dot"
-                      formatter={(value) => [`R$ ${Number(value).toLocaleString()}`, '']}
+                      labelFormatter={(value) => {
+                        const date = new Date(value)
+                        return date.toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric"
+                        })
+                      }}
+                      formatter={(value) => [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, '']}
                     />
                   }
                 />

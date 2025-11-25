@@ -21,6 +21,7 @@ import { Target, Calendar as CalendarIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { ptBR } from "date-fns/locale"
 
 interface CreateGoalSheetProps {
   children: React.ReactNode
@@ -193,8 +194,8 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
           <div className="grid gap-2">
             <Label>Tipo de Meta</Label>
             <div className="flex gap-4">
-              <button type="button" className={`py-2 px-3 rounded ${goalType === 'saving' ? 'bg-green-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('saving')}>💰 Meta de Poupança</button>
-              <button type="button" className={`py-2 px-3 rounded ${goalType === 'spending' ? 'bg-red-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('spending')}>💸 Meta de Gasto</button>
+              <button type="button" className={`flex-1 py-2 px-3 rounded ${goalType === 'saving' ? 'bg-green-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('saving')}>💰 Meta de Poupança</button>
+              <button type="button" className={`flex-1 py-2 px-3 rounded ${goalType === 'spending' ? 'bg-red-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('spending')}>💸 Meta de Gasto</button>
             </div>
           </div>
 
@@ -261,13 +262,14 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
                       variant="ghost"
                       size="icon"
                       aria-label="Abrir calendário"
-                      className="absolute right-1 top-1/2 -translate-y-1/2"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity"
                     >
                       <CalendarIcon className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
+                  <PopoverContent className="w-auto p-0" align="end" sideOffset={8} avoidCollisions={false}>
                     <Calendar
+                      locale={ptBR}
                       initialFocus
                       mode="single"
                       selected={selectedTargetDate}
@@ -328,7 +330,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
 
         <SheetFooter>
           <Button onClick={handleSave} className="w-full">
-            Criar Meta
+            Salvar Meta
           </Button>
         </SheetFooter>
       </SheetContent>
