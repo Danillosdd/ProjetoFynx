@@ -9,7 +9,7 @@ import goatLogo from "@/assets/FYNX CABRA SF.png"
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Ranking", url: "/ranking", icon: Trophy },
-  { title: "Goals", url: "/goals", icon: Target },
+  { title: "Metas", url: "/metas", icon: Target },
 ]
 
 interface AppSidebarProps {
@@ -49,7 +49,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
               size="sm"
               onClick={onToggle}
               aria-label="Colapsar navbar"
-              className="ml-auto text-muted-foreground hover:text-foreground"
+              className="ml-auto text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             >
               <X className="h-4 w-4" />
             </Button>

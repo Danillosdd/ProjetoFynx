@@ -20,7 +20,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             <h1 className="text-lg font-semibold">
               {location.pathname === '/dashboard' && 'Dashboard'}
               {location.pathname === '/ranking' && 'Ranking'}
-              {location.pathname === '/goals' && 'Metas'}
+              {location.pathname === '/metas' && 'Metas'}
             </h1>
             <TourButton />
           </div>

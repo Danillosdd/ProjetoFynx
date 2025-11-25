@@ -36,7 +36,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useQueryClient } from "@tanstack/react-query"
-import * as z from "zod"
+import { z } from "@/lib/zod-pt-br"
 import {
   useCreate,
   useInvalidate,
@@ -307,6 +307,9 @@ export function AddTransactionSheet({
             <Plus className="h-5 w-5" />
             Adicionar Transação
           </SheetTitle>
+          <SheetDescription>
+            Registre suas receitas e despesas para acompanhar suas finanças em tempo real.
+          </SheetDescription>
         </SheetHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
@@ -362,7 +365,8 @@ export function AddTransactionSheet({
                         if (!typedAmount) return
                         const [intPartRaw = "", decPartRaw = ""] = typedAmount.split(",")
                         const intDigits = intPartRaw.replace(/\./g, "")
-                        const decDigits = decPartRaw.padEnd(2, "0").slice(0, 2)
+                        // Se não há parte decimal ou está vazia, preenche com "00"
+                        const decDigits = decPartRaw ? decPartRaw.padEnd(2, "0").slice(0, 2) : "00"
                         const intWithDots = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
                         const finalFormatted = `${intWithDots},${decDigits}`
                         setTypedAmount(finalFormatted)
@@ -461,7 +465,7 @@ export function AddTransactionSheet({
                 return (
                   <FormItem>
                     <FormLabel>Data *</FormLabel>
-                    <div className="relative w-[280px]">
+                    <div className="relative w-full">
                       <FormControl>
                         <Input
                           placeholder="dd/mm/yyyy"

@@ -1056,7 +1056,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground">Visualize o fluxo de caixa mensal</p>
             </div>
             <Select value={monthlyTimeRange} onValueChange={setMonthlyTimeRange}>
-              <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1106,13 +1106,13 @@ const Index = () => {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Total Receitas</p>
                 <p className="text-lg font-bold" style={{ color: '#8b5cf6' }}>
-                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.receitas, 0).toLocaleString()}
+                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.receitas, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Total Despesas</p>
                 <p className="text-lg font-bold" style={{ color: '#84cc16' }}>
-                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.despesas, 0).toLocaleString()}
+                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.despesas, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
@@ -1126,82 +1126,22 @@ const Index = () => {
 
 
       {/* Botão Flutuante - Add Transaction (expansão dinâmica) */}
-
-
-
       <AddTransactionSheet open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen} initialData={initialTransactionData}>
-
-
-
         <Button
-
-
-
           data-tour="add-transaction-btn"
           onClick={() => handleOpenTransactionSheet(null)}
-
-
-
-          className="group fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full group-hover:rounded-lg bg-violet-600 text-white hover:bg-violet-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out flex items-center justify-center hover:w-[200px]"
-
-
-
+          className="group fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full group-hover:rounded-lg bg-violet-600 text-white hover:bg-violet-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out hover:w-[200px]"
           aria-label="Adicionar Transação"
-
-
-
         >
-
-
-
-          {/* Ícone + central no estado compacto; desloca para a esquerda quando expande */}
-
-
-
-          <Plus
-
-
-
-            className="h-6 w-6 text-white transition-all duration-300 ease-out group-hover:mr-2"
-
-
-
-          />
-
-
-
-
-
-
-
-          {/* Texto que aparece no hover */}
-
-
-
-          <span
-
-
-
-            className="text-sm font-medium whitespace-nowrap opacity-0 max-w-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:max-w-[150px]"
-
-
-
-          >
-
-
-
-            Adicionar Transação
-
-
-
-          </span>
-
-
-
+          <div className="flex items-center justify-center w-full h-full">
+            {/* Ícone + central no estado compacto; desloca para a esquerda quando expande */}
+            <Plus className="h-6 w-6 text-white transition-all duration-300 ease-out group-hover:mr-2 shrink-0" />
+            {/* Texto que aparece no hover */}
+            <span className="text-sm font-medium whitespace-nowrap opacity-0 max-w-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:max-w-[150px] overflow-hidden">
+              Adicionar Transação
+            </span>
+          </div>
         </Button>
-
-
-
       </AddTransactionSheet>
 
 

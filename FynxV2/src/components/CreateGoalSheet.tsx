@@ -326,11 +326,8 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
           )}
         </div>
 
-        <SheetFooter className="gap-2">
-          <SheetClose asChild>
-            <Button variant="outline">Cancelar</Button>
-          </SheetClose>
-          <Button onClick={handleSave} className="bg-accent text-accent-foreground hover:bg-accent/90">
+        <SheetFooter>
+          <Button onClick={handleSave} className="w-full">
             Criar Meta
           </Button>
         </SheetFooter>

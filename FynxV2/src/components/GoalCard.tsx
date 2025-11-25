@@ -42,6 +42,7 @@ const formatCurrency = (value: number) => {
 export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) => {
   const percentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
   const remaining = goal.targetAmount - goal.currentAmount;
+  const percentageFormatted = percentage.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   if (goal.goalType === 'saving') {
     return (
@@ -124,7 +125,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
             <span className="text-blue-600 dark:text-blue-400">
               {percentage >= 100 ? "Meta Atingida! 🎉" : "Em progresso"}
             </span>
-            <span className="text-muted-foreground">{Math.round(percentage)}% concluído</span>
+            <span className="text-muted-foreground">{percentageFormatted}% concluído</span>
           </div>
         </div>
       </div>
@@ -215,7 +216,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
           <span className={isOverLimit ? "text-destructive" : "text-emerald-600"}>
             {isOverLimit ? "Limite Excedido" : "Dentro do limite"}
           </span>
-          <span className="text-muted-foreground">{Math.round(percentage)}% usado</span>
+          <span className="text-muted-foreground">{percentageFormatted}% usado</span>
         </div>
       </div>
     </div>

@@ -36,8 +36,8 @@
     --success: 142 76% 47%;
     --success-foreground: 220 13% 91%;
 
-    /* Destructive/Expense - Red */
-    --destructive: 0 84% 60%;
+    /* Destructive/Expense - Vibrant Red with better contrast */
+    --destructive: 0 72% 55%;
     --destructive-foreground: 220 13% 91%;
 
     /* Borders and inputs */
@@ -83,7 +83,7 @@
     --accent-foreground: 220 13% 9%;
     --success: 142 76% 47%;
     --success-foreground: 220 13% 91%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 220 13% 91%;
     --border: 220 13% 20%;
     --input: 220 13% 15%;
