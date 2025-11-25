@@ -25,6 +25,7 @@ import { ptBR } from "date-fns/locale"
 
 interface CreateGoalSheetProps {
   children: React.ReactNode
+  initialGoalType?: 'saving' | 'spending'
   onCreateGoal: (goalData: {
     goalType: 'saving' | 'spending'
     name: string
@@ -38,7 +39,7 @@ interface CreateGoalSheetProps {
   }) => void
 }
 
-export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps) {
+export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: CreateGoalSheetProps) {
   const [name, setName] = useState("")
   const [targetValue, setTargetValue] = useState("")
   const [description, setDescription] = useState("")
@@ -51,7 +52,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
     const d = new Date(targetDate)
     return isNaN(d.getTime()) ? undefined : d
   })
-  const [goalType, setGoalType] = useState<'saving'|'spending'>('saving')
+  const [goalType, setGoalType] = useState<'saving'|'spending'>(initialGoalType || 'saving')
   const [category, setCategory] = useState('Outros')
   const [period, setPeriod] = useState<'monthly'|'weekly'|'yearly'>('monthly')
   const [isOpen, setIsOpen] = useState(false)
@@ -165,7 +166,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
     setTargetValue("")
     setDescription("")
     setTargetDate("")
-    setGoalType('saving')
+    setGoalType(initialGoalType || 'saving')
     setCategory('Outros')
     setPeriod('monthly')
   }
