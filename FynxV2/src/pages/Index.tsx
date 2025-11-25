@@ -926,7 +926,7 @@ const Index = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label>Filtro</Label>
+                  <Label>Tipo</Label>
                   <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
                     <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                       <SelectValue placeholder="Tipo" />
@@ -939,7 +939,7 @@ const Index = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label>Filtro</Label>
+                  <Label>Categoria</Label>
                   <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v)}>
                     <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                       <SelectValue placeholder="Categoria" />
@@ -972,8 +972,8 @@ const Index = () => {
 
               {/* Lista expandida de transações */}
               <div className="space-y-2 overflow-x-auto">
-                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px]" style={{ gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr' }}>
-                  <div className="flex flex-col items-start gap-1">
+                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px] border-b border-border" style={{ gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr' }}>
+                  <div className="flex flex-col gap-1 border-r border-border pr-4">
                     <span>Selecionar</span>
                     <Checkbox 
                       checked={allSelected} 
@@ -981,11 +981,11 @@ const Index = () => {
                       aria-label="Selecionar todos"
                     />
                   </div>
-                  <span>Descrição</span>
-                  <span>Tipo</span>
-                  <span>Valor</span>
-                  <span>Data</span>
-                  <span>Categoria</span>
+                  <span className="border-r border-border pr-4">Descrição</span>
+                  <span className="border-r border-border pr-4">Tipo</span>
+                  <span className="border-r border-border pr-4">Valor</span>
+                  <span className="border-r border-border pr-4">Data</span>
+                  <span className="border-r border-border pr-4">Categoria</span>
                   <span>Ações</span>
                 </div>
                 <div className="min-w-[900px]">
@@ -1020,17 +1020,17 @@ const Index = () => {
                       const checked = selectedIds.has(Number(transaction.id))
                       return (
                         <div style={{ ...style, display: 'grid', gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', alignItems: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem', minWidth: '900px' }} {...ariaAttributes}>
-                          <div className="flex items-center">
+                          <div className="flex items-center border-r border-border pr-4">
                             <Checkbox checked={checked} onCheckedChange={() => toggleSelect(Number(transaction.id))} />
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 border-r border-border pr-4">
                             <div className={`w-2 h-2 rounded-full ${color === 'success' ? 'bg-success' : 'bg-destructive'}`} />
                             <span className="font-medium text-foreground">{transaction.description}</span>
                           </div>
-                          <span className="text-muted-foreground">{typeLabel}</span>
-                          <span className={`font-semibold ${color === 'success' ? 'text-success' : 'text-destructive'}`}>{amountStr}</span>
-                          <span className="text-muted-foreground">{dateStr}</span>
-                          <span className="text-muted-foreground">{transaction.category}</span>
+                          <span className="text-muted-foreground border-r border-border pr-4">{typeLabel}</span>
+                          <span className={`font-semibold border-r border-border pr-4 ${color === 'success' ? 'text-success' : 'text-destructive'}`}>{amountStr}</span>
+                          <span className="text-muted-foreground border-r border-border pr-4">{dateStr}</span>
+                          <span className="text-muted-foreground border-r border-border pr-4">{transaction.category}</span>
                           <div className="flex items-center justify-end">
                             <Button
                               variant="ghost"
