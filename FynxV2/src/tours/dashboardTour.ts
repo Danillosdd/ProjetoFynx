@@ -73,6 +73,15 @@ export const dashboardSteps: DriveStep[] = [
         }
     },
     {
+        element: '[data-tour="add-transaction-btn"]',
+        popover: {
+            title: '➕ Adicionar Transação',
+            description: 'Use este botão flutuante para registrar rapidamente uma nova entrada ou saída.',
+            side: 'left',
+            align: 'start'
+        }
+    },
+    {
         popover: {
             title: '✅ Tour Concluído!',
             description: 'Agora você conhece os principais recursos do Dashboard. Explore à vontade!',

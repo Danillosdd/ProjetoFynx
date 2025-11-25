@@ -523,10 +523,16 @@ const Index = () => {
         {(dashboard?.overview || []).map((item, index) => {
           const title = String(item.title || '').toLowerCase();
           const getTourKey = (t: string) => {
+            // EN terms
             if (t.includes('balance')) return 'balance-card';
             if (t.includes('income')) return 'income-card';
             if (t.includes('expense') || t.includes('expenses')) return 'expenses-card';
             if (t.includes('saving') || t.includes('savings')) return 'savings-card';
+            // PT-BR terms
+            if (t.includes('saldo') || t.includes('balanço')) return 'balance-card';
+            if (t.includes('receita')) return 'income-card';
+            if (t.includes('despesa') || t.includes('gasto')) return 'expenses-card';
+            if (t.includes('poupança') || t.includes('poupanca') || t.includes('taxa de poup')) return 'savings-card';
             return undefined;
           };
           const tourKey = getTourKey(title);

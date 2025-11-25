@@ -23,6 +23,7 @@ export const createDriver = (steps: DriveStep[]) => {
         smoothScroll: true,
         allowClose: true,
         overlayColor: "rgba(0,0,0,0.7)",
+        stageBackgroundColor: "transparent",
         stagePadding: 8,
         popoverClass: "fynx-driver-popover",
         showButtons: ['next', 'previous', 'close'],
@@ -97,6 +98,18 @@ export const createDriver = (steps: DriveStep[]) => {
                         }
                     });
                 }
+            }
+        },
+
+        // When element is highlighted we can tweak additional styles if needed
+        onHighlighted: (element) => {
+            // If element has a dark background, temporarily add a lighter ring class
+            try {
+                if (element) {
+                    element.classList.add('driver-active-element');
+                }
+            } catch (e) {
+                console.warn('onHighlighted style application failed:', e);
             }
         }
     };
