@@ -144,7 +144,7 @@ export function ManageCategoriesModal() {
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Gerenciar categorias personalizadas</SheetTitle>
+          <SheetTitle>Gerenciar Categorias Personalizadas</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-4 mt-4">

@@ -435,7 +435,10 @@ export function AddTransactionSheet({
               name="type"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Tipo *</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Tipo *</FormLabel>
+                    <ManageCategoriesModal />
+                  </div>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -498,10 +501,6 @@ export function AddTransactionSheet({
                 </FormItem>
               )}
             />
-
-                  <div className="flex justify-end">
-                    <ManageCategoriesModal />
-                  </div>
 
             <FormField
               control={form.control}
