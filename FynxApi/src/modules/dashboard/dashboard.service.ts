@@ -253,7 +253,7 @@ const getPerformanceData = async (userId: number): Promise<{ dailyPerformance: D
     ORDER BY month_key ASC
   `, [userId]);
   
-  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const monthlyPerformance: MonthlyData[] = monthlyResults.map((row: MonthlyRow) => ({
     month: row.month_num ? monthNames[parseInt(row.month_num) - 1] || 'N/A' : 'N/A',
     income: row.income,
