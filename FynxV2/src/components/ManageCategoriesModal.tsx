@@ -21,7 +21,7 @@ import {
 export function ManageCategoriesModal() {
   const [open, setOpen] = React.useState(false)
   const [name, setName] = React.useState('')
-  const [type, setType] = React.useState<'income'|'expense'>('expense')
+  const [type, setType] = React.useState<'income'|'expense'>('income')
   const [loading, setLoading] = React.useState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
@@ -133,14 +133,26 @@ export function ManageCategoriesModal() {
 
         <div className="space-y-4 mt-4">
           <div>
-            <Label>Nome</Label>
+            <Label>Nome *</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Café" />
           </div>
           <div>
             <Label>Tipo</Label>
             <div className="flex gap-2 mt-2">
-              <Button variant={type === 'income' ? 'default' : 'outline'} onClick={() => setType('income')}>Entrada</Button>
-              <Button variant={type === 'expense' ? 'default' : 'outline'} onClick={() => setType('expense')}>Saída</Button>
+              <Button 
+                variant={type === 'income' ? 'default' : 'outline'} 
+                onClick={() => setType('income')}
+                className={type === 'income' ? 'bg-accent text-accent-foreground hover:bg-accent/90' : ''}
+              >
+                Entrada
+              </Button>
+              <Button 
+                variant={type === 'expense' ? 'default' : 'outline'} 
+                onClick={() => setType('expense')}
+                className={type === 'expense' ? 'bg-accent text-accent-foreground hover:bg-accent/90' : ''}
+              >
+                Saída
+              </Button>
             </div>
           </div>
 
