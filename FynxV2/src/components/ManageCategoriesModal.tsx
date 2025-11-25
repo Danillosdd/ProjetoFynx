@@ -140,7 +140,7 @@ export function ManageCategoriesModal() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button className="bg-accent text-accent-foreground hover:bg-accent/90">Gerenciar categorias</Button>
+        <Button className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs">Gerenciar categorias</Button>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>

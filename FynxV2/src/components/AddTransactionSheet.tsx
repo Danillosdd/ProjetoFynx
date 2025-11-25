@@ -435,29 +435,29 @@ export function AddTransactionSheet({
               name="type"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Tipo *</FormLabel>
-                    <ManageCategoriesModal />
-                  </div>
+                  <FormLabel>Tipo *</FormLabel>
                   <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex space-x-4"
-                    >
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="income" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Entrada</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="expense" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Saída</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
+                    <div className="flex items-center justify-between">
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="income" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Entrada</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="expense" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Saída</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                      <ManageCategoriesModal />
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
