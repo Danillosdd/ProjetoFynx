@@ -14,7 +14,7 @@ import {
   Eye, TrendingUp, TrendingDown, Users,
   ArrowUpRight, ArrowDownRight, Plus,
   MoreHorizontal, CheckCircle, Clock, AlertCircle, CalendarIcon, Trash2,
-  Target as TargetIcon, PiggyBank
+  Target as TargetIcon, PiggyBank, ChevronDown
 } from "lucide-react"
 import { Area, AreaChart, CartesianGrid, XAxis, PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, YAxis, Tooltip, Legend } from "recharts"
 import {
@@ -512,8 +512,8 @@ const Index = () => {
       {/* Header */}
       <div className="flex items-center justify-start">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Financial Overview</h1>
-          <p className="text-muted-foreground">Track your financial performance</p>
+          <h1 className="text-3xl font-bold text-foreground">Visão Geral Financeira</h1>
+          <p className="text-muted-foreground">Acompanhe seu desempenho financeiro</p>
         </div>
       </div>
 
@@ -561,20 +561,24 @@ const Index = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Category Breakdown Chart - First (1/4) */}
         <Card data-tour="category-chart" className="bg-card border-border col-span-1">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-2">
-            <div className="flex-1">
-              <CardTitle className="text-lg font-semibold">Breakdown por Categoria</CardTitle>
+          <CardHeader className="pb-2">
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-lg font-semibold">Detalhamento por Categoria</CardTitle>
+                </div>
+                <Select value={chartView} onValueChange={(value: "income" | "expense") => setChartView(value)}>
+                  <SelectTrigger className="w-[120px] flex-shrink-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="income">Entradas</SelectItem>
+                    <SelectItem value="expense">Saídas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <p className="text-sm text-muted-foreground">Visualize suas entradas e saídas</p>
             </div>
-            <Select value={chartView} onValueChange={(value: "income" | "expense") => setChartView(value)}>
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income">Entradas</SelectItem>
-                <SelectItem value="expense">Saídas</SelectItem>
-              </SelectContent>
-            </Select>
           </CardHeader>
           <CardContent>
             <div className="relative h-[250px] sm:h-[300px]">
@@ -606,7 +610,7 @@ const Index = () => {
                   R$ {(chartView === "income"
                     ? incomeChartData.reduce((sum, item) => sum + item.value, 0)
                     : expenseChartData.reduce((sum, item) => sum + item.value, 0)
-                  ).toLocaleString()}
+                  ).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
@@ -661,6 +665,7 @@ const Index = () => {
                     ) : (
                       <span>Selecionar período</span>
                     )}
+                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
@@ -671,6 +676,7 @@ const Index = () => {
                     selected={dateRange}
                     onSelect={handleDateRangeSelect}
                     numberOfMonths={2}
+                    locale={ptBR}
                   />
                 </PopoverContent>
               </Popover>
@@ -793,17 +799,17 @@ const Index = () => {
         {/* Recent Transactions */}
         <Card data-tour="recent-transactions" className="lg:col-span-2 bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold">Recent Transactions</CardTitle>
+            <CardTitle className="text-lg font-semibold">Transações Recentes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {/* Table Header */}
               <div className="grid grid-cols-6 gap-4 text-sm font-medium text-muted-foreground pb-2">
-                <span>Description</span>
-                <span>Type</span>
-                <span>Amount</span>
-                <span>Date</span>
-                <span>Category</span>
+                <span>Descrição</span>
+                <span>Tipo</span>
+                <span>Valor</span>
+                <span>Data</span>
+                <span>Categoria</span>
                 <span>Ações</span>
               </div>
 
