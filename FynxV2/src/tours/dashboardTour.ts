@@ -46,15 +46,6 @@ export const dashboardSteps: DriveStep[] = [
         }
     },
     {
-        element: '[data-tour="revenue-chart"]',
-        popover: {
-            title: '📊 Comparação Diária',
-            description: 'Linhas de receitas e despesas dia a dia no período selecionado. Procure picos fora do padrão para investigar ou ajustar comportamento rapidamente.',
-            side: 'left',
-            align: 'start'
-        }
-    },
-    {
         element: '[data-tour="category-chart"]',
         popover: {
             title: '🥧 Distribuição por Categoria',
@@ -64,10 +55,37 @@ export const dashboardSteps: DriveStep[] = [
         }
     },
     {
+        element: '[data-tour="revenue-chart"]',
+        popover: {
+            title: '📊 Comparação Diária',
+            description: 'Linhas de receitas e despesas dia a dia no período selecionado. Procure picos fora do padrão para investigar ou ajustar comportamento rapidamente.',
+            side: 'left',
+            align: 'start'
+        }
+    },
+    {
+        element: '[data-tour="goals-widget"]',
+        popover: {
+            title: '🎯 Minhas Metas',
+            description: 'Acompanhe suas metas de poupança e controle de gastos. Visualize o progresso e ajuste prioridades conforme necessário para alcançar seus objetivos financeiros.',
+            side: 'left',
+            align: 'start'
+        }
+    },
+    {
         element: '[data-tour="recent-transactions"]',
         popover: {
             title: '📋 Transações Recentes',
             description: 'Últimas movimentações registradas. Edite ou remova rapidamente para manter seus dados limpos e evitar distorções em relatórios.',
+            side: 'top',
+            align: 'start'
+        }
+    },
+    {
+        element: '[data-tour="monthly-chart"]',
+        popover: {
+            title: '📊 Entradas e Saídas Mensais',
+            description: 'Gráfico de barras mostrando receitas e despesas mês a mês. Use para identificar tendências de longo prazo e planejar ajustes sazonais no orçamento.',
             side: 'top',
             align: 'start'
         }

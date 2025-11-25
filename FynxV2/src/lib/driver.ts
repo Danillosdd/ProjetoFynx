@@ -22,6 +22,7 @@ export const createDriver = (steps: DriveStep[]) => {
         animate: true,
         smoothScroll: true,
         allowClose: true,
+        allowKeyboardControl: true,
         // Overlay mais claro para não escurecer tanto o elemento destacado
         overlayColor: "rgba(0,0,0,0.55)",
         // Mantém fundo transparente dentro do recorte

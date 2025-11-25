@@ -801,7 +801,7 @@ const Index = () => {
         </AlertDialog>
 
         {/* Wallet Goals Widget - Third (1/4) */}
-        <div className="col-span-1 h-full">
+        <div className="col-span-1 h-full" data-tour="goals-widget">
           <WalletGoalsWidget
             spendingGoals={spendingGoals}
             savingGoals={savingGoals}
@@ -1082,7 +1082,7 @@ const Index = () => {
         </AlertDialog>
 
         {/* Entradas e Saídas Mensais */}
-        <Card className="bg-card border-border">
+        <Card data-tour="monthly-chart" className="bg-card border-border">
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
             <div className="flex-1">
               <CardTitle className="text-lg font-semibold">Entradas e Saídas Mensais</CardTitle>
