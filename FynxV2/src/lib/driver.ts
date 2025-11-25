@@ -22,9 +22,12 @@ export const createDriver = (steps: DriveStep[]) => {
         animate: true,
         smoothScroll: true,
         allowClose: true,
-        overlayColor: "rgba(0,0,0,0.7)",
+        // Overlay mais claro para não escurecer tanto o elemento destacado
+        overlayColor: "rgba(0,0,0,0.55)",
+        // Mantém fundo transparente dentro do recorte
         stageBackgroundColor: "transparent",
-        stagePadding: 8,
+        // Aumenta espaço ao redor do elemento para evitar recorte encostado nas bordas do card
+        stagePadding: 14,
         popoverClass: "fynx-driver-popover",
         showButtons: ['next', 'previous', 'close'],
         progressText: "{{current}} de {{total}}",

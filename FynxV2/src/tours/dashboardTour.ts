@@ -4,7 +4,7 @@ export const dashboardSteps: DriveStep[] = [
     {
         popover: {
             title: '👋 Bem-vindo ao Fynx!',
-            description: 'Vamos fazer um tour rápido para você conhecer as principais funcionalidades da plataforma.',
+            description: 'Este tour apresenta os principais indicadores e ações da sua Dashboard. Em cada passo você verá para que serve o bloco e como usá-lo para tomar decisões melhores.',
             side: 'bottom',
             align: 'center'
         }
@@ -12,8 +12,8 @@ export const dashboardSteps: DriveStep[] = [
     {
         element: '[data-tour="balance-card"]',
         popover: {
-            title: '💰 Saldo Total',
-            description: 'Aqui você visualiza seu saldo atual, calculado automaticamente com base em suas receitas e despesas.',
+            title: '💰 Saldo / Balanço',
+            description: 'Mostra o resultado do período (Receitas - Despesas). Acompanhe aqui se você está fechando o mês positivo. Use como termômetro rápido antes de detalhar categorias ou tendências.',
             side: 'bottom',
             align: 'start'
         }
@@ -21,8 +21,8 @@ export const dashboardSteps: DriveStep[] = [
     {
         element: '[data-tour="income-card"]',
         popover: {
-            title: '📈 Receitas Mensais',
-            description: 'Total de receitas registradas no mês atual.',
+            title: '📈 Receitas do Mês',
+            description: 'Total de entradas confirmadas no mês atual. Ideal para comparar evolução de ganhos e validar se metas de aumento de renda estão funcionando.',
             side: 'bottom',
             align: 'start'
         }
@@ -30,8 +30,8 @@ export const dashboardSteps: DriveStep[] = [
     {
         element: '[data-tour="expenses-card"]',
         popover: {
-            title: '📉 Despesas Mensais',
-            description: 'Total de despesas do mês. Fique atento a esse valor!',
+            title: '📉 Despesas do Mês',
+            description: 'Somatório de todos os gastos registrados. Compare com seus limites e metas para segurar excessos antes do fim do período.',
             side: 'bottom',
             align: 'start'
         }
@@ -39,8 +39,8 @@ export const dashboardSteps: DriveStep[] = [
     {
         element: '[data-tour="savings-card"]',
         popover: {
-            title: '🎯 Meta de Poupança',
-            description: 'Acompanhe seu progresso rumo às suas metas de poupança.',
+            title: '🎯 Poupança / Meta',
+            description: 'Exibe seu progresso rumo à meta ou sua taxa de poupança (parte da renda que não virou despesa). Serve para medir a saúde financeira de longo prazo.',
             side: 'bottom',
             align: 'start'
         }
@@ -48,8 +48,8 @@ export const dashboardSteps: DriveStep[] = [
     {
         element: '[data-tour="revenue-chart"]',
         popover: {
-            title: '📊 Gráfico de Receitas vs Despesas',
-            description: 'Visualize a evolução de suas receitas e despesas ao longo do tempo.',
+            title: '📊 Comparação Diária',
+            description: 'Linhas de receitas e despesas dia a dia no período selecionado. Procure picos fora do padrão para investigar ou ajustar comportamento rapidamente.',
             side: 'left',
             align: 'start'
         }
@@ -58,7 +58,7 @@ export const dashboardSteps: DriveStep[] = [
         element: '[data-tour="category-chart"]',
         popover: {
             title: '🥧 Distribuição por Categoria',
-            description: 'Veja como suas despesas estão distribuídas entre diferentes categorias.',
+            description: 'Mostra onde o dinheiro está sendo aplicado ou gasto. Foque nas maiores fatias para encontrar oportunidades de redução ou realocação.',
             side: 'left',
             align: 'start'
         }
@@ -67,7 +67,7 @@ export const dashboardSteps: DriveStep[] = [
         element: '[data-tour="recent-transactions"]',
         popover: {
             title: '📋 Transações Recentes',
-            description: 'Lista de suas transações mais recentes. Você pode editar ou deletar transações aqui.',
+            description: 'Últimas movimentações registradas. Edite ou remova rapidamente para manter seus dados limpos e evitar distorções em relatórios.',
             side: 'top',
             align: 'start'
         }
@@ -75,8 +75,8 @@ export const dashboardSteps: DriveStep[] = [
     {
         element: '[data-tour="add-transaction-btn"]',
         popover: {
-            title: '➕ Adicionar Transação',
-            description: 'Use este botão flutuante para registrar rapidamente uma nova entrada ou saída.',
+            title: '➕ Novo Lançamento',
+            description: 'Botão flutuante para registrar uma nova transação (entrada ou saída) instantaneamente. Quanto mais rápido você registra, mais fiel fica seu painel.',
             side: 'left',
             align: 'start'
         }
@@ -84,7 +84,7 @@ export const dashboardSteps: DriveStep[] = [
     {
         popover: {
             title: '✅ Tour Concluído!',
-            description: 'Agora você conhece os principais recursos do Dashboard. Explore à vontade!',
+            description: 'Você já viu os principais blocos. Use o menu de Ajuda para refazer o tour quando quiser ou avance para outras áreas (Metas, Ranking, Transações). Bom proveito!',
             side: 'bottom',
             align: 'center'
         }

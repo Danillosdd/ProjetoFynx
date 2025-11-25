@@ -137,11 +137,23 @@
 /* Highlighted Element */
 .driver-active-element {
     position: relative;
-    outline: 3px solid hsl(var(--primary)) !important;
-    box-shadow: 0 0 0 6px rgba(255,255,255,0.05), 0 0 0 10px rgba(0,0,0,0.4) !important;
-    filter: brightness(1.15) saturate(1.1);
+    outline: 2px solid hsl(var(--primary)) !important;
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.08), 0 0 0 8px rgba(0,0,0,0.5) !important;
+    filter: brightness(1.25) saturate(1.15);
+    background-color: rgba(255,255,255,0.02); /* leve iluminação interna */
+    mix-blend-mode: normal;
     transition: filter .2s ease, outline-color .2s ease;
     z-index: 100000001 !important;
+}
+
+/* Força destaque quando driver injeta wrapper diferente */
+.driver-stage-element, .driver-highlighted-element {
+    z-index: 100000000 !important;
+}
+
+/* Ajusta overlay para permitir foco mais claro */
+.driver-overlay {
+    backdrop-filter: blur(1px);
 }
 
 .driver-active-element * { /* slightly increase readability of inner text */
