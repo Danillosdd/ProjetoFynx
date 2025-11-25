@@ -4,6 +4,7 @@ import "@/styles/driver.css";
 
 // Singleton instance to manage the driver
 let driverObj: ReturnType<typeof driver> | null = null;
+let handleEscape: ((e: KeyboardEvent) => void) | null = null;
 
 export const createDriver = (steps: DriveStep[]) => {
     // Destroy existing instance if any
@@ -74,6 +75,9 @@ export const createDriver = (steps: DriveStep[]) => {
                 }
             }
 
+            // Remove ESC listener when tour is destroyed
+            document.removeEventListener('keydown', handleEscape, true);
+
             // Allow destruction to proceed
             return true;
         },
@@ -124,6 +128,27 @@ export const createDriver = (steps: DriveStep[]) => {
 
 export const startTour = (steps: DriveStep[]) => {
     const tour = createDriver(steps);
+    
+    // Add explicit ESC key handler
+    handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('ESC pressed - closing tour');
+            if (driverObj) {
+                driverObj.destroy();
+                driverObj = null;
+            }
+            if (handleEscape) {
+                document.removeEventListener('keydown', handleEscape, true);
+                handleEscape = null;
+            }
+        }
+    };
+    
+    // Use capture phase to ensure we catch the event first
+    document.addEventListener('keydown', handleEscape, true);
+    
     tour.drive();
 };
 
