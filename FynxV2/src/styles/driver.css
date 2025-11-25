@@ -1,3 +1,18 @@
+/* Destaque manual animado para o campo de descrição durante o tour */
+.fynx-tour-manual-highlight {
+    box-shadow: 0 0 0 4px #a78bfa, 0 0 16px 4px #a78bfa99, 0 0 0 8px #fff !important;
+    border: 2.5px solid #a78bfa !important;
+    animation: fynx-pulse 1.2s infinite alternate;
+    z-index: 2147483647 !important;
+    position: relative !important;
+    background: #fff !important;
+    color: #222 !important;
+}
+
+@keyframes fynx-pulse {
+    0% { box-shadow: 0 0 0 4px #a78bfa, 0 0 16px 4px #a78bfa99, 0 0 0 8px #fff; }
+    100% { box-shadow: 0 0 0 8px #a78bfa, 0 0 32px 8px #a78bfa99, 0 0 0 12px #fff; }
+}
 /* Força o input de descrição a ficar branco durante o tour, independente do tema */
 input[data-tour="transaction-description"].fynx-tour-highlight,
 .fynx-tour-highlight input[data-tour="transaction-description"] {

@@ -24,7 +24,8 @@ export const transactionsSteps: DriveStep[] = [
             title: '📝 Descrição da Transação',
             description: 'Descreva sua transação de forma clara.\n\nExemplo: "Salário", "Supermercado", "Cinema", "Uber".\n\nDica: Use descrições padronizadas para facilitar buscas e relatórios.',
             side: 'right',
-            align: 'center'
+            align: 'center',
+            overlay: false
         }
     },
     {

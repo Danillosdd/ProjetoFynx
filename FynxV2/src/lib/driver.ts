@@ -298,6 +298,18 @@ export const createDriver = (steps: DriveStep[]) => {
 
         // When element is highlighted we can tweak additional styles if needed
         onHighlighted: (element) => {
+                        // Destaque manual para o campo de descrição
+                        try {
+                            if (element && element.matches('[data-tour="transaction-description"]')) {
+                                element.classList.add('fynx-tour-manual-highlight');
+                                const input = element.querySelector('input') || element;
+                                if (input) input.classList.add('fynx-tour-manual-highlight');
+                            }
+                        } catch (e) {}
+                        // Remove destaque manual
+                        document.querySelectorAll('.fynx-tour-manual-highlight').forEach(el => {
+                            el.classList.remove('fynx-tour-manual-highlight');
+                        });
             // Adiciona classe de destaque especial para campos em sheets/painéis escuros
             try {
                 if (element) {
