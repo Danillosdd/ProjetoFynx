@@ -996,7 +996,7 @@ const Index = () => {
                       const color = transaction.type === 'income' ? 'success' : 'destructive'
                       const amountStr = `${transaction.type === 'income' ? '+' : ''}R$ ${Number(transaction.amount).toLocaleString()}`
                       const dateStr = format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR })
-                      const typeLabel = transaction.type === 'income' ? 'Income' : 'Expense'
+                      const typeLabel = transaction.type === 'income' ? 'Entrada' : 'Saída'
                       const checked = selectedIds.has(Number(transaction.id))
                       return (
                         <div style={style} {...ariaAttributes} className="grid grid-cols-7 gap-4 items-center px-2 min-w-[900px]">
