@@ -49,8 +49,22 @@ export function ManageCategoriesModal() {
   const listError = listResult.error;
 
   const create = async () => {
-    if (!name.trim()) return
-    if (name.length > 50) return
+    if (!name.trim()) {
+      toast({ 
+        title: 'Campo obrigatório', 
+        description: 'Por favor, preencha o nome da categoria.', 
+        variant: 'destructive' 
+      })
+      return
+    }
+    if (name.length > 50) {
+      toast({ 
+        title: 'Nome muito longo', 
+        description: 'O nome da categoria deve ter no máximo 50 caracteres.', 
+        variant: 'destructive' 
+      })
+      return
+    }
     setLoading(true)
     try {
       await api.post('/categories/custom', { name: name.trim(), type })
@@ -79,7 +93,8 @@ export function ManageCategoriesModal() {
     try {
       const res = await fetch(`${BASE_URL}/categories/custom/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
       if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ['categories/custom'] })
+        await queryClient.invalidateQueries({ queryKey: ['categories/custom'] })
+        await listResult.refetch()
         toast({ title: 'Categoria removida', description: 'Categoria deletada com sucesso.' })
         setPendingCategoryId(null)
         return
@@ -118,7 +133,8 @@ export function ManageCategoriesModal() {
     if (!id) return
     try {
       await api.post(`/categories/custom/${id}/archive`, {})
-      queryClient.invalidateQueries({ queryKey: ['categories/custom'] })
+      await queryClient.invalidateQueries({ queryKey: ['categories/custom'] })
+      await listResult.refetch()
       toast({ title: 'Categoria arquivada', description: 'A categoria foi arquivada com sucesso.' })
     } catch (err) {
       console.error('Erro ao arquivar:', err)
@@ -172,7 +188,7 @@ export function ManageCategoriesModal() {
             </div>
           </div>
 
-          <Button onClick={create} disabled={loading || !name.trim()} className="w-full">
+          <Button onClick={create} disabled={loading} className="w-full">
             Salvar categoria personalizada
           </Button>
 

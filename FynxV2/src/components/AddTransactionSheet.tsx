@@ -660,7 +660,7 @@ export function AddTransactionSheet({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                           <SelectValue placeholder="Selecione uma meta" />
                         </SelectTrigger>
                       </FormControl>
