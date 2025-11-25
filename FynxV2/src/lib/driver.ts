@@ -309,6 +309,11 @@ export const createDriver = (steps: DriveStep[]) => {
                         const input = element.querySelector('input') || element;
                         if (input) {
                             input.classList.add('fynx-tour-highlight');
+                            // Remove bg-input se existir, para garantir fundo branco
+                            if (input.classList.contains('bg-input')) {
+                                input.classList.remove('bg-input');
+                                input.setAttribute('data-tour-removed-bg', '1');
+                            }
                         }
                     }
                 }
@@ -318,6 +323,11 @@ export const createDriver = (steps: DriveStep[]) => {
                     // Remove classe de destaque especial de todos os campos e inputs
                     document.querySelectorAll('.fynx-tour-highlight').forEach(el => {
                         el.classList.remove('fynx-tour-highlight');
+                        // Se for input e teve bg-input removido, restaura
+                        if (el.tagName === 'INPUT' && el.getAttribute('data-tour-removed-bg') === '1') {
+                            el.classList.add('bg-input');
+                            el.removeAttribute('data-tour-removed-bg');
+                        }
                     });
         }
     };
