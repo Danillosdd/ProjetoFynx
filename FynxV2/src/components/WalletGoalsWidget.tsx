@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, ArrowRight, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Target, ArrowRight, ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InitialTransactionData } from "./AddTransactionSheet";
 import {
@@ -76,7 +76,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
         <Card className="bg-card border-border h-full flex flex-col overflow-hidden relative">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 z-10 bg-card/80 backdrop-blur-sm">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <Wallet className="w-5 h-5 text-primary" />
+                    <Target className="w-5 h-5 text-accent" />
                     Minhas Metas
                 </CardTitle>
                 <div className="flex items-center bg-muted rounded-full p-1 relative">
