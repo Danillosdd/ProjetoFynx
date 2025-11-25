@@ -625,7 +625,7 @@ const Index = () => {
                   />
                   <span className="text-sm text-muted-foreground truncate flex-1">{item.category}</span>
                   <span className="text-sm font-medium whitespace-nowrap">
-                    R$ {item.value.toLocaleString()}
+                    R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               ))}
