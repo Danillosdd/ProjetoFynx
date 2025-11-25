@@ -83,47 +83,57 @@ export const createDriver = (steps: DriveStep[]) => {
         },
 
         onPopoverRender: (popover, { config, state }) => {
-            // Add Skip Button to the footer
             const footer = popover.footerButtons;
 
             if (footer) {
-                // Handle Skip Button
-                if (!footer.querySelector('.fynx-skip-btn')) {
-                    const skipBtn = document.createElement("button");
-                    skipBtn.innerText = "Pular";
-                    skipBtn.className = "fynx-skip-btn";
-                    footer.insertBefore(skipBtn, footer.firstChild);
+                // Force footer layout
+                footer.style.cssText = `
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    width: 100% !important;
+                    gap: 0 !important;
+                `;
 
-                    skipBtn.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Skip button clicked');
-
-                        localStorage.setItem('fynx-tour-skipped', 'true');
-                        if (driverObj) {
-                            driverObj.destroy();
-                            driverObj = null;
-                        }
-                    });
-                }
-
-                // Force styles on navigation buttons
-                const prevBtn = footer.querySelector('.driver-prev-btn, button[aria-label*="previous"], button[aria-label*="Previous"]') as HTMLElement;
-                const nextBtn = footer.querySelector('.driver-next-btn, button[aria-label*="next"], button[aria-label*="Next"]') as HTMLElement;
-                
-                // Try to find by index if selectors don't work
+                // Get all buttons
                 const allButtons = Array.from(footer.querySelectorAll('button')).filter(btn => 
-                    !btn.classList.contains('fynx-skip-btn') && 
                     !btn.classList.contains('driver-popover-close-btn')
                 );
                 
-                const firstBtn = allButtons[0] as HTMLElement;
-                const secondBtn = allButtons[1] as HTMLElement;
+                // Create a container for buttons if there are buttons
+                if (allButtons.length > 0) {
+                    // Create wrapper div for buttons
+                    const buttonWrapper = document.createElement('div');
+                    buttonWrapper.style.cssText = `
+                        display: flex !important;
+                        gap: 8px !important;
+                        order: 0 !important;
+                        flex-shrink: 0 !important;
+                    `;
+                    
+                    // Move all buttons to wrapper
+                    allButtons.forEach(btn => {
+                        buttonWrapper.appendChild(btn);
+                    });
+                    
+                    // Insert wrapper at the beginning of footer
+                    footer.insertBefore(buttonWrapper, footer.firstChild);
+                }
+
+                // Move progress text to the end
+                const progressText = footer.querySelector('.driver-popover-progress-text') as HTMLElement;
+                if (progressText) {
+                    progressText.style.cssText = `
+                        margin-left: auto !important;
+                        order: 999 !important;
+                        flex-shrink: 0 !important;
+                    `;
+                    footer.appendChild(progressText);
+                }
 
                 const applyButtonStyles = (btn: HTMLElement) => {
                     if (!btn) return;
                     
-                    // Force inline styles with !important equivalent (direct style object)
                     btn.style.cssText = `
                         border-radius: 50% !important;
                         width: 32px !important;
@@ -142,9 +152,9 @@ export const createDriver = (steps: DriveStep[]) => {
                         color: hsl(var(--foreground)) !important;
                         transition: all 0.2s !important;
                         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+                        flex-shrink: 0 !important;
                     `;
 
-                    // Add hover effect
                     btn.addEventListener('mouseenter', () => {
                         btn.style.backgroundColor = 'hsl(var(--accent))';
                         btn.style.color = 'hsl(var(--accent-foreground))';
@@ -160,10 +170,7 @@ export const createDriver = (steps: DriveStep[]) => {
                     });
                 };
 
-                if (prevBtn) applyButtonStyles(prevBtn);
-                if (nextBtn) applyButtonStyles(nextBtn);
-                if (firstBtn) applyButtonStyles(firstBtn);
-                if (secondBtn) applyButtonStyles(secondBtn);
+                allButtons.forEach(btn => applyButtonStyles(btn as HTMLElement));
             }
         },
 

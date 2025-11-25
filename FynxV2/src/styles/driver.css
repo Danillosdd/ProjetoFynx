@@ -30,45 +30,31 @@
 }
 
 .fynx-driver-popover .driver-popover-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     margin-top: 16px;
     padding: 12px 8px;
     background-color: hsl(var(--muted));
     border-radius: calc(var(--radius) - 2px);
     position: relative;
-    gap: 12px;
+    gap: 8px;
 }
 
-/* Skip button styled like outline button */
-.fynx-skip-btn {
-    background-color: transparent !important;
-    border: 1px solid hsl(var(--border)) !important;
-    color: hsl(var(--foreground)) !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    padding: 4px 12px !important;
-    border-radius: var(--radius) !important;
-    height: 32px !important;
-    flex: 0 0 auto !important;
-    order: 2 !important;
-    transition: all 0.2s !important;
-    text-decoration: none !important;
-    margin-left: auto !important;
+/* Container for navigation buttons on the left */
+.fynx-driver-popover .driver-popover-footer > button {
+    order: 1 !important;
+    margin-right: 4px !important;
+    flex-shrink: 0 !important;
 }
 
-.fynx-skip-btn:hover {
-    background-color: hsl(var(--accent)) !important;
-    color: hsl(var(--accent-foreground)) !important;
-}
-
-/* Progress text on the left */
+/* Progress text on the right */
 .fynx-driver-popover .driver-popover-progress-text {
-    color: hsl(var(--muted-foreground));
-    font-size: 12px;
-    order: 1;
+    color: hsl(var(--muted-foreground)) !important;
+    font-size: 12px !important;
+    order: 999 !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
 }
 
 .fynx-driver-popover button {
