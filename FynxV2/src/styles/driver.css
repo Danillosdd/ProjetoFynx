@@ -1,12 +1,33 @@
+.fynx-tour-highlight.fynx-tour-highlight,
+.fynx-tour-highlight input,
+input.fynx-tour-highlight {
+    background: #fff !important;
+    color: #222 !important;
+    border-color: #a78bfa !important;
+    box-shadow: 0 0 0 5px #a78bfa, 0 0 24px 6px #a78bfa99 !important;
+    z-index: 2147483647 !important;
+    position: relative !important;
+    outline: 0 !important;
+}
 /* Destaque especial para campos em tour dentro de sheets ou painéis escuros */
 .fynx-tour-highlight {
-    box-shadow: 0 0 0 4px #a78bfa, 0 0 12px 2px #a78bfa99 !important;
-    border: 2px solid #a78bfa !important;
-    z-index: 100000001 !important;
+    box-shadow: 0 0 0 5px #a78bfa, 0 0 24px 6px #a78bfa99 !important;
+    border: 2.5px solid #a78bfa !important;
+    z-index: 2147483647 !important;
     position: relative !important;
-    transition: box-shadow 0.2s, border 0.2s;
-    background-color: #fff !important;
+    transition: box-shadow 0.2s, border 0.2s, background 0.2s;
+    background: #fff !important;
     color: #222 !important;
+    outline: 0 !important;
+}
+
+/* Garante que o input fique acima de overlays do driver.js */
+.fynx-tour-highlight, .fynx-tour-highlight input {
+    z-index: 2147483647 !important;
+    background: #fff !important;
+    color: #222 !important;
+    position: relative !important;
+    outline: 0 !important;
 }
 /* Import default driver styles if not already imported in JS */
 @import "driver.js/dist/driver.css";
