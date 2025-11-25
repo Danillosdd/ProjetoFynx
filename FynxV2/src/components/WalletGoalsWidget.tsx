@@ -290,9 +290,9 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                     <>
                         <div className="absolute bottom-4 left-4 z-20">
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="icon"
-                                className="rounded-full shadow-lg hover:scale-105 transition-transform"
+                                className="rounded-full shadow-lg hover:bg-accent hover:text-accent-foreground transition-all"
                                 onClick={handlePrev}
                             >
                                 <ArrowLeft className="w-4 h-4" />
@@ -306,7 +306,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                                     key={idx}
                                     className={cn(
                                         "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                                        idx === activeDotIndex ? "bg-primary w-4" : "bg-muted-foreground/30"
+                                        idx === activeDotIndex ? "bg-accent w-4" : "bg-muted-foreground/30"
                                     )}
                                 />
                             ))}
@@ -314,9 +314,9 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
 
                         <div className="absolute bottom-4 right-4 z-20">
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="icon"
-                                className="rounded-full shadow-lg hover:scale-105 transition-transform"
+                                className="rounded-full shadow-lg hover:bg-accent hover:text-accent-foreground transition-all"
                                 onClick={handleNext}
                             >
                                 <ArrowRight className="w-4 h-4" />
