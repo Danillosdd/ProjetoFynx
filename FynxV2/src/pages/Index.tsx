@@ -899,7 +899,7 @@ const Index = () => {
               </div>
 
               {/* Demais filtros alinhados na mesma linha */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div>
                   <Label>Ordenar por</Label>
                   <Select value={sortField} onValueChange={(v) => setSortField(v as any)}>
@@ -952,13 +952,13 @@ const Index = () => {
                   </SelectContent>
                 </Select>
                 </div>
+                <div className="flex items-end">
+                  <Button variant="outline" onClick={clearFilters} className="w-full">Limpar Filtros</Button>
+                </div>
               </div>
 
-              {/* Ações de filtros e seleção */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={clearFilters}>Limpar filtros</Button>
-                </div>
+              {/* Ações de seleção */}
+              <div className="flex items-center justify-end gap-2">
                 <div className="flex gap-2">
                   <Button
                     variant="destructive"
