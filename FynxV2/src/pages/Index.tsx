@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -888,47 +889,60 @@ const Index = () => {
               {/* Controles de busca, ordenação e filtros */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="md:col-span-2">
+                  <Label>Buscar</Label>
                   <Input
                     placeholder="Buscar por descrição, categoria, data..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-input border-border"
                   />
                 </div>
-                <Select value={sortField} onValueChange={(v) => setSortField(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ordenar por" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date">Data</SelectItem>
-                    <SelectItem value="type">Tipo</SelectItem>
-                    <SelectItem value="category">Categoria</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ordem" />
+                <div>
+                  <Label>Ordenar por</Label>
+                  <Select value={sortField} onValueChange={(v) => setSortField(v as any)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date">Data</SelectItem>
+                      <SelectItem value="type">Tipo</SelectItem>
+                      <SelectItem value="category">Categoria</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Ordem</Label>
+                  <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as any)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Ordem" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="asc">Crescente</SelectItem>
                     <SelectItem value="desc">Decrescente</SelectItem>
                   </SelectContent>
                 </Select>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os tipos</SelectItem>
-                    <SelectItem value="income">Entrada</SelectItem>
-                    <SelectItem value="expense">Saída</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Categoria" />
+                <div>
+                  <Label>Filtrar por tipo</Label>
+                  <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os tipos</SelectItem>
+                      <SelectItem value="income">Entrada</SelectItem>
+                      <SelectItem value="expense">Saída</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Filtrar por categoria</Label>
+                  <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
@@ -937,15 +951,13 @@ const Index = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                </div>
               </div>
 
               {/* Ações de filtros e seleção */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={clearFilters}>Limpar filtros</Button>
-                  <Button variant="outline" onClick={toggleSelectAll}>
-                    {allSelected ? "Limpar seleção" : "Selecionar todos (filtrados)"}
-                  </Button>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -960,13 +972,20 @@ const Index = () => {
 
               {/* Lista expandida de transações */}
               <div className="space-y-2 overflow-x-auto">
-                <div className="grid grid-cols-7 gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px]">
-                  <span>Selecionar</span>
-                  <span>Description</span>
-                  <span>Type</span>
-                  <span>Amount</span>
-                  <span>Date</span>
-                  <span>Category</span>
+                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px]" style={{ gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr' }}>
+                  <div className="flex flex-col items-start gap-1">
+                    <span>Selecionar</span>
+                    <Checkbox 
+                      checked={allSelected} 
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Selecionar todos"
+                    />
+                  </div>
+                  <span>Descrição</span>
+                  <span>Tipo</span>
+                  <span>Valor</span>
+                  <span>Data</span>
+                  <span>Categoria</span>
                   <span>Ações</span>
                 </div>
                 <div className="min-w-[900px]">
@@ -982,8 +1001,8 @@ const Index = () => {
                       // Sentinel na última linha para scroll infinito
                       if (index === items.length) {
                         return (
-                          <div style={style} {...ariaAttributes} className="grid grid-cols-7 gap-4 items-center px-2 min-w-[900px]">
-                            <div ref={sentinelRef} className="col-span-7 flex items-center justify-center py-2">
+                          <div style={{ ...style, display: 'grid', gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', minWidth: '900px' }} {...ariaAttributes}>
+                            <div ref={sentinelRef} style={{ gridColumn: '1 / -1' }} className="flex items-center justify-center py-2">
                               {hasMore ? (
                                 <span className="text-sm text-muted-foreground">{isFetchingTx ? "Carregando mais..." : "Role para carregar mais"}</span>
                               ) : (
@@ -995,12 +1014,12 @@ const Index = () => {
                       }
                       const transaction = items[index]
                       const color = transaction.type === 'income' ? 'success' : 'destructive'
-                      const amountStr = `${transaction.type === 'income' ? '+' : ''}R$ ${Number(transaction.amount).toLocaleString()}`
+                      const amountStr = `R$ ${Number(transaction.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       const dateStr = format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR })
                       const typeLabel = transaction.type === 'income' ? 'Entrada' : 'Saída'
                       const checked = selectedIds.has(Number(transaction.id))
                       return (
-                        <div style={style} {...ariaAttributes} className="grid grid-cols-7 gap-4 items-center px-2 min-w-[900px]">
+                        <div style={{ ...style, display: 'grid', gridTemplateColumns: '60px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', alignItems: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem', minWidth: '900px' }} {...ariaAttributes}>
                           <div className="flex items-center">
                             <Checkbox checked={checked} onCheckedChange={() => toggleSelect(Number(transaction.id))} />
                           </div>
