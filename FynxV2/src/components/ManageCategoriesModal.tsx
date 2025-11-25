@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { api, BASE_URL } from '@/lib/apiClient'
 import { useQueryClient } from '@tanstack/react-query'
 import { useList } from '@refinedev/core'
@@ -156,7 +157,7 @@ export function ManageCategoriesModal() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs">Gerenciar categorias</Button>
+        <Button variant="outline" className="hover:bg-accent hover:text-accent-foreground h-8 text-xs">Gerenciar Categorias</Button>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
@@ -170,22 +171,16 @@ export function ManageCategoriesModal() {
           </div>
           <div>
             <Label>Tipo</Label>
-            <div className="flex gap-2 mt-2">
-              <Button 
-                variant={type === 'income' ? 'default' : 'outline'} 
-                onClick={() => setType('income')}
-                className={type === 'income' ? 'bg-accent text-accent-foreground hover:bg-accent/90' : ''}
-              >
-                Entrada
-              </Button>
-              <Button 
-                variant={type === 'expense' ? 'default' : 'outline'} 
-                onClick={() => setType('expense')}
-                className={type === 'expense' ? 'bg-accent text-accent-foreground hover:bg-accent/90' : ''}
-              >
-                Saída
-              </Button>
-            </div>
+            <RadioGroup value={type} onValueChange={(value) => setType(value as 'income' | 'expense')} className="flex gap-4 mt-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="income" id="income" />
+                <Label htmlFor="income" className="font-normal cursor-pointer">Entrada</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="expense" id="expense" />
+                <Label htmlFor="expense" className="font-normal cursor-pointer">Saída</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <Button onClick={create} disabled={loading} className="w-full">

@@ -861,8 +861,8 @@ const Index = () => {
               })}
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" onClick={() => setIsExpandedOpen(true)}>
-                Ver mais transações
+              <Button variant="outline" className="hover:bg-accent hover:text-accent-foreground h-8 text-xs" onClick={() => setIsExpandedOpen(true)}>
+                Ver Mais Transações
               </Button>
             </div>
           </CardContent>
