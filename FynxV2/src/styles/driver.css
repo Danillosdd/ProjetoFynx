@@ -74,6 +74,31 @@
     justify-content: center;
 }
 
+/* Garante que os botões de navegação do tour fiquem circulares e com borda */
+.driver-popover-footer button.driver-prev-btn,
+.driver-popover-footer button.driver-next-btn,
+button.driver-prev-btn,
+button.driver-next-btn {
+    background-color: hsl(var(--background)) !important;
+    background: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+    border: 2px solid #888 !important;
+    box-shadow: 0 0 0 1.5px #888 !important;
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    max-width: 44px !important;
+    max-height: 44px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+    font-size: 28px !important;
+    line-height: 1 !important;
+    flex: 0 0 auto !important;
+}
+
 .fynx-driver-popover button:hover {
     opacity: 0.9;
 }
@@ -83,10 +108,9 @@
 .driver-popover-footer button.driver-next-btn,
 button.driver-prev-btn,
 button.driver-next-btn {
-    background-color: transparent !important;
-    background: transparent !important;
-    color: hsl(var(--foreground)) !important;
-    border: 1px solid hsl(var(--border)) !important;
+    background-color: #222 !important;
+    color: #fff !important;
+    border: 2px solid #fff !important;
     border-radius: 50% !important;
     width: 44px !important;
     height: 44px !important;
