@@ -178,10 +178,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className={cn(
-                                                        "h-8 w-8 transition-opacity hover:bg-muted",
-                                                        isSaving ? "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20" : ""
-                                                    )}
+                                                    className="h-8 w-8 transition-opacity hover:bg-accent hover:text-accent-foreground"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         onAddTransaction({
