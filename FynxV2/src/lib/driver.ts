@@ -109,12 +109,60 @@ export const createDriver = (steps: DriveStep[]) => {
                         gap: 8px !important;
                         order: 0 !important;
                         flex-shrink: 0 !important;
+                        align-items: center !important;
                     `;
                     
                     // Move all buttons to wrapper
                     allButtons.forEach(btn => {
                         buttonWrapper.appendChild(btn);
                     });
+                    
+                    // Create Skip button
+                    const skipBtn = document.createElement("button");
+                    skipBtn.innerText = "Pular";
+                    skipBtn.className = "fynx-skip-btn";
+                    
+                    skipBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        localStorage.setItem('fynx-tour-skipped', 'true');
+                        if (driverObj) {
+                            driverObj.destroy();
+                            driverObj = null;
+                        }
+                    });
+                    
+                    // Apply same styling pattern as navigation buttons
+                    skipBtn.style.cssText = `
+                        background-color: transparent !important;
+                        border: 1px solid hsl(var(--border)) !important;
+                        color: hsl(var(--foreground)) !important;
+                        font-size: 12px !important;
+                        font-weight: 500 !important;
+                        cursor: pointer !important;
+                        padding: 6px 12px !important;
+                        border-radius: var(--radius) !important;
+                        height: 32px !important;
+                        transition: all 0.2s !important;
+                        margin: 0 !important;
+                        white-space: nowrap !important;
+                        flex-shrink: 0 !important;
+                    `;
+                    
+                    skipBtn.addEventListener('mouseenter', () => {
+                        skipBtn.style.backgroundColor = 'hsl(var(--accent))';
+                        skipBtn.style.color = 'hsl(var(--accent-foreground))';
+                        skipBtn.style.borderColor = 'hsl(var(--accent))';
+                    });
+                    
+                    skipBtn.addEventListener('mouseleave', () => {
+                        skipBtn.style.backgroundColor = 'transparent';
+                        skipBtn.style.color = 'hsl(var(--foreground))';
+                        skipBtn.style.borderColor = 'hsl(var(--border))';
+                    });
+                    
+                    // Add skip button to wrapper after navigation buttons
+                    buttonWrapper.appendChild(skipBtn);
                     
                     // Insert wrapper at the beginning of footer
                     footer.insertBefore(buttonWrapper, footer.firstChild);
