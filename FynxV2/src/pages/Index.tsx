@@ -932,7 +932,7 @@ const Index = () => {
                       <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos os tipos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="income">Entrada</SelectItem>
                       <SelectItem value="expense">Saída</SelectItem>
                     </SelectContent>
@@ -945,7 +945,7 @@ const Index = () => {
                       <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {availableCategories.map((cat) => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
