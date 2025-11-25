@@ -825,9 +825,9 @@ const Index = () => {
               {recentTransactionsSorted.map((transaction: any) => {
                 const isBackend = typeof transaction.amount === 'number'
                 const color = (transaction.type === 'income' || transaction.type === 'Income') ? 'success' : 'destructive'
-                const amountStr = isBackend ? `${(transaction.type === 'income') ? '+' : ''}R$ ${Number(transaction.amount).toLocaleString()}` : transaction.amount
-                const dateStr = isBackend ? format(new Date(transaction.date), 'MMM dd', { locale: ptBR }) : transaction.date
-                const typeLabel = isBackend ? (transaction.type === 'income' ? 'Income' : 'Expense') : transaction.type
+                const amountStr = isBackend ? `R$ ${Number(transaction.amount).toLocaleString()}` : transaction.amount
+                const dateStr = isBackend ? format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR }) : transaction.date
+                const typeLabel = isBackend ? (transaction.type === 'income' ? 'Entrada' : 'Saída') : transaction.type
                 return (
                   <div key={transaction.id} className="grid grid-cols-6 gap-4 items-center py-3 border-b border-border last:border-0">
                     <div className="flex items-center gap-2">
