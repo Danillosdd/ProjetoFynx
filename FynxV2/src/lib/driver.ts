@@ -1,4 +1,16 @@
 import { driver, DriveStep, Config } from 'driver.js';
+
+// Monkey patch para impedir foco automático no botão de fechar do popover do driver.js
+if (typeof window !== 'undefined' && window.document) {
+    const origFocusMethod = HTMLElement.prototype.focus;
+    HTMLElement.prototype.focus = function(...args) {
+        // Se for o botão de fechar do driver.js, não foca
+        if (this.classList && this.classList.contains('driver-popover-close-btn')) {
+            return;
+        }
+        return origFocusMethod.apply(this, args);
+    };
+}
 import "driver.js/dist/driver.css";
 import "@/styles/driver.css";
 
@@ -94,6 +106,39 @@ export const createDriver = (steps: DriveStep[]) => {
                 const nextBtn = footer.querySelector('button.driver-next-btn');
                 if (nextBtn) {
                     nextBtn.innerHTML = '→';
+                    // Move o botão "próximo" para ser o primeiro botão focável no footer
+                    const closeBtn = footer.querySelector('button.driver-popover-close-btn');
+                    if (closeBtn && nextBtn !== closeBtn.previousSibling) {
+                        try {
+                            footer.insertBefore(nextBtn, closeBtn); // insere antes do botão de fechar
+                        } catch (e) {
+                            // ignora erros
+                        }
+                        // Remove o foco do botão de fechar, se ele estiver focado
+                        if (document.activeElement === closeBtn) {
+                            closeBtn.blur();
+                        }
+                        // Remove o atributo tabIndex e autoFocus do botão de fechar para evitar foco automático
+                        closeBtn.removeAttribute('tabindex');
+                        closeBtn.removeAttribute('autofocus');
+                    }
+                    // Foca o botão "próximo" assim que possível usando requestAnimationFrame
+                    const focusNextBtn = (attempt = 0) => {
+                        if (attempt > 20) return; // evita loop infinito
+                        if (nextBtn && nextBtn.offsetParent !== null) {
+                            try {
+                                nextBtn.focus();
+                                if (document.activeElement !== nextBtn) {
+                                    requestAnimationFrame(() => focusNextBtn(attempt + 1));
+                                }
+                            } catch (e) {
+                                // ignora erros de foco
+                            }
+                        } else {
+                            requestAnimationFrame(() => focusNextBtn(attempt + 1));
+                        }
+                    };
+                    focusNextBtn();
                 }
                 // Force footer layout
                 footer.style.cssText = `
