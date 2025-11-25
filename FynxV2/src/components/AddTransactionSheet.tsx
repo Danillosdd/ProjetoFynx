@@ -21,7 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Plus, Upload, X, CalendarIcon } from "lucide-react"
+import { ArrowLeftRight, Upload, X, CalendarIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Form,
@@ -350,7 +350,7 @@ export function AddTransactionSheet({
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
+            <ArrowLeftRight className="h-5 w-5 text-accent" />
             Adicionar Transação
           </SheetTitle>
           <SheetDescription>
