@@ -972,7 +972,7 @@ const Index = () => {
 
               {/* Lista expandida de transações */}
               <div className="space-y-2 overflow-x-auto">
-                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px] border-b border-border" style={{ gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr' }}>
+                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px] border-b border-border min-h-[64px]" style={{ gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', alignItems: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem' }}>
                   <div className="flex items-center justify-center border-r border-border">
                     <Checkbox 
                       checked={allSelected} 
