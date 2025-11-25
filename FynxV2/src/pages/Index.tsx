@@ -98,6 +98,12 @@ const Index = () => {
   const [monthlyTimeRange, setMonthlyTimeRange] = React.useState("12m")
   const [isAddTransactionOpen, setIsAddTransactionOpen] = React.useState(false)
   const [initialTransactionData, setInitialTransactionData] = React.useState<InitialTransactionData | null>(null);
+
+  // Expor função global para o tour abrir o painel de adicionar transação
+  React.useEffect(() => {
+    window.openAddTransactionSheet = () => setIsAddTransactionOpen(true);
+    return () => { delete window.openAddTransactionSheet; };
+  }, []);
   const { data: dashboardData } = useDashboard()
   // const { data: transactionHistory } = useTransactionHistory()
   const { data: goalsData, isLoading: goalsLoading, error: goalsError } = useGoals()

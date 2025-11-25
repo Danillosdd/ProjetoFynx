@@ -366,7 +366,7 @@ export function AddTransactionSheet({
                 <FormItem>
                   <FormLabel>Descrição *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Salário, Supermercado" {...field} className="bg-input border-border" />
+                    <Input data-tour="transaction-description" placeholder="Ex: Salário, Supermercado" {...field} className="bg-input border-border" />
                   </FormControl>
                 </FormItem>
               )}

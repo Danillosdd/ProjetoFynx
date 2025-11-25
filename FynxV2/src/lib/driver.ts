@@ -95,6 +95,10 @@ export const createDriver = (steps: DriveStep[]) => {
         },
 
         onPopoverRender: (popover, { config, state }) => {
+                        // Se for o passo 3 do tour de transações, abrir o painel de adicionar transação
+                        if (config.steps && config.steps.length === 11 && state.activeIndex === 2 && typeof window !== 'undefined' && typeof window.openAddTransactionSheet === 'function') {
+                            window.openAddTransactionSheet();
+                        }
             const footer = popover.footerButtons;
 
             if (footer) {
@@ -294,14 +298,22 @@ export const createDriver = (steps: DriveStep[]) => {
 
         // When element is highlighted we can tweak additional styles if needed
         onHighlighted: (element) => {
-            // If element has a dark background, temporarily add a lighter ring class
+            // Adiciona classe de destaque especial para campos em sheets/painéis escuros
             try {
                 if (element) {
                     element.classList.add('driver-active-element');
+                    // Se for o campo de descrição da transação, adiciona destaque especial
+                    if (element.matches('[data-tour="transaction-description"]')) {
+                        element.classList.add('fynx-tour-highlight');
+                    }
                 }
             } catch (e) {
                 console.warn('onHighlighted style application failed:', e);
             }
+                    // Remove classe de destaque especial de todos os campos
+                    document.querySelectorAll('.fynx-tour-highlight').forEach(el => {
+                        el.classList.remove('fynx-tour-highlight');
+                    });
         }
     };
 

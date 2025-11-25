@@ -19,6 +19,7 @@ export const transactionsSteps: DriveStep[] = [
         }
     },
     {
+        element: '[data-tour="transaction-description"]',
         popover: {
             title: '📝 Descrição da Transação',
             description: 'Descreva sua transação de forma clara.\n\nExemplo: "Salário", "Supermercado", "Cinema", "Uber".\n\nDica: Use descrições padronizadas para facilitar buscas e relatórios.',
