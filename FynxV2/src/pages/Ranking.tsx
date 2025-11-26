@@ -212,42 +212,44 @@ const Ranking = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {globalLeaderboard.map((entry) => (
-                <div
-                  key={entry.userId}
-                  className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl font-bold text-primary w-8">
-                      #{entry.position}
+              <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                {globalLeaderboard.map((entry) => (
+                  <div
+                    key={entry.userId}
+                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="text-2xl font-bold text-primary w-8">
+                        #{entry.position}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-foreground">{entry.username}</div>
+                        <Badge className={`mt-1 ${getLeagueColor(normalizeLeague(entry.league))}`}>
+                          {localizeLeagueLabel(entry.league).toUpperCase()}
+                        </Badge>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold text-foreground">{entry.username}</div>
-                      <Badge className={`mt-1 ${getLeagueColor(normalizeLeague(entry.league))}`}>
-                        {localizeLeagueLabel(entry.league).toUpperCase()}
-                      </Badge>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-foreground">{entry.score.toLocaleString()}</div>
+                      <div className="flex items-center gap-1 text-sm">
+                        {entry.change > 0 ? (
+                          <>
+                            <TrendingUp className="h-4 w-4 text-success" />
+                            <span className="text-success">+{entry.change}</span>
+                          </>
+                        ) : entry.change < 0 ? (
+                          <>
+                            <TrendingDown className="h-4 w-4 text-destructive" />
+                            <span className="text-destructive">{entry.change}</span>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">--</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-foreground">{entry.score.toLocaleString()}</div>
-                    <div className="flex items-center gap-1 text-sm">
-                      {entry.change > 0 ? (
-                        <>
-                          <TrendingUp className="h-4 w-4 text-success" />
-                          <span className="text-success">+{entry.change}</span>
-                        </>
-                      ) : entry.change < 0 ? (
-                        <>
-                          <TrendingDown className="h-4 w-4 text-destructive" />
-                          <span className="text-destructive">{entry.change}</span>
-                        </>
-                      ) : (
-                        <span className="text-muted-foreground">--</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>

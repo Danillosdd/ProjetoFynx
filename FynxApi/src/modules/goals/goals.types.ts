@@ -16,6 +16,7 @@ export interface SpendingGoal {
 
 export interface Budget {
   id: string;
+  name: string;
   category: string;
   allocatedAmount: number;
   spentAmount: number;
@@ -73,6 +74,7 @@ export interface UpdateSpendingGoalRequest {
 }
 
 export interface CreateBudgetRequest {
+  name: string;
   category: string;
   allocatedAmount: number;
   period: 'monthly' | 'weekly' | 'yearly';
@@ -82,6 +84,7 @@ export interface CreateBudgetRequest {
 }
 
 export interface UpdateBudgetRequest {
+  name?: string;
   category?: string;
   allocatedAmount?: number;
   period?: 'monthly' | 'weekly' | 'yearly';

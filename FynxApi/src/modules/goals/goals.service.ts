@@ -30,6 +30,7 @@ interface SpendingGoalRow {
 
 interface BudgetRow {
   id: number;
+  name: string;
   category: string;
   allocated_amount: number;
   spent_amount: number;
@@ -107,24 +108,25 @@ const formatBudgetFromDB = (row: BudgetRow): Budget => ({
   endDate: row.end_date,
   status: row.status as 'active' | 'exceeded' | 'completed',
   createdAt: row.created_at,
-  updatedAt: row.updated_at
+  updatedAt: row.updated_at,
+  name: row.name // Ensure name is mapped
 });
 
 export class GoalsService {
   // Get all goals data
-  static async getGoalsData(): Promise<GoalsData> {
+  static async getGoalsData(userId: number): Promise<GoalsData> {
     const db = database;
 
     try {
       // Get spending goals
-      const goalRows = await db.all('SELECT * FROM spending_goals ORDER BY created_at DESC', []);
+      const goalRows = await db.all('SELECT * FROM spending_goals WHERE user_id = ? ORDER BY created_at DESC', [userId]);
       const spendingGoals = goalRows.map((row: any) => formatSpendingGoalFromDB(row as SpendingGoalRow));
       const goalProgress = spendingGoals.map(calculateGoalProgress);
       const activeGoals = spendingGoals.filter(goal => goal.status === 'active').length;
       const completedGoals = spendingGoals.filter(goal => goal.status === 'completed').length;
 
       // Get budgets
-      const budgetRows = await db.all('SELECT * FROM budgets ORDER BY created_at DESC', []);
+      const budgetRows = await db.all('SELECT * FROM budgets WHERE user_id = ? ORDER BY created_at DESC', [userId]);
       const budgets = budgetRows.map((row: any) => formatBudgetFromDB(row as BudgetRow));
       const totalBudgetAllocated = budgets.reduce((sum, budget) => sum + budget.allocatedAmount, 0);
       const totalBudgetSpent = budgets.reduce((sum, budget) => sum + budget.spentAmount, 0);
@@ -145,11 +147,11 @@ export class GoalsService {
   }
 
   // Spending Goals CRUD
-  static async getSpendingGoals(): Promise<SpendingGoal[]> {
+  static async getSpendingGoals(userId: number): Promise<SpendingGoal[]> {
     const db = database;
 
     try {
-      const rows = await db.all('SELECT * FROM spending_goals ORDER BY created_at DESC', []);
+      const rows = await db.all('SELECT * FROM spending_goals WHERE user_id = ? ORDER BY created_at DESC', [userId]);
       return rows.map(formatSpendingGoalFromDB);
     } catch (error) {
       throw error;
@@ -396,11 +398,11 @@ export class GoalsService {
   }
 
   // Budgets CRUD
-  static async getBudgets(): Promise<Budget[]> {
+  static async getBudgets(userId: number): Promise<Budget[]> {
     const db = database;
 
     try {
-      const rows = await db.all('SELECT * FROM budgets ORDER BY created_at DESC', []);
+      const rows = await db.all('SELECT * FROM budgets WHERE user_id = ? ORDER BY created_at DESC', [userId]);
       return rows.map((row: any) => formatBudgetFromDB(row as BudgetRow));
     } catch (error) {
       throw error;
@@ -427,11 +429,12 @@ export class GoalsService {
 
       const result = await db.run(`
         INSERT INTO budgets (
-          user_id, category, allocated_amount, spent_amount, remaining_amount, 
+          user_id, name, category, allocated_amount, spent_amount, remaining_amount, 
           period, start_date, end_date, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         userId,
+        data.name,
         data.category,
         data.allocatedAmount,
         0, // spentAmount starts at 0
@@ -461,6 +464,10 @@ export class GoalsService {
       const updateFields: string[] = [];
       const updateValues: any[] = [];
 
+      if (data.name !== undefined) {
+        updateFields.push('name = ?');
+        updateValues.push(data.name);
+      }
       if (data.category !== undefined) {
         updateFields.push('category = ?');
         updateValues.push(data.category);

@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Plus, Eye, Edit, Trash2, Target, Calendar, TrendingUp } from 'lucide-react';
 import { SavingGoal } from '../../providers';
+import { useAuth } from '@/context/AuthContext';
 
 const SavingGoalsList: React.FC = () => {
+  const { user } = useAuth();
   const { data, isLoading, error } = useList<SavingGoal>({
     resource: 'saving-goals',
     pagination: {
@@ -19,6 +21,9 @@ const SavingGoalsList: React.FC = () => {
         order: 'asc',
       },
     ],
+    queryOptions: {
+      enabled: !!user?.id,
+    },
   });
 
   if (isLoading) {
@@ -80,7 +85,7 @@ const SavingGoalsList: React.FC = () => {
           const percentage = (goal.currentAmount / goal.targetAmount) * 100;
           const status = getStatusBadge(percentage);
           const daysRemaining = getDaysRemaining(goal.targetDate);
-          
+
           return (
             <Card key={goal.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
@@ -127,7 +132,7 @@ const SavingGoalsList: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Progresso</span>
@@ -141,9 +146,9 @@ const SavingGoalsList: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <TrendingUp className="w-4 h-4" />
                       <span>
-                        {percentage >= 100 ? 'Meta atingida!' : 
-                         daysRemaining <= 0 ? 'Prazo vencido' :
-                         `${Math.ceil((goal.targetAmount - goal.currentAmount) / Math.max(daysRemaining, 1))} por dia`}
+                        {percentage >= 100 ? 'Meta atingida!' :
+                          daysRemaining <= 0 ? 'Prazo vencido' :
+                            `${Math.ceil((goal.targetAmount - goal.currentAmount) / Math.max(daysRemaining, 1))} por dia`}
                       </span>
                     </div>
                   </div>

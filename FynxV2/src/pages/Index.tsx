@@ -38,6 +38,7 @@ import { ptBR } from "date-fns/locale"
 import { DashboardData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useGoals, useCreateSpendingGoal, useDeleteGoal } from '@/hooks/useGoals'
+import { useAuth } from '@/context/AuthContext'
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Checkbox } from "@/components/ui/checkbox"
 import { api } from "@/lib/apiClient"
@@ -97,6 +98,7 @@ const Index = () => {
   const [monthlyTimeRange, setMonthlyTimeRange] = React.useState("12m")
   const [isAddTransactionOpen, setIsAddTransactionOpen] = React.useState(false)
   const [initialTransactionData, setInitialTransactionData] = React.useState<InitialTransactionData | null>(null);
+  const { user } = useAuth()
   const { data: dashboardData } = useDashboard()
   // const { data: transactionHistory } = useTransactionHistory()
   const { data: goalsData, isLoading: goalsLoading, error: goalsError } = useGoals()
@@ -183,7 +185,7 @@ const Index = () => {
       searchDebounced ? { field: "search", operator: "contains", value: searchDebounced } : undefined,
     ].filter(Boolean) as any,
     sorters: [{ field: sortField, order: sortOrder }],
-    queryOptions: { keepPreviousData: true, enabled: isExpandedOpen },
+    queryOptions: { keepPreviousData: true, enabled: isExpandedOpen && !!user?.id },
   })
 
   // Debounce de busca
@@ -421,6 +423,13 @@ const Index = () => {
         })
         // Invalidar a lista do Refine para manter o estado em sincronia
         invalidate({ resource: "transactions", invalidates: ["list"] })
+
+        // Invalidate all related queries to ensure auto-update
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+        queryClient.invalidateQueries({ queryKey: ["transactions"] })
+        queryClient.invalidateQueries({ queryKey: ["ranking"] })
+        queryClient.invalidateQueries({ queryKey: ["goals"] })
+
         // Toast amigável
         toast({ title: "Transação apagada", description: "A transação foi removida com sucesso." })
       },

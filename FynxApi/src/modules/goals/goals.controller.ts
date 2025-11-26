@@ -1,250 +1,251 @@
 import type { Request, Response } from 'express';
 import { GoalsService } from './goals.service.js';
+import { z } from 'zod';
+import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import type { UpdateSpendingGoalRequest } from './goals.types.js';
+
+const createSpendingGoalSchema = z.object({
+  title: z.string().min(1),
+  category: z.string().min(1),
+  target_amount: z.number().positive(),
+  period: z.enum(['monthly', 'weekly', 'yearly']),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  goal_type: z.enum(['spending', 'saving']).default('spending'),
+});
+
+const updateSpendingGoalSchema = z.object({
+  title: z.string().min(1).optional(),
+  category: z.string().min(1).optional(),
+  target_amount: z.number().positive().optional(),
+  period: z.enum(['monthly', 'weekly', 'yearly']).optional(),
+  status: z.enum(['active', 'completed', 'paused']).optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+});
 
 export class GoalsController {
-  // Get all goals data (overview)
-  static async getGoalsData(req: Request, res: Response) {
+  static async getGoalsData(req: AuthRequest, res: Response) {
     try {
-      const goalsData = await GoalsService.getGoalsData();
-      res.status(200).json(goalsData);
-    } catch (error) {
-      console.error('Error fetching goals data:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      const userId = req.user!.id;
+      const data = await GoalsService.getGoalsData(userId);
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  // Spending Goals endpoints
-  static async getSpendingGoals(req: Request, res: Response) {
+  static async getSpendingGoals(req: AuthRequest, res: Response) {
     try {
-      const spendingGoals = await GoalsService.getSpendingGoals();
-      res.status(200).json(spendingGoals);
-    } catch (error) {
-      console.error('Error fetching spending goals:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      const userId = req.user!.id;
+      const goals = await GoalsService.getSpendingGoals(userId);
+      res.json(goals);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async getSpendingGoalById(req: Request, res: Response) {
+  static async getSpendingGoalById(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
-      const spendingGoal = await GoalsService.getSpendingGoalById(id);
-      
-      if (!spendingGoal) {
-        return res.status(404).json({ error: 'Spending goal not found' });
-      }
-      
-      res.status(200).json(spendingGoal);
-    } catch (error) {
-      console.error('Error fetching spending goal:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
+      const goal = await GoalsService.getSpendingGoalById(id);
+      if (!goal) return res.status(404).json({ error: 'Goal not found' });
+
+      res.json(goal);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async createSpendingGoal(req: Request, res: Response) {
+  static async createSpendingGoal(req: AuthRequest, res: Response) {
     try {
-      const goalData = req.body;
-      console.log('📥 Payload recebido (createSpendingGoal):', JSON.stringify(goalData, null, 2));
-      console.log('🔍 Goal type:', goalData.goalType || goalData.goal_type);
+      const userId = req.user!.id;
+      const data = createSpendingGoalSchema.parse(req.body);
 
-      const newGoal = await GoalsService.createSpendingGoal(goalData);
-      console.log('✅ Meta criada com sucesso:', JSON.stringify(newGoal, null, 2));
-      res.status(201).json(newGoal);
-    } catch (error) {
-      console.error('❌ ERRO AO CRIAR META:', error && (error as any).message ? (error as any).message : error);
-      console.error('Stack:', (error && (error as any).stack) || error);
-      console.error('Payload that caused error:', JSON.stringify(req.body, null, 2));
-      res.status(500).json({ 
-        error: (error && (error as any).message) || 'Internal server error',
-        details: (error && (error as any).stack) || null,
-        payload: req.body
-      });
+      const serviceData = {
+        title: data.title,
+        category: data.category,
+        targetAmount: data.target_amount,
+        period: data.period,
+        startDate: data.start_date || '',
+        endDate: data.end_date || '',
+        goalType: data.goal_type,
+        userId
+      };
+
+      const goal = await GoalsService.createSpendingGoal(serviceData);
+
+      res.status(201).json(goal);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.issues });
+      }
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async updateSpendingGoal(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
-      const updateData = req.body;
-      const updatedGoal = await GoalsService.updateSpendingGoal(id, updateData);
-      
-      if (!updatedGoal) {
-        return res.status(404).json({ error: 'Spending goal not found' });
-      }
-      
-      res.status(200).json(updatedGoal);
-    } catch (error) {
-      console.error('Error updating spending goal:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-
-  static async deleteSpendingGoal(req: Request, res: Response) {
+  static async updateSpendingGoal(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
+      const data = updateSpendingGoalSchema.parse(req.body);
+
+      // Manually construct the object to avoid undefined properties
+      const serviceData: UpdateSpendingGoalRequest = {};
+      if (data.title !== undefined) serviceData.title = data.title;
+      if (data.category !== undefined) serviceData.category = data.category;
+      if (data.target_amount !== undefined) serviceData.targetAmount = data.target_amount;
+      if (data.period !== undefined) serviceData.period = data.period;
+      if (data.start_date !== undefined) serviceData.startDate = data.start_date;
+      if (data.end_date !== undefined) serviceData.endDate = data.end_date;
+      if (data.status !== undefined) serviceData.status = data.status;
+
+      const goal = await GoalsService.updateSpendingGoal(id, serviceData);
+      res.json(goal);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.issues });
       }
-      const deleted = await GoalsService.deleteSpendingGoal(id);
-      
-      if (!deleted) {
-        return res.status(404).json({ error: 'Spending goal not found' });
-      }
-      
-      res.status(200).json({ message: 'Spending goal deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting spending goal:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async updateGoalProgress(req: Request, res: Response) {
+  static async deleteSpendingGoal(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
+      await GoalsService.deleteSpendingGoal(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async updateGoalProgress(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
       const { amount } = req.body;
-      const updatedGoal = await GoalsService.updateGoalProgress(id, amount);
-      
-      if (!updatedGoal) {
-        return res.status(404).json({ error: 'Spending goal not found' });
+
+      if (amount === undefined) {
+        return res.status(400).json({ error: 'Amount is required' });
       }
-      
-      res.status(200).json(updatedGoal);
-    } catch (error) {
-      console.error('Error updating goal progress:', error);
-      res.status(500).json({ error: 'Internal server error' });
+
+      const goal = await GoalsService.updateGoalProgress(id, Number(amount));
+      res.json(goal);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async updateGoalProgressByTransaction(req: Request, res: Response) {
+  static async updateGoalProgressByTransaction(req: AuthRequest, res: Response) {
     try {
-      const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
-      const { amount, transactionType } = req.body;
-      
-      if (!transactionType || !['income', 'expense'].includes(transactionType)) {
-        return res.status(400).json({ error: 'Valid transaction type (income or expense) is required' });
-      }
-      
-      const updatedGoal = await GoalsService.updateGoalProgressByTransaction(id, amount, transactionType);
-      
-      if (!updatedGoal) {
-        return res.status(404).json({ error: 'Spending goal not found' });
-      }
-      
-      res.status(200).json(updatedGoal);
-    } catch (error) {
-      console.error('Error updating goal progress by transaction:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  } 
+      const { goalId, amount, type } = req.body;
 
-  // Budget endpoints
-  static async getBudgets(req: Request, res: Response) {
-    try {
-      const budgets = await GoalsService.getBudgets();
-      res.status(200).json(budgets);
-    } catch (error) {
-      console.error('Error fetching budgets:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      if (!goalId || amount === undefined || !type) {
+        return res.status(400).json({ error: 'GoalId, amount and type are required' });
+      }
+
+      const goal = await GoalsService.updateGoalProgressByTransaction(goalId, amount, type);
+      res.json(goal);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async getBudgetById(req: Request, res: Response) {
+  // Budgets endpoints
+  static async getBudgets(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const budgets = await GoalsService.getBudgets(userId);
+      res.json(budgets);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async getBudgetById(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
       const budget = await GoalsService.getBudgetById(id);
-      
-      if (!budget) {
-        return res.status(404).json({ error: 'Budget not found' });
-      }
-      
-      res.status(200).json(budget);
-    } catch (error) {
-      console.error('Error fetching budget:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      if (!budget) return res.status(404).json({ error: 'Budget not found' });
+
+      res.json(budget);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async createBudget(req: Request, res: Response) {
+  static async createBudget(req: AuthRequest, res: Response) {
     try {
-      const budgetData = req.body;
-      const newBudget = await GoalsService.createBudget(budgetData);
-      res.status(201).json(newBudget);
-    } catch (error) {
-      console.error('Error creating budget:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      const userId = req.user!.id;
+      const { name, category, allocated_amount, period, start_date, end_date } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+
+      const budget = await GoalsService.createBudget({
+        userId,
+        name,
+        category,
+        allocatedAmount: allocated_amount,
+        period,
+        startDate: start_date,
+        endDate: end_date
+      });
+      res.status(201).json(budget);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async updateBudget(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
-      const updateData = req.body;
-      const updatedBudget = await GoalsService.updateBudget(id, updateData);
-      
-      if (!updatedBudget) {
-        return res.status(404).json({ error: 'Budget not found' });
-      }
-      
-      res.status(200).json(updatedBudget);
-    } catch (error) {
-      console.error('Error updating budget:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-
-  static async deleteBudget(req: Request, res: Response) {
+  static async updateBudget(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
-      const deleted = await GoalsService.deleteBudget(id);
-      
-      if (!deleted) {
-        return res.status(404).json({ error: 'Budget not found' });
-      }
-      
-      res.status(200).json({ message: 'Budget deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting budget:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
+      const data = req.body;
+      const budget = await GoalsService.updateBudget(id, data);
+      res.json(budget);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 
-  static async updateBudgetSpending(req: Request, res: Response) {
+  static async deleteBudget(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ error: 'ID parameter is required' });
-      }
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
+      await GoalsService.deleteBudget(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async updateBudgetSpending(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
       const { spentAmount } = req.body;
-      const updatedBudget = await GoalsService.updateBudgetSpending(id, spentAmount);
-      
-      if (!updatedBudget) {
-        return res.status(404).json({ error: 'Budget not found' });
-      }
-      
-      res.status(200).json(updatedBudget);
-    } catch (error) {
-      console.error('Error updating budget spending:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      if (spentAmount === undefined) return res.status(400).json({ error: 'Spent amount is required' });
+
+      const budget = await GoalsService.updateBudgetSpending(id, Number(spentAmount));
+      if (!budget) return res.status(404).json({ error: 'Budget not found' });
+
+      res.json(budget);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 }

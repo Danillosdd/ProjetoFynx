@@ -1,21 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/apiClient';
+import { useAuth } from '@/context/AuthContext';
 import type { DashboardData, Transaction } from '@/lib/types';
 
 export function useDashboard() {
+  const { user } = useAuth();
   const query = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => api.get<DashboardData>('/dashboard'),
     refetchOnWindowFocus: false,
+    enabled: !!user?.id,
   });
   return query;
 }
 
 export function useTransactionHistory() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['transactions'],
     queryFn: () => api.get<Transaction[]>('/dashboard/transactions'),
     refetchOnWindowFocus: false,
+    enabled: !!user?.id,
   });
 }
 

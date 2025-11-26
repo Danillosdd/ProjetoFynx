@@ -16,12 +16,12 @@ function calculateLevel(score: number): number {
 }
 
 // Helper function to calculate league based on score
-function calculateLeague(score: number): 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' {
-  if (score >= 10000) return 'diamond';
-  if (score >= 7500) return 'platinum';
-  if (score >= 5000) return 'gold';
-  if (score >= 2500) return 'silver';
-  return 'bronze';
+function calculateLeague(score: number): 'Bronze' | 'Prata' | 'Ouro' | 'Platina' | 'Diamante' {
+  if (score >= 10000) return 'Diamante';
+  if (score >= 7500) return 'Platina';
+  if (score >= 5000) return 'Ouro';
+  if (score >= 2500) return 'Prata';
+  return 'Bronze';
 }
 
 // Helper function to get trend
@@ -111,7 +111,7 @@ export class RankingService {
 
     return {
       userRanking,
-      globalLeaderboard: globalLeaderboard.slice(0, 50), // Limit to top 50
+      globalLeaderboard: globalLeaderboard, // Return all users
       friendsLeaderboard: [], // Implement friend logic if needed
       categoryLeaderboards: await this.getCategoryLeaderboards(),
       achievements: await this.getAchievements(userId),
@@ -334,12 +334,11 @@ export class RankingService {
       SELECT 
         u.id,
         u.name as username,
-        us.total_score,
-        us.league
+        COALESCE(us.total_score, 0) as total_score,
+        COALESCE(us.league, 'Bronze') as league
       FROM users u
-      JOIN user_scores us ON u.id = us.user_id
-      ORDER BY us.total_score DESC
-      LIMIT 50
+      LEFT JOIN user_scores us ON u.id = us.user_id
+      ORDER BY total_score DESC
     `, []) as any[];
 
     return leaderboard.map((user, index) => ({
@@ -349,7 +348,7 @@ export class RankingService {
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
       score: user.total_score,
       level: calculateLevel(user.total_score),
-      league: user.league || 'Bronze',
+      league: (user.league as 'Bronze' | 'Prata' | 'Ouro' | 'Platina' | 'Diamante') || 'Bronze',
       change: 0, // Needs history table for this
       trend: 'same'
     }));

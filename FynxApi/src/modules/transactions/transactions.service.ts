@@ -11,6 +11,7 @@ import type {
 } from './transactions.types.js';
 import { database } from '../../database/database.js';
 import { GoalsService } from '../goals/goals.service.js';
+import { RankingService } from '../ranking/ranking.service.js';
 
 export class TransactionsService {
   // Get all transactions with filters and pagination
@@ -163,6 +164,12 @@ export class TransactionsService {
       }
 
       await database.run('COMMIT');
+
+      // Calculate ranking asynchronously to not block response
+      RankingService.calculateScore(userId).catch(err => {
+        console.error('Error calculating ranking after transaction:', err);
+      });
+
       return formatted;
     } catch (error) {
       try {

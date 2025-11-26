@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
 import { CustomCategoriesService } from './customCategories.service.js';
+import type { AuthRequest } from '../../middleware/auth.middleware.js';
 
 export class CustomCategoriesController {
-  static async list(req: Request, res: Response) {
+  static async list(req: AuthRequest, res: Response) {
     try {
-      const userId = parseInt(req.query.userId as string) || 1;
+      const userId = req.user!.id;
       const cats = await CustomCategoriesService.getCustomCategories(userId);
       res.status(200).json({ success: true, data: cats });
     } catch (error) {
@@ -13,10 +14,10 @@ export class CustomCategoriesController {
     }
   }
 
-  static async create(req: Request, res: Response) {
+  static async create(req: AuthRequest, res: Response) {
     try {
       const payload = req.body;
-      const userId = parseInt(req.body.userId) || (parseInt(req.query.userId as string) || 1);
+      const userId = req.user!.id;
       const cat = await CustomCategoriesService.createCustomCategory({ name: payload.name, type: payload.type, userId });
       res.status(201).json(cat);
     } catch (error) {

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/apiClient';
+import { useAuth } from '@/context/AuthContext';
 
 export interface SpendingGoal {
   id: string;
@@ -63,12 +64,14 @@ export interface CreateSpendingGoalRequest {
 }
 
 export function useGoals() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['goals'],
     queryFn: async () => {
       const res = await api.get<GoalsData>('/goals');
       return res;
     },
+    enabled: !!user?.id,
   });
 }
 
