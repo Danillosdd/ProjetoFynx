@@ -1,7 +1,7 @@
 import {
-  BarChart3, Trophy, Target, Settings, Zap, Menu, X
+  BarChart3, Trophy, Target, Settings, Zap, Menu, X, LogOut
 } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import goatLogo from "@/assets/FYNX CABRA SF.png"
@@ -9,7 +9,7 @@ import goatLogo from "@/assets/FYNX CABRA SF.png"
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Ranking", url: "/ranking", icon: Trophy },
-  { title: "Goals", url: "/goals", icon: Target },
+  { title: "Metas", url: "/metas", icon: Target },
 ]
 
 interface AppSidebarProps {
@@ -19,14 +19,20 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const currentPath = location.pathname
 
   const isActive = (path: string) => currentPath === path
 
+  const handleLogout = () => {
+    // Futuramente: limpar localStorage, sessão, etc.
+    navigate('/login')
+  }
+
   return (
     <div className={`${isCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 ease-in-out bg-card border-r border-border flex flex-col h-full`}>
       {/* Header */}
-      <div className={`relative ${isCollapsed ? 'p-4' : 'p-6'} border-b border-border flex items-center`}>
+      <div className={`h-[73px] relative ${isCollapsed ? 'px-4' : 'px-6'} border-b border-border flex items-center`}>
         {isCollapsed ? (
           <Button
             variant="ghost"
@@ -49,7 +55,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
               size="sm"
               onClick={onToggle}
               aria-label="Colapsar navbar"
-              className="ml-auto text-muted-foreground hover:text-foreground"
+              className="ml-auto opacity-70 hover:opacity-100 hover:bg-accent hover:text-accent-foreground transition-opacity"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -80,6 +86,18 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
         </nav>
       </div>
 
+      {/* Logout Button */}
+      <div className={`${isCollapsed ? 'px-2' : 'px-4'} py-4 border-t border-border`}>
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className={`w-full ${isCollapsed ? 'justify-center p-3' : 'justify-start gap-3 px-3 py-2'} text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors`}
+          title={isCollapsed ? 'Sair' : undefined}
+        >
+          <LogOut className="h-5 w-5 flex-shrink-0" />
+          {!isCollapsed && <span className="font-medium">Sair</span>}
+        </Button>
+      </div>
 
     </div>
   )

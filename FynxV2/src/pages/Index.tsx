@@ -14,7 +14,7 @@ import {
   Eye, TrendingUp, TrendingDown, Users,
   ArrowUpRight, ArrowDownRight, Plus,
   MoreHorizontal, CheckCircle, Clock, AlertCircle, CalendarIcon, Trash2,
-  Target as TargetIcon, PiggyBank
+  Target as TargetIcon, PiggyBank, ChevronDown
 } from "lucide-react"
 import { Area, AreaChart, CartesianGrid, XAxis, PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, YAxis, Tooltip, Legend } from "recharts"
 import {
@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -97,6 +98,12 @@ const Index = () => {
   const [monthlyTimeRange, setMonthlyTimeRange] = React.useState("12m")
   const [isAddTransactionOpen, setIsAddTransactionOpen] = React.useState(false)
   const [initialTransactionData, setInitialTransactionData] = React.useState<InitialTransactionData | null>(null);
+
+  // Expor função global para o tour abrir o painel de adicionar transação
+  React.useEffect(() => {
+    window.openAddTransactionSheet = () => setIsAddTransactionOpen(true);
+    return () => { delete window.openAddTransactionSheet; };
+  }, []);
   const { data: dashboardData } = useDashboard()
   // const { data: transactionHistory } = useTransactionHistory()
   const { data: goalsData, isLoading: goalsLoading, error: goalsError } = useGoals()
@@ -512,8 +519,8 @@ const Index = () => {
       {/* Header */}
       <div className="flex items-center justify-start">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Financial Overview</h1>
-          <p className="text-muted-foreground">Track your financial performance</p>
+          <h1 className="text-3xl font-bold text-foreground">Visão Geral Financeira</h1>
+          <p className="text-muted-foreground">Acompanhe seu desempenho financeiro</p>
         </div>
       </div>
 
@@ -522,10 +529,16 @@ const Index = () => {
         {(dashboard?.overview || []).map((item, index) => {
           const title = String(item.title || '').toLowerCase();
           const getTourKey = (t: string) => {
+            // EN terms
             if (t.includes('balance')) return 'balance-card';
             if (t.includes('income')) return 'income-card';
             if (t.includes('expense') || t.includes('expenses')) return 'expenses-card';
             if (t.includes('saving') || t.includes('savings')) return 'savings-card';
+            // PT-BR terms
+            if (t.includes('saldo') || t.includes('balanço')) return 'balance-card';
+            if (t.includes('receita')) return 'income-card';
+            if (t.includes('despesa') || t.includes('gasto')) return 'expenses-card';
+            if (t.includes('poupança') || t.includes('poupanca') || t.includes('taxa de poup')) return 'savings-card';
             return undefined;
           };
           const tourKey = getTourKey(title);
@@ -561,20 +574,24 @@ const Index = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Category Breakdown Chart - First (1/4) */}
         <Card data-tour="category-chart" className="bg-card border-border col-span-1">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-2">
-            <div className="flex-1">
-              <CardTitle className="text-lg font-semibold">Breakdown por Categoria</CardTitle>
+          <CardHeader className="pb-2">
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-lg font-semibold">Detalhamento por Categoria</CardTitle>
+                </div>
+                <Select value={chartView} onValueChange={(value: "income" | "expense") => setChartView(value)}>
+                  <SelectTrigger className="w-[120px] flex-shrink-0 hover:bg-accent hover:text-accent-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="income">Entradas</SelectItem>
+                    <SelectItem value="expense">Saídas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <p className="text-sm text-muted-foreground">Visualize suas entradas e saídas</p>
             </div>
-            <Select value={chartView} onValueChange={(value: "income" | "expense") => setChartView(value)}>
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income">Entradas</SelectItem>
-                <SelectItem value="expense">Saídas</SelectItem>
-              </SelectContent>
-            </Select>
           </CardHeader>
           <CardContent>
             <div className="relative h-[250px] sm:h-[300px]">
@@ -606,7 +623,7 @@ const Index = () => {
                   R$ {(chartView === "income"
                     ? incomeChartData.reduce((sum, item) => sum + item.value, 0)
                     : expenseChartData.reduce((sum, item) => sum + item.value, 0)
-                  ).toLocaleString()}
+                  ).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
@@ -621,7 +638,7 @@ const Index = () => {
                   />
                   <span className="text-sm text-muted-foreground truncate flex-1">{item.category}</span>
                   <span className="text-sm font-medium whitespace-nowrap">
-                    R$ {item.value.toLocaleString()}
+                    R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               ))}
@@ -661,9 +678,10 @@ const Index = () => {
                     ) : (
                       <span>Selecionar período</span>
                     )}
+                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
+                <PopoverContent className="w-auto p-0" align="end" sideOffset={8} avoidCollisions={false}>
                   <Calendar
                     initialFocus
                     mode="range"
@@ -671,6 +689,7 @@ const Index = () => {
                     selected={dateRange}
                     onSelect={handleDateRangeSelect}
                     numberOfMonths={2}
+                    locale={ptBR}
                   />
                 </PopoverContent>
               </Popover>
@@ -719,7 +738,8 @@ const Index = () => {
                     const date = new Date(value)
                     return date.toLocaleDateString("pt-BR", {
                       day: "2-digit",
-                      month: "short",
+                      month: "2-digit",
+                      year: "numeric"
                     })
                   }}
                 />
@@ -728,7 +748,15 @@ const Index = () => {
                   content={
                     <ChartTooltipContent
                       indicator="dot"
-                      formatter={(value) => [`R$ ${Number(value).toLocaleString()}`, '']}
+                      labelFormatter={(value) => {
+                        const date = new Date(value)
+                        return date.toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric"
+                        })
+                      }}
+                      formatter={(value) => [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, '']}
                     />
                   }
                 />
@@ -779,7 +807,7 @@ const Index = () => {
         </AlertDialog>
 
         {/* Wallet Goals Widget - Third (1/4) */}
-        <div className="col-span-1 h-full">
+        <div className="col-span-1 h-full" data-tour="goals-widget">
           <WalletGoalsWidget
             spendingGoals={spendingGoals}
             savingGoals={savingGoals}
@@ -793,17 +821,17 @@ const Index = () => {
         {/* Recent Transactions */}
         <Card data-tour="recent-transactions" className="lg:col-span-2 bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold">Recent Transactions</CardTitle>
+            <CardTitle className="text-lg font-semibold">Transações Recentes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {/* Table Header */}
-              <div className="grid grid-cols-6 gap-4 text-sm font-medium text-muted-foreground pb-2">
-                <span>Description</span>
-                <span>Type</span>
-                <span>Amount</span>
-                <span>Date</span>
-                <span>Category</span>
+              <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2" style={{ gridTemplateColumns: '2fr 1fr 1.2fr 1.2fr 1.2fr 0.6fr' }}>
+                <span>Descrição</span>
+                <span>Tipo</span>
+                <span>Valor</span>
+                <span>Data</span>
+                <span>Categoria</span>
                 <span>Ações</span>
               </div>
 
@@ -811,11 +839,11 @@ const Index = () => {
               {recentTransactionsSorted.map((transaction: any) => {
                 const isBackend = typeof transaction.amount === 'number'
                 const color = (transaction.type === 'income' || transaction.type === 'Income') ? 'success' : 'destructive'
-                const amountStr = isBackend ? `${(transaction.type === 'income') ? '+' : ''}R$ ${Number(transaction.amount).toLocaleString()}` : transaction.amount
-                const dateStr = isBackend ? format(new Date(transaction.date), 'MMM dd', { locale: ptBR }) : transaction.date
-                const typeLabel = isBackend ? (transaction.type === 'income' ? 'Income' : 'Expense') : transaction.type
+                const amountStr = isBackend ? `R$ ${Number(transaction.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : transaction.amount
+                const dateStr = isBackend ? format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR }) : transaction.date
+                const typeLabel = isBackend ? (transaction.type === 'income' ? 'Entrada' : 'Saída') : transaction.type
                 return (
-                  <div key={transaction.id} className="grid grid-cols-6 gap-4 items-center py-3 border-b border-border last:border-0">
+                  <div key={transaction.id} className="grid gap-4 items-center py-3 border-b border-border last:border-0" style={{ gridTemplateColumns: '2fr 1fr 1.2fr 1.2fr 1.2fr 0.6fr' }}>
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${color === 'success' ? 'bg-success' :
                         color === 'destructive' ? 'bg-destructive' :
@@ -834,7 +862,7 @@ const Index = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-destructive"
+                        className="text-destructive hover:bg-accent hover:text-accent-foreground"
                         onClick={() => handleDelete(transaction.id)}
                         aria-label="Remover transação"
                       >
@@ -846,8 +874,8 @@ const Index = () => {
               })}
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" onClick={() => setIsExpandedOpen(true)}>
-                Ver mais transações
+              <Button variant="outline" className="hover:bg-accent hover:text-accent-foreground h-8 text-xs" onClick={() => setIsExpandedOpen(true)}>
+                Ver Mais Transações
               </Button>
             </div>
           </CardContent>
@@ -871,67 +899,78 @@ const Index = () => {
             </DialogClose>
             <div className="flex flex-col gap-4">
               {/* Controles de busca, ordenação e filtros */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="md:col-span-2">
-                  <Input
-                    placeholder="Buscar por descrição, categoria, data..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+              {/* Campo de busca em linha separada */}
+              <div>
+                <Label>Buscar</Label>
+                <Input
+                  placeholder="Buscar por descrição, categoria, data..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-input border-border"
+                />
+              </div>
+
+              {/* Demais filtros alinhados na mesma linha */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div>
+                  <Label>Ordenar por</Label>
+                  <Select value={sortField} onValueChange={(v) => setSortField(v as any)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date">Data</SelectItem>
+                      <SelectItem value="type">Tipo</SelectItem>
+                      <SelectItem value="category">Categoria</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select value={sortField} onValueChange={(v) => setSortField(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ordenar por" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date">Data</SelectItem>
-                    <SelectItem value="type">Tipo</SelectItem>
-                    <SelectItem value="category">Categoria</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ordem" />
+                <div>
+                  <Label>Ordem</Label>
+                  <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as any)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Ordem" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="asc">Crescente</SelectItem>
                     <SelectItem value="desc">Decrescente</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tipo" />
+                </div>
+                <div>
+                  <Label>Tipo</Label>
+                  <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="income">Entrada</SelectItem>
+                      <SelectItem value="expense">Saída</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Categoria</Label>
+                  <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v)}>
+                    <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
+                      <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os tipos</SelectItem>
-                    <SelectItem value="income">Entrada</SelectItem>
-                    <SelectItem value="expense">Saída</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {availableCategories.map((cat) => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button variant="outline" onClick={clearFilters} className="w-full">Limpar Filtros</Button>
+                </div>
               </div>
 
-              {/* Ações de filtros e seleção */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={clearFilters}>Limpar filtros</Button>
-                  <Button variant="outline" onClick={toggleSelectAll}>
-                    {allSelected ? "Limpar seleção" : "Selecionar todos (filtrados)"}
-                  </Button>
-                </div>
+              {/* Ações de seleção */}
+              <div className="flex items-center justify-end gap-2">
                 <div className="flex gap-2">
                   <Button
                     variant="destructive"
@@ -945,14 +984,20 @@ const Index = () => {
 
               {/* Lista expandida de transações */}
               <div className="space-y-2 overflow-x-auto">
-                <div className="grid grid-cols-7 gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px]">
-                  <span>Selecionar</span>
-                  <span>Description</span>
-                  <span>Type</span>
-                  <span>Amount</span>
-                  <span>Date</span>
-                  <span>Category</span>
-                  <span>Ações</span>
+                <div className="grid gap-4 text-sm font-medium text-muted-foreground pb-2 min-w-[900px] border-b border-border min-h-[64px]" style={{ gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', alignItems: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem' }}>
+                  <div className="flex items-center justify-center border-r border-border">
+                    <Checkbox 
+                      checked={allSelected} 
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Selecionar todos"
+                    />
+                  </div>
+                  <span className="border-r border-border text-center">Descrição</span>
+                  <span className="border-r border-border text-center">Tipo</span>
+                  <span className="border-r border-border text-center">Valor</span>
+                  <span className="border-r border-border text-center">Data</span>
+                  <span className="border-r border-border text-center">Categoria</span>
+                  <span className="text-center">Ações</span>
                 </div>
                 <div className="min-w-[900px]">
                   <VirtualList
@@ -967,8 +1012,8 @@ const Index = () => {
                       // Sentinel na última linha para scroll infinito
                       if (index === items.length) {
                         return (
-                          <div style={style} {...ariaAttributes} className="grid grid-cols-7 gap-4 items-center px-2 min-w-[900px]">
-                            <div ref={sentinelRef} className="col-span-7 flex items-center justify-center py-2">
+                          <div style={{ ...style, display: 'grid', gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', minWidth: '900px' }} {...ariaAttributes}>
+                            <div ref={sentinelRef} style={{ gridColumn: '1 / -1' }} className="flex items-center justify-center py-2">
                               {hasMore ? (
                                 <span className="text-sm text-muted-foreground">{isFetchingTx ? "Carregando mais..." : "Role para carregar mais"}</span>
                               ) : (
@@ -980,24 +1025,24 @@ const Index = () => {
                       }
                       const transaction = items[index]
                       const color = transaction.type === 'income' ? 'success' : 'destructive'
-                      const amountStr = `${transaction.type === 'income' ? '+' : ''}R$ ${Number(transaction.amount).toLocaleString()}`
+                      const amountStr = `R$ ${Number(transaction.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       const dateStr = format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR })
-                      const typeLabel = transaction.type === 'income' ? 'Income' : 'Expense'
+                      const typeLabel = transaction.type === 'income' ? 'Entrada' : 'Saída'
                       const checked = selectedIds.has(Number(transaction.id))
                       return (
-                        <div style={style} {...ariaAttributes} className="grid grid-cols-7 gap-4 items-center px-2 min-w-[900px]">
-                          <div className="flex items-center">
+                        <div style={{ ...style, display: 'grid', gridTemplateColumns: '80px 2fr 1fr 1.2fr 1fr 1.2fr 0.6fr', gap: '1rem', alignItems: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem', minWidth: '900px' }} {...ariaAttributes}>
+                          <div className="flex items-center justify-center border-r border-border">
                             <Checkbox checked={checked} onCheckedChange={() => toggleSelect(Number(transaction.id))} />
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 border-r border-border">
                             <div className={`w-2 h-2 rounded-full ${color === 'success' ? 'bg-success' : 'bg-destructive'}`} />
                             <span className="font-medium text-foreground">{transaction.description}</span>
                           </div>
-                          <span className="text-muted-foreground">{typeLabel}</span>
-                          <span className={`font-semibold ${color === 'success' ? 'text-success' : 'text-destructive'}`}>{amountStr}</span>
-                          <span className="text-muted-foreground">{dateStr}</span>
-                          <span className="text-muted-foreground">{transaction.category}</span>
-                          <div className="flex items-center justify-end">
+                          <span className="text-muted-foreground border-r border-border">{typeLabel}</span>
+                          <span className={`font-semibold border-r border-border ${color === 'success' ? 'text-success' : 'text-destructive'}`}>{amountStr}</span>
+                          <span className="text-muted-foreground border-r border-border">{dateStr}</span>
+                          <span className="text-muted-foreground border-r border-border">{transaction.category}</span>
+                          <div className="flex items-center justify-center">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1043,14 +1088,14 @@ const Index = () => {
         </AlertDialog>
 
         {/* Entradas e Saídas Mensais */}
-        <Card className="bg-card border-border">
+        <Card data-tour="monthly-chart" className="bg-card border-border">
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
             <div className="flex-1">
               <CardTitle className="text-lg font-semibold">Entradas e Saídas Mensais</CardTitle>
               <p className="text-sm text-muted-foreground">Visualize o fluxo de caixa mensal</p>
             </div>
             <Select value={monthlyTimeRange} onValueChange={setMonthlyTimeRange}>
-              <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectTrigger className="w-full sm:w-[180px] hover:bg-accent hover:text-accent-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1078,7 +1123,7 @@ const Index = () => {
                   content={
                     <ChartTooltipContent
                       indicator="dashed"
-                      formatter={(value) => [`R$ ${Number(value).toLocaleString()}`, '']}
+                      formatter={(value) => [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, '']}
                     />
                   }
                 />
@@ -1100,13 +1145,13 @@ const Index = () => {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Total Receitas</p>
                 <p className="text-lg font-bold" style={{ color: '#8b5cf6' }}>
-                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.receitas, 0).toLocaleString()}
+                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.receitas, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Total Despesas</p>
                 <p className="text-lg font-bold" style={{ color: '#84cc16' }}>
-                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.despesas, 0).toLocaleString()}
+                  R$ {filteredMonthlyData.reduce((sum, item) => sum + item.despesas, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
@@ -1120,82 +1165,22 @@ const Index = () => {
 
 
       {/* Botão Flutuante - Add Transaction (expansão dinâmica) */}
-
-
-
       <AddTransactionSheet open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen} initialData={initialTransactionData}>
-
-
-
         <Button
-
-
-
           data-tour="add-transaction-btn"
           onClick={() => handleOpenTransactionSheet(null)}
-
-
-
-          className="group fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full group-hover:rounded-lg bg-violet-600 text-white hover:bg-violet-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out flex items-center justify-center hover:w-[200px]"
-
-
-
+          className="group fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full group-hover:rounded-lg bg-violet-600 text-white hover:bg-violet-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out hover:w-[200px]"
           aria-label="Adicionar Transação"
-
-
-
         >
-
-
-
-          {/* Ícone + central no estado compacto; desloca para a esquerda quando expande */}
-
-
-
-          <Plus
-
-
-
-            className="h-6 w-6 text-white transition-all duration-300 ease-out group-hover:mr-2"
-
-
-
-          />
-
-
-
-
-
-
-
-          {/* Texto que aparece no hover */}
-
-
-
-          <span
-
-
-
-            className="text-sm font-medium whitespace-nowrap opacity-0 max-w-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:max-w-[150px]"
-
-
-
-          >
-
-
-
-            Adicionar Transação
-
-
-
-          </span>
-
-
-
+          <div className="flex items-center justify-center w-full h-full">
+            {/* Ícone + central no estado compacto; desloca para a esquerda quando expande */}
+            <Plus className="h-6 w-6 text-white transition-all duration-300 ease-out group-hover:mr-2 shrink-0" />
+            {/* Texto que aparece no hover */}
+            <span className="text-sm font-medium whitespace-nowrap opacity-0 max-w-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:max-w-[150px] overflow-hidden">
+              Adicionar Transação
+            </span>
+          </div>
         </Button>
-
-
-
       </AddTransactionSheet>
 
 

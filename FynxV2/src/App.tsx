@@ -48,7 +48,7 @@ const App = () => (
                   <Ranking />
                 </Layout>
               } />
-              <Route path="/goals" element={
+              <Route path="/metas" element={
                 <Layout>
                   <Goal />
                 </Layout>
