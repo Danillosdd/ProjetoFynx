@@ -1,9 +1,22 @@
 import { driver, DriveStep, Config } from 'driver.js';
+
+// Monkey patch para impedir foco automático no botão de fechar do popover do driver.js
+if (typeof window !== 'undefined' && window.document) {
+    const origFocusMethod = HTMLElement.prototype.focus;
+    HTMLElement.prototype.focus = function(...args) {
+        // Se for o botão de fechar do driver.js, não foca
+        if (this.classList && this.classList.contains('driver-popover-close-btn')) {
+            return;
+        }
+        return origFocusMethod.apply(this, args);
+    };
+}
 import "driver.js/dist/driver.css";
 import "@/styles/driver.css";
 
 // Singleton instance to manage the driver
 let driverObj: ReturnType<typeof driver> | null = null;
+let handleEscape: ((e: KeyboardEvent) => void) | null = null;
 
 export const createDriver = (steps: DriveStep[]) => {
     // Destroy existing instance if any
@@ -22,14 +35,19 @@ export const createDriver = (steps: DriveStep[]) => {
         animate: true,
         smoothScroll: true,
         allowClose: true,
-        overlayColor: "rgba(0,0,0,0.7)",
-        stagePadding: 8,
+        allowKeyboardControl: true,
+        // Overlay mais claro para não escurecer tanto o elemento destacado
+        overlayColor: "rgba(0,0,0,0.55)",
+        // Mantém fundo transparente dentro do recorte
+        stageBackgroundColor: "transparent",
+        // Aumenta espaço ao redor do elemento para evitar recorte encostado nas bordas do card
+        stagePadding: 14,
         popoverClass: "fynx-driver-popover",
         showButtons: ['next', 'previous', 'close'],
         progressText: "{{current}} de {{total}}",
-        nextBtnText: "Próximo",
-        prevBtnText: "Anterior",
-        doneBtnText: "Concluir",
+        nextBtnText: "→",
+        prevBtnText: "←",
+        doneBtnText: "→",
 
         // Hook for the Close (X) button
         onCloseClick: () => {
@@ -69,35 +87,260 @@ export const createDriver = (steps: DriveStep[]) => {
                 }
             }
 
+            // Remove ESC listener when tour is destroyed
+            document.removeEventListener('keydown', handleEscape, true);
+
             // Allow destruction to proceed
             return true;
         },
 
         onPopoverRender: (popover, { config, state }) => {
-            // Add Skip Button to the footer
+                        // Se for o passo 3 do tour de transações, abrir o painel de adicionar transação
+                        if (config.steps && config.steps.length === 11 && state.activeIndex === 2 && typeof window !== 'undefined' && typeof window.openAddTransactionSheet === 'function') {
+                            window.openAddTransactionSheet();
+                        }
             const footer = popover.footerButtons;
 
             if (footer) {
-                // Handle Skip Button
-                if (!footer.querySelector('.fynx-skip-btn')) {
+                // Sempre reaplica SVG nas setas para garantir centralização, mesmo após hover/focus ou rerender do driver.js
+                const prevBtn = footer.querySelector('button.driver-prev-btn');
+                if (prevBtn) {
+                    prevBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+                }
+                const nextBtn = footer.querySelector('button.driver-next-btn');
+                if (nextBtn) {
+                    // Sempre mostra só a seta →, nunca texto
+                    nextBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+                    // Move o botão "próximo" para ser o primeiro botão focável no footer
+                    const closeBtn = footer.querySelector('button.driver-popover-close-btn');
+                    if (closeBtn && nextBtn !== closeBtn.previousSibling) {
+                        try {
+                            footer.insertBefore(nextBtn, closeBtn); // insere antes do botão de fechar
+                        } catch (e) {
+                            // ignora erros
+                        }
+                        // Remove o foco do botão de fechar, se ele estiver focado
+                        if (document.activeElement === closeBtn) {
+                            closeBtn.blur();
+                        }
+                        // Remove o atributo tabIndex e autoFocus do botão de fechar para evitar foco automático
+                        closeBtn.removeAttribute('tabindex');
+                        closeBtn.removeAttribute('autofocus');
+                    }
+                    // Foca o botão "próximo" assim que possível usando requestAnimationFrame
+                    const focusNextBtn = (attempt = 0) => {
+                        if (attempt > 20) return; // evita loop infinito
+                        if (nextBtn && nextBtn.offsetParent !== null) {
+                            try {
+                                nextBtn.focus();
+                                if (document.activeElement !== nextBtn) {
+                                    requestAnimationFrame(() => focusNextBtn(attempt + 1));
+                                }
+                            } catch (e) {
+                                // ignora erros de foco
+                            }
+                        } else {
+                            requestAnimationFrame(() => focusNextBtn(attempt + 1));
+                        }
+                    };
+                    focusNextBtn();
+                }
+                // Force footer layout
+                footer.style.cssText = `
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    width: 100% !important;
+                    gap: 0 !important;
+                `;
+
+                // Get all buttons
+                const allButtons = Array.from(footer.querySelectorAll('button')).filter(btn => 
+                    !btn.classList.contains('driver-popover-close-btn')
+                );
+                
+                // Create a container for buttons if there are buttons
+                if (allButtons.length > 0) {
+                    // Create wrapper div for buttons
+                    const buttonWrapper = document.createElement('div');
+                    buttonWrapper.style.cssText = `
+                        display: flex !important;
+                        gap: 8px !important;
+                        order: 0 !important;
+                        flex-shrink: 0 !important;
+                        align-items: center !important;
+                    `;
+
+                    // Move all buttons to wrapper
+                    allButtons.forEach(btn => {
+                        buttonWrapper.appendChild(btn);
+                    });
+
+                    // Create Skip button
                     const skipBtn = document.createElement("button");
                     skipBtn.innerText = "Pular";
                     skipBtn.className = "fynx-skip-btn";
-                    footer.insertBefore(skipBtn, footer.firstChild);
 
                     skipBtn.addEventListener("click", (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Skip button clicked');
-
                         localStorage.setItem('fynx-tour-skipped', 'true');
                         if (driverObj) {
                             driverObj.destroy();
                             driverObj = null;
                         }
                     });
+
+
+                    // Estilo idêntico ao botão 'Ver Mais Transações'
+                    skipBtn.style.cssText = `
+                        background-color: var(--background) !important;
+                        border: 1px solid hsl(var(--border)) !important;
+                        color: hsl(var(--primary-foreground)) !important;
+                        font-size: 13px !important;
+                        font-weight: 700 !important;
+                        cursor: pointer !important;
+                        padding: 0 1.25rem !important;
+                        border-radius: 0.375rem !important;
+                        height: 2rem !important;
+                        line-height: 2rem !important;
+                        margin: 0 !important;
+                        white-space: nowrap !important;
+                        flex-shrink: 0 !important;
+                        box-shadow: none !important;
+                        transition: background 0.2s, color 0.2s, border 0.2s !important;
+                        letter-spacing: 0.01em !important;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+                    `;
+                    skipBtn.classList.add('hover:bg-accent', 'hover:text-accent-foreground', 'h-8', 'text-xs');
+
+                    skipBtn.addEventListener('mouseenter', () => {
+                        skipBtn.style.backgroundColor = 'hsl(var(--accent))';
+                        skipBtn.style.color = 'hsl(var(--accent-foreground))';
+                        skipBtn.style.borderColor = 'hsl(var(--accent))';
+                        skipBtn.style.fontWeight = '700';
+                    });
+                    skipBtn.addEventListener('mouseleave', () => {
+                        skipBtn.style.backgroundColor = 'var(--background)';
+                        skipBtn.style.color = 'hsl(var(--primary-foreground))';
+                        skipBtn.style.borderColor = 'hsl(var(--border))';
+                        skipBtn.style.fontWeight = '700';
+                    });
+
+                    // Add skip button to wrapper after navigation buttons
+                    buttonWrapper.appendChild(skipBtn);
+
+                    // Insert wrapper at the beginning of footer
+                    footer.insertBefore(buttonWrapper, footer.firstChild);
                 }
+
+                // Move progress text to the end
+                const progressText = footer.querySelector('.driver-popover-progress-text') as HTMLElement;
+                if (progressText) {
+                    progressText.style.cssText = `
+                        margin-left: auto !important;
+                        order: 999 !important;
+                        flex-shrink: 0 !important;
+                    `;
+                    footer.appendChild(progressText);
+                }
+
+                const applyButtonStyles = (btn: HTMLElement) => {
+                    if (!btn) return;
+                    
+                    // Não manipula filhos nem força conteúdo, deixa o driver.js renderizar normalmente
+
+                    btn.style.cssText = `
+                        border-radius: 50% !important;
+                        width: 32px !important;
+                        height: 32px !important;
+                        min-width: 32px !important;
+                        min-height: 32px !important;
+                        max-width: 32px !important;
+                        max-height: 32px !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        background-color: transparent !important;
+                        border: none !important;
+                        color: hsl(var(--foreground)) !important;
+                        transition: none !important;
+                        flex-shrink: 0 !important;
+                        font-size: 28px !important;
+                        line-height: 1 !important;
+                        vertical-align: middle !important;
+                        box-shadow: none !important;
+                        outline: none !important;
+                    `;
+                    // Remove pseudo-elementos se houver (via CSS)
+                    btn.classList.add('no-pseudo');
+
+                    btn.addEventListener('mouseenter', () => {
+                        btn.style.backgroundColor = 'hsl(var(--accent))';
+                        btn.style.color = 'hsl(var(--accent-foreground))';
+                        btn.style.borderColor = 'hsl(var(--accent))';
+                        btn.style.transform = 'scale(1.05)';
+                    });
+
+                    btn.addEventListener('mouseleave', () => {
+                        btn.style.backgroundColor = 'transparent';
+                        btn.style.color = 'hsl(var(--foreground))';
+                        btn.style.borderColor = 'hsl(var(--border))';
+                        btn.style.transform = 'scale(1)';
+                    });
+                };
+
+                allButtons.forEach(btn => applyButtonStyles(btn as HTMLElement));
             }
+        },
+
+        // When element is highlighted we can tweak additional styles if needed
+        onHighlighted: (element) => {
+                        // Destaque manual para o campo de descrição
+                        try {
+                            if (element && element.matches('[data-tour="transaction-description"]')) {
+                                element.classList.add('fynx-tour-manual-highlight');
+                                const input = element.querySelector('input') || element;
+                                if (input) input.classList.add('fynx-tour-manual-highlight');
+                            }
+                        } catch (e) {}
+                        // Remove destaque manual
+                        document.querySelectorAll('.fynx-tour-manual-highlight').forEach(el => {
+                            el.classList.remove('fynx-tour-manual-highlight');
+                        });
+            // Adiciona classe de destaque especial para campos em sheets/painéis escuros
+            try {
+                if (element) {
+                    element.classList.add('driver-active-element');
+                    // Se for o campo de descrição da transação, adiciona destaque especial
+                    if (element.matches('[data-tour="transaction-description"]')) {
+                        element.classList.add('fynx-tour-highlight');
+                        // Também aplica no input interno
+                        const input = element.querySelector('input') || element;
+                        if (input) {
+                            input.classList.add('fynx-tour-highlight');
+                            // Remove bg-input se existir, para garantir fundo branco
+                            if (input.classList.contains('bg-input')) {
+                                input.classList.remove('bg-input');
+                                input.setAttribute('data-tour-removed-bg', '1');
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('onHighlighted style application failed:', e);
+            }
+                    // Remove classe de destaque especial de todos os campos e inputs
+                    document.querySelectorAll('.fynx-tour-highlight').forEach(el => {
+                        el.classList.remove('fynx-tour-highlight');
+                        // Se for input e teve bg-input removido, restaura
+                        if (el.tagName === 'INPUT' && el.getAttribute('data-tour-removed-bg') === '1') {
+                            el.classList.add('bg-input');
+                            el.removeAttribute('data-tour-removed-bg');
+                        }
+                    });
         }
     };
 
@@ -107,6 +350,27 @@ export const createDriver = (steps: DriveStep[]) => {
 
 export const startTour = (steps: DriveStep[]) => {
     const tour = createDriver(steps);
+    
+    // Add explicit ESC key handler
+    handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('ESC pressed - closing tour');
+            if (driverObj) {
+                driverObj.destroy();
+                driverObj = null;
+            }
+            if (handleEscape) {
+                document.removeEventListener('keydown', handleEscape, true);
+                handleEscape = null;
+            }
+        }
+    };
+    
+    // Use capture phase to ensure we catch the event first
+    document.addEventListener('keydown', handleEscape, true);
+    
     tour.drive();
 };
 

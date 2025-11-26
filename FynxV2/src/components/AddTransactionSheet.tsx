@@ -21,7 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Plus, Upload, X, CalendarIcon } from "lucide-react"
+import { ArrowLeftRight, Upload, X, CalendarIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Form,
@@ -36,7 +36,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useQueryClient } from "@tanstack/react-query"
-import * as z from "zod"
+import { z } from "@/lib/zod-pt-br"
 import {
   useCreate,
   useInvalidate,
@@ -65,13 +65,11 @@ interface AddTransactionSheetProps {
 }
 
 const transactionFormSchema = z.object({
-  description: z.string().min(1, "Descrição é obrigatória"),
-  amount: z.coerce.number().min(0.01, "O valor deve ser maior que zero"),
-  type: z.enum(["income", "expense"], {
-    required_error: "O tipo da transação é obrigatório",
-  }),
-  category: z.string().min(1, "Categoria é obrigatória"),
-  date: z.string().min(1, "Data é obrigatória"),
+  description: z.string().optional(),
+  amount: z.coerce.number().optional(),
+  type: z.enum(["income", "expense"]).optional(),
+  category: z.string().optional(),
+  date: z.string().optional(),
   isRecurring: z.boolean().default(false),
   spendingGoalId: z.string().optional(),
   savingGoalId: z.string().optional(),
@@ -118,6 +116,7 @@ export function AddTransactionSheet({
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
+      type: 'income',
       isRecurring: false,
       date: new Date().toISOString().split('T')[0], // Data de hoje no formato YYYY-MM-DD
     },
@@ -215,6 +214,7 @@ export function AddTransactionSheet({
     } else if (!open) {
       // Reset form and state when sheet closes
       form.reset({
+        type: 'income',
         isRecurring: false,
         date: new Date().toISOString().split('T')[0],
       });
@@ -229,6 +229,52 @@ export function AddTransactionSheet({
   const onSubmit = (values: TransactionFormValues) => {
     (async () => {
       try {
+        // Validação manual dos campos obrigatórios
+        if (!values.description || values.description.trim() === '') {
+          toast({
+            title: "Campo obrigatório",
+            description: "A descrição é obrigatória",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.amount || values.amount <= 0) {
+          toast({
+            title: "Campo obrigatório",
+            description: "O valor deve ser maior que zero",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.type) {
+          toast({
+            title: "Campo obrigatório",
+            description: "O tipo da transação é obrigatório",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.category || values.category.trim() === '') {
+          toast({
+            title: "Campo obrigatório",
+            description: "A categoria é obrigatória",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!values.date || values.date.trim() === '') {
+          toast({
+            title: "Campo obrigatório",
+            description: "A data é obrigatória",
+            variant: "destructive"
+          });
+          return;
+        }
+
         let finalCategory = values.category;
 
         // Do NOT auto-create categories when adding a transaction.
@@ -304,9 +350,12 @@ export function AddTransactionSheet({
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
+            <ArrowLeftRight className="h-5 w-5 text-accent" />
             Adicionar Transação
           </SheetTitle>
+          <SheetDescription>
+            Registre suas receitas e despesas para acompanhar suas finanças em tempo real.
+          </SheetDescription>
         </SheetHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
@@ -317,9 +366,8 @@ export function AddTransactionSheet({
                 <FormItem>
                   <FormLabel>Descrição *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Salário, Supermercado" {...field} />
+                    <Input data-tour="transaction-description" placeholder="Ex: Salário, Supermercado" {...field} className="bg-input border-border" />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -336,6 +384,7 @@ export function AddTransactionSheet({
                       inputMode="decimal"
                       placeholder="R$ 0,00"
                       value={typedAmount}
+                      className="bg-input border-border"
                       onChange={(e) => {
                         const val = e.target.value
                         // Permite apenas dígitos e vírgula; remove pontos para recalcular formatação
@@ -362,7 +411,8 @@ export function AddTransactionSheet({
                         if (!typedAmount) return
                         const [intPartRaw = "", decPartRaw = ""] = typedAmount.split(",")
                         const intDigits = intPartRaw.replace(/\./g, "")
-                        const decDigits = decPartRaw.padEnd(2, "0").slice(0, 2)
+                        // Se não há parte decimal ou está vazia, preenche com "00"
+                        const decDigits = decPartRaw ? decPartRaw.padEnd(2, "0").slice(0, 2) : "00"
                         const intWithDots = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
                         const finalFormatted = `${intWithDots},${decDigits}`
                         setTypedAmount(finalFormatted)
@@ -373,7 +423,9 @@ export function AddTransactionSheet({
                       }}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <p className="text-xs text-muted-foreground">
+                    Digite apenas números. Ex: 15000 para R$ 15.000
+                  </p>
                 </FormItem>
               )}
             />
@@ -385,26 +437,28 @@ export function AddTransactionSheet({
                 <FormItem className="space-y-3">
                   <FormLabel>Tipo *</FormLabel>
                   <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex space-x-4"
-                    >
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="income" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Entrada</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="expense" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Saída</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
+                    <div className="flex items-center justify-between">
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="income" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Entrada</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="expense" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Saída</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                      <ManageCategoriesModal />
+                    </div>
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -417,7 +471,7 @@ export function AddTransactionSheet({
                   <FormLabel>Categoria *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                         <SelectValue placeholder="Selecione uma categoria" />
                       </SelectTrigger>
                     </FormControl>
@@ -444,14 +498,9 @@ export function AddTransactionSheet({
                           )}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
                 </FormItem>
               )}
             />
-
-                  <div className="flex justify-end">
-                    <ManageCategoriesModal />
-                  </div>
 
             <FormField
               control={form.control}
@@ -461,12 +510,13 @@ export function AddTransactionSheet({
                 return (
                   <FormItem>
                     <FormLabel>Data *</FormLabel>
-                    <div className="relative w-[280px]">
+                    <div className="relative w-full">
                       <FormControl>
                         <Input
                           placeholder="dd/mm/yyyy"
                           inputMode="numeric"
                           value={typedDate}
+                          className="bg-input border-border"
                           onChange={(e) => {
                             const masked = maskDateOnInput(e.target.value)
                             setTypedDate(masked)
@@ -498,13 +548,14 @@ export function AddTransactionSheet({
                             variant="ghost"
                             size="icon"
                             aria-label="Abrir calendário"
-                            className="absolute right-1 top-1/2 -translate-y-1/2"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity"
                           >
                             <CalendarIcon className="h-4 w-4" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
+                        <PopoverContent className="w-auto p-0" align="end" sideOffset={8} avoidCollisions={false}>
                           <Calendar
+                            locale={ptBR}
                             initialFocus
                             mode="single"
                             selected={selectedDate}
@@ -518,7 +569,6 @@ export function AddTransactionSheet({
                         </PopoverContent>
                       </Popover>
                     </div>
-                    <FormMessage />
                   </FormItem>
                 )
               }}
@@ -593,7 +643,6 @@ export function AddTransactionSheet({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -611,7 +660,7 @@ export function AddTransactionSheet({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                           <SelectValue placeholder="Selecione uma meta" />
                         </SelectTrigger>
                       </FormControl>
@@ -623,11 +672,11 @@ export function AddTransactionSheet({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
             )}
+
 
             {/* If user selected 'Outros', prompt to use category manager (do not auto-create) */}
             {form.watch('category') === 'Outros' && (

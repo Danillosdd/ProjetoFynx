@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, ArrowRight, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Target, ArrowRight, ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InitialTransactionData } from "./AddTransactionSheet";
 import {
@@ -76,7 +76,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
         <Card className="bg-card border-border h-full flex flex-col overflow-hidden relative">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 z-10 bg-card/80 backdrop-blur-sm">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <Wallet className="w-5 h-5 text-primary" />
+                    <Target className="w-5 h-5 text-accent" />
                     Minhas Metas
                 </CardTitle>
                 <div className="flex items-center bg-muted rounded-full p-1 relative">
@@ -178,10 +178,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className={cn(
-                                                        "h-8 w-8 transition-opacity hover:bg-muted",
-                                                        isSaving ? "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20" : ""
-                                                    )}
+                                                    className="h-8 w-8 transition-opacity hover:bg-accent hover:text-accent-foreground"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         onAddTransaction({
@@ -200,7 +197,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8 transition-opacity text-destructive hover:bg-destructive/10"
+                                                            className="h-8 w-8 transition-opacity text-destructive hover:bg-accent hover:text-accent-foreground"
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -290,9 +287,9 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                     <>
                         <div className="absolute bottom-4 left-4 z-20">
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="icon"
-                                className="rounded-full shadow-lg hover:scale-105 transition-transform"
+                                className="rounded-full shadow-lg hover:bg-accent hover:text-accent-foreground transition-all"
                                 onClick={handlePrev}
                             >
                                 <ArrowLeft className="w-4 h-4" />
@@ -306,7 +303,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                                     key={idx}
                                     className={cn(
                                         "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                                        idx === activeDotIndex ? "bg-primary w-4" : "bg-muted-foreground/30"
+                                        idx === activeDotIndex ? "bg-accent w-4" : "bg-muted-foreground/30"
                                     )}
                                 />
                             ))}
@@ -314,9 +311,9 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
 
                         <div className="absolute bottom-4 right-4 z-20">
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="icon"
-                                className="rounded-full shadow-lg hover:scale-105 transition-transform"
+                                className="rounded-full shadow-lg hover:bg-accent hover:text-accent-foreground transition-all"
                                 onClick={handleNext}
                             >
                                 <ArrowRight className="w-4 h-4" />

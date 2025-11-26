@@ -21,9 +21,11 @@ import { Target, Calendar as CalendarIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { ptBR } from "date-fns/locale"
 
 interface CreateGoalSheetProps {
   children: React.ReactNode
+  initialGoalType?: 'saving' | 'spending'
   onCreateGoal: (goalData: {
     goalType: 'saving' | 'spending'
     name: string
@@ -37,7 +39,7 @@ interface CreateGoalSheetProps {
   }) => void
 }
 
-export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps) {
+export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: CreateGoalSheetProps) {
   const [name, setName] = useState("")
   const [targetValue, setTargetValue] = useState("")
   const [description, setDescription] = useState("")
@@ -50,7 +52,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
     const d = new Date(targetDate)
     return isNaN(d.getTime()) ? undefined : d
   })
-  const [goalType, setGoalType] = useState<'saving'|'spending'>('saving')
+  const [goalType, setGoalType] = useState<'saving'|'spending'>(initialGoalType || 'saving')
   const [category, setCategory] = useState('Outros')
   const [period, setPeriod] = useState<'monthly'|'weekly'|'yearly'>('monthly')
   const [isOpen, setIsOpen] = useState(false)
@@ -164,7 +166,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
     setTargetValue("")
     setDescription("")
     setTargetDate("")
-    setGoalType('saving')
+    setGoalType(initialGoalType || 'saving')
     setCategory('Outros')
     setPeriod('monthly')
   }
@@ -193,8 +195,8 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
           <div className="grid gap-2">
             <Label>Tipo de Meta</Label>
             <div className="flex gap-4">
-              <button type="button" className={`py-2 px-3 rounded ${goalType === 'saving' ? 'bg-green-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('saving')}>💰 Meta de Poupança</button>
-              <button type="button" className={`py-2 px-3 rounded ${goalType === 'spending' ? 'bg-red-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('spending')}>💸 Meta de Gasto</button>
+              <button type="button" className={`flex-1 py-2 px-3 rounded ${goalType === 'spending' ? 'bg-red-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('spending')}>💸 Limite de Gasto</button>
+              <button type="button" className={`flex-1 py-2 px-3 rounded ${goalType === 'saving' ? 'bg-green-500 text-white' : 'bg-muted'}`} onClick={() => setGoalType('saving')}>💰 Meta de Poupança</button>
             </div>
           </div>
 
@@ -242,8 +244,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
           {/* Target Date (only for saving) or Reset Period (only for spending) */}
           {goalType === 'saving' ? (
             <div className="grid gap-2">
-              <Label htmlFor="target-date" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
+              <Label htmlFor="target-date">
                 Data Final / Prazo
               </Label>
               <div className="relative">
@@ -261,13 +262,14 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
                       variant="ghost"
                       size="icon"
                       aria-label="Abrir calendário"
-                      className="absolute right-1 top-1/2 -translate-y-1/2"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity"
                     >
                       <CalendarIcon className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
+                  <PopoverContent className="w-auto p-0" align="end" sideOffset={8} avoidCollisions={false}>
                     <Calendar
+                      locale={ptBR}
                       initialFocus
                       mode="single"
                       selected={selectedTargetDate}
@@ -287,7 +289,7 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
             <div className="grid gap-2">
               <Label>Período de Reset</Label>
               <Select onValueChange={(v) => setPeriod(v as any)} defaultValue={period}>
-                <SelectTrigger>
+                <SelectTrigger className="hover:bg-accent hover:text-accent-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -326,12 +328,9 @@ export function CreateGoalSheet({ children, onCreateGoal }: CreateGoalSheetProps
           )}
         </div>
 
-        <SheetFooter className="gap-2">
-          <SheetClose asChild>
-            <Button variant="outline">Cancelar</Button>
-          </SheetClose>
-          <Button onClick={handleSave} className="bg-accent text-accent-foreground hover:bg-accent/90">
-            Criar Meta
+        <SheetFooter>
+          <Button onClick={handleSave} className="w-full">
+            Salvar Meta
           </Button>
         </SheetFooter>
       </SheetContent>

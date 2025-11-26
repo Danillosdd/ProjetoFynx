@@ -123,7 +123,7 @@ const Goals = () => {
         <div className="space-y-6" data-tour="spending-goals-section">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-foreground">💸 Limites de Gasto</h2>
-            <CreateGoalSheet onCreateGoal={addNewGoal}>
+            <CreateGoalSheet initialGoalType="spending" onCreateGoal={addNewGoal}>
               <Button data-tour="create-spending-goal-btn">
                 + Novo Limite
               </Button>
@@ -135,7 +135,7 @@ const Goals = () => {
         <div className="space-y-6" data-tour="saving-goals-section">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-foreground">💰 Metas de Poupança</h2>
-            <CreateGoalSheet onCreateGoal={addNewGoal}>
+            <CreateGoalSheet initialGoalType="saving" onCreateGoal={addNewGoal}>
               <Button data-tour="create-saving-goal-btn">
                 + Nova Meta
               </Button>

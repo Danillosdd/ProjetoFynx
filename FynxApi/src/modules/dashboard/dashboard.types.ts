@@ -15,6 +15,17 @@ export interface Transaction {
   category: string;
 }
 
+// Define a estrutura para uma única transação recente a ser exibida no dashboard.
+export interface RecentTransaction {
+  id: number;
+  description: string;
+  type: 'income' | 'expense';
+  status: 'completed' | 'pending' | 'failed';
+  amount: number;
+  date: string;
+  category: string;
+}
+
 // Define a estrutura para os dados do overview do dashboard.
 export interface OverviewData {
   title: string;
@@ -53,7 +64,7 @@ export interface MonthlyData {
 // Define a estrutura completa dos dados do dashboard.
 export interface DashboardData {
   overview: OverviewData[];
-  recentTransactions: Transaction[];
+  recentTransactions: RecentTransaction[];
   spendingByCategory: SpendingCategory[];
   incomeByCategory: IncomeCategory[];
   dailyPerformance: DailyData[];

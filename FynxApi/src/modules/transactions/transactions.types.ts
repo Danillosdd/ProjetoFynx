@@ -94,7 +94,7 @@ export interface CreateTransactionRequest {
   category: string;
   subcategory?: string;
   date: string;
-  paymentMethod: 'cash' | 'credit_card' | 'debit_card' | 'bank_transfer' | 'pix' | 'other';
+  paymentMethod?: 'cash' | 'credit_card' | 'debit_card' | 'bank_transfer' | 'pix' | 'other';
   tags?: string[];
   location?: string;
   notes?: string;

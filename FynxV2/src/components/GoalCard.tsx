@@ -42,6 +42,7 @@ const formatCurrency = (value: number) => {
 export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) => {
   const percentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
   const remaining = goal.targetAmount - goal.currentAmount;
+  const percentageFormatted = percentage.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   if (goal.goalType === 'saving') {
     return (
@@ -59,7 +60,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent hover:text-accent-foreground"
               onClick={() => onAddTransaction({ type: 'income', goalId: goal.id })}
               data-tour="add-to-goal-btn"
             >
@@ -71,7 +72,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-accent hover:text-accent-foreground"
                     data-tour="delete-goal-btn"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -124,7 +125,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
             <span className="text-blue-600 dark:text-blue-400">
               {percentage >= 100 ? "Meta Atingida! 🎉" : "Em progresso"}
             </span>
-            <span className="text-muted-foreground">{Math.round(percentage)}% concluído</span>
+            <span className="text-muted-foreground">{percentageFormatted}% concluído</span>
           </div>
         </div>
       </div>
@@ -150,7 +151,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent hover:text-accent-foreground"
             onClick={() => onAddTransaction({ type: 'expense', spendingLimitId: goal.id })}
             data-tour="add-to-goal-btn"
           >
@@ -162,7 +163,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-accent hover:text-accent-foreground"
                   data-tour="delete-goal-btn"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -215,7 +216,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
           <span className={isOverLimit ? "text-destructive" : "text-emerald-600"}>
             {isOverLimit ? "Limite Excedido" : "Dentro do limite"}
           </span>
-          <span className="text-muted-foreground">{Math.round(percentage)}% usado</span>
+          <span className="text-muted-foreground">{percentageFormatted}% usado</span>
         </div>
       </div>
     </div>
