@@ -84,7 +84,7 @@ export function useRanking() {
   return useQuery({
     queryKey: ['ranking'],
     queryFn: async () => {
-      const res = await api.get<{ success: boolean; data?: RankingData }>(`/ranking`);
+      const res = await api.get<RankingData>(`/ranking`);
       const empty: RankingData = {
         userRanking: {
           id: '',
@@ -122,7 +122,7 @@ export function useRanking() {
           userPercentile: 0,
         },
       };
-      const raw = res.data;
+      const raw = res;
       if (!raw) return empty;
       return {
         userRanking: {

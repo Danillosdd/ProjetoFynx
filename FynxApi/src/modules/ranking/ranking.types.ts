@@ -52,7 +52,7 @@ export interface LeaderboardEntry {
   avatar?: string;
   score: number;
   level: number;
-  league: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+  league: 'Bronze' | 'Prata' | 'Ouro' | 'Platina' | 'Diamante';
   change: number; // Position change from last period
   trend: 'up' | 'down' | 'same';
 }

@@ -10,8 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Eye, EyeOff, Mail, Lock, User, Apple, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Apple, ArrowRight, Check, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/context/AuthContext"
+import { api } from "@/services/api"
+import { toast } from "sonner"
 import fynxLogo from "@/assets/FYNX CABRA SF.png"
 
 export default function LoginPage() {
@@ -21,6 +24,37 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const navigate = useNavigate()
 
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [registerEmail, setRegisterEmail] = useState("")
+  const [registerPassword, setRegisterPassword] = useState("")
+
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    minLength: false,
+    hasUpperCase: false,
+    hasNumber: false,
+    hasSpecialChar: false
+  })
+
+  const validatePassword = (pass: string) => {
+    setPasswordCriteria({
+      minLength: pass.length >= 8,
+      hasUpperCase: /[A-Z]/.test(pass),
+      hasNumber: /[0-9]/.test(pass),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+    })
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPass = e.target.value
+    setRegisterPassword(newPass)
+    validatePassword(newPass)
+  }
+
+  const { login } = useAuth()
+
+  /*
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
   const rotateX = useTransform(mouseY, [-300, 300], [5, -5])
@@ -36,6 +70,7 @@ export default function LoginPage() {
     mouseX.set(0)
     mouseY.set(0)
   }
+  */
 
   const handleSocialLogin = (provider: string) => {
     setIsLoading(true)
@@ -46,33 +81,63 @@ export default function LoginPage() {
     }, 2000)
   }
 
-  const handleLogin = () => {
-    setIsLoading(true)
-    // Simulate loading
-    setTimeout(() => {
-      setIsLoading(false)
+  const handleLogin = async () => {
+    try {
+      setIsLoading(true)
+      console.log('[Login] Attempting login with:', email)
+      const response = await api.post('/auth/login', { email, password })
+      console.log('[Login] Success:', response.data)
+
+      login(response.data.token, response.data.user)
       navigate("/dashboard")
-    }, 2000)
+    } catch (error: any) {
+      console.error('[Login] Error:', error)
+      toast.error("Erro ao fazer login", {
+        description: error.response?.data?.error || 'Credenciais inválidas. Verifique seu email e senha.'
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleRegister = () => {
-    setIsLoading(true)
-    // Simulate loading
-    setTimeout(() => {
-      setIsLoading(false)
+  const handleRegister = async () => {
+    const isValidPassword = Object.values(passwordCriteria).every(Boolean)
+    if (!isValidPassword) {
+      toast.error("Senha inválida", {
+        description: "A senha deve atender a todos os requisitos."
+      })
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      console.log('[Register] Attempting register with:', registerEmail)
+      const response = await api.post('/auth/register', {
+        name,
+        email: registerEmail,
+        password: registerPassword
+      })
+      console.log('[Register] Success:', response.data)
+
+      login(response.data.token, response.data.user)
       navigate("/dashboard")
-    }, 2000)
+    } catch (error: any) {
+      console.error('[Register] Error:', error)
+      alert(error.response?.data?.error || 'Erro ao criar conta')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-3">
       {/* Left Side - Animated Background with Logo and Text */}
       <div className="lg:col-span-2 gradient-bg-dark flex items-center justify-center p-8 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden"> 
-           <div className="absolute -top-40 -right-40 w-80 h-80 bg-lime-400/20 rounded-full blur-3xl animate-pulse"></div> 
-           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div> 
-           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-lime-300/15 rounded-full blur-3xl animate-pulse delay-500"></div> 
-         </div>
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-lime-400/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-lime-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
+        </div>
 
         {/* Logo and Branding */}
         <div className="text-center relative z-10">
@@ -122,9 +187,9 @@ export default function LoginPage() {
       <div className="flex items-center justify-center p-6" style={{ backgroundColor: "#14141A" }}>
         <motion.div className="w-full max-w-sm" style={{ perspective: 1500 }}>
           <motion.div
-            style={{ rotateX, rotateY }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
+          // style={{ rotateX, rotateY }}
+          // onMouseMove={handleMouseMove}
+          // onMouseLeave={handleMouseLeave}
           >
             <div className="relative group">
               {/* Card glow effect */}
@@ -309,14 +374,15 @@ export default function LoginPage() {
                         <div className="relative group">
                           <div className="absolute -inset-[0.5px] bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-purple-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none" />
                           <Mail
-                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${
-                              focusedInput === "email" ? "text-purple-400" : "text-purple-400"
-                            }`}
+                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${focusedInput === "email" ? "text-purple-400" : "text-purple-400"
+                              }`}
                           />
                           <Input
                             id="email"
                             type="email"
                             placeholder="seu@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocusedInput("email")}
                             onBlur={() => setFocusedInput(null)}
                             className="pl-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
@@ -345,14 +411,15 @@ export default function LoginPage() {
                         <div className="relative group">
                           <div className="absolute -inset-[0.5px] bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-purple-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none" />
                           <Lock
-                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${
-                              focusedInput === "password" ? "text-purple-400" : "text-purple-400"
-                            }`}
+                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${focusedInput === "password" ? "text-purple-400" : "text-purple-400"
+                              }`}
                           />
                           <Input
                             id="password"
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             onFocus={() => setFocusedInput("password")}
                             onBlur={() => setFocusedInput(null)}
                             className="pl-10 pr-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
@@ -494,6 +561,8 @@ export default function LoginPage() {
                             id="name"
                             type="text"
                             placeholder="Seu nome"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                             className="pl-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
                           />
                         </div>
@@ -510,14 +579,15 @@ export default function LoginPage() {
                         <div className="relative group">
                           <div className="absolute -inset-[0.5px] bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-purple-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none" />
                           <Mail
-                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${
-                              focusedInput === "register-email" ? "text-purple-400" : "text-purple-400"
-                            }`}
+                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${focusedInput === "register-email" ? "text-purple-400" : "text-purple-400"
+                              }`}
                           />
                           <Input
                             id="register-email"
                             type="email"
                             placeholder="seu@email.com"
+                            value={registerEmail}
+                            onChange={(e) => setRegisterEmail(e.target.value)}
                             onFocus={() => setFocusedInput("register-email")}
                             onBlur={() => setFocusedInput(null)}
                             className="pl-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
@@ -546,14 +616,15 @@ export default function LoginPage() {
                         <div className="relative group">
                           <div className="absolute -inset-[0.5px] bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-purple-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none" />
                           <Lock
-                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${
-                              focusedInput === "register-password" ? "text-purple-400" : "text-purple-400"
-                            }`}
+                            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-300 ${focusedInput === "register-password" ? "text-purple-400" : "text-purple-400"
+                              }`}
                           />
                           <Input
                             id="register-password"
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
+                            value={registerPassword}
+                            onChange={handlePasswordChange}
                             onFocus={() => setFocusedInput("register-password")}
                             onBlur={() => setFocusedInput(null)}
                             className="pl-10 pr-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
@@ -576,6 +647,29 @@ export default function LoginPage() {
                             />
                           )}
                         </div>
+
+                        {/* Password Criteria Feedback */}
+                        <div className="space-y-1 mt-2">
+                          <p className="text-xs text-gray-400 mb-2">A senha deve conter:</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className={`flex items-center text-xs ${passwordCriteria.minLength ? "text-green-400" : "text-gray-500"}`}>
+                              {passwordCriteria.minLength ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                              Mínimo 8 caracteres
+                            </div>
+                            <div className={`flex items-center text-xs ${passwordCriteria.hasUpperCase ? "text-green-400" : "text-gray-500"}`}>
+                              {passwordCriteria.hasUpperCase ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                              Letra maiúscula
+                            </div>
+                            <div className={`flex items-center text-xs ${passwordCriteria.hasNumber ? "text-green-400" : "text-gray-500"}`}>
+                              {passwordCriteria.hasNumber ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                              Número
+                            </div>
+                            <div className={`flex items-center text-xs ${passwordCriteria.hasSpecialChar ? "text-green-400" : "text-gray-500"}`}>
+                              {passwordCriteria.hasSpecialChar ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                              Caractere especial
+                            </div>
+                          </div>
+                        </div>
                       </motion.div>
 
                       <motion.div
@@ -584,7 +678,7 @@ export default function LoginPage() {
                         className="relative group/button"
                       >
                         <div className="absolute inset-0 bg-purple-500/20 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
-                        <Button 
+                        <Button
                           className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 transition-all duration-300 relative overflow-hidden"
                           onClick={handleRegister}
                           disabled={isLoading}

@@ -17,14 +17,16 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
+import { useAuth } from '@/context/AuthContext'
 
 export function ManageCategoriesModal() {
   const [open, setOpen] = React.useState(false)
   const [name, setName] = React.useState('')
-  const [type, setType] = React.useState<'income'|'expense'>('expense')
+  const [type, setType] = React.useState<'income' | 'expense'>('expense')
   const [loading, setLoading] = React.useState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
+  const { user } = useAuth()
 
   // confirmation dialogs state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
@@ -112,13 +114,13 @@ export function ManageCategoriesModal() {
     }
   }
 
-  const listResult = useList({ resource: 'categories/custom', queryOptions: { enabled: open } });
+  const listResult = useList({ resource: 'categories/custom', queryOptions: { enabled: open && !!user?.id } });
   // Normalize different possible shapes: refine useList may return { data: { data: [...] } } or { data: [...] }
   const categories: any[] = Array.isArray(listResult.data?.data)
     ? listResult.data!.data
     : Array.isArray(listResult.data)
-    ? listResult.data
-    : [];
+      ? listResult.data
+      : [];
   const listError = listResult.error;
 
   return (

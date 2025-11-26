@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
+import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,6 +74,7 @@ class Database {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
           email TEXT UNIQUE NOT NULL,
+          password TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -349,6 +351,25 @@ class Database {
         console.error('Erro ao aplicar migração de coluna goal_type em spending_goals:', err);
       }
 
+      // Migration for users table - add password if not exists
+      try {
+        const usersCols = await this.all("PRAGMA table_info('users')");
+        const hasPassword = usersCols.some((col: any) => col.name === 'password');
+
+        if (!hasPassword) {
+          console.log('Applying migration: adding password to users');
+          await this.run("ALTER TABLE users ADD COLUMN password TEXT");
+
+          // Set default password for existing users (e.g., '123456')
+          // Hash generated with bcrypt.hash('123456', 10)
+          const defaultHash = await bcrypt.hash('123456', 10);
+          await this.run("UPDATE users SET password = ? WHERE password IS NULL", [defaultHash]);
+          console.log('Default password set for existing users.');
+        }
+      } catch (err) {
+        console.error('Error applying users migrations:', err);
+      }
+
     } catch (error) {
       console.error('Erro ao inicializar tabelas:', error);
     }
@@ -391,9 +412,10 @@ class Database {
 
       if (existingUser.count === 0) {
         // Inserir usuário padrão
+        const defaultHash = await bcrypt.hash('123456', 10);
         await this.run(
-          'INSERT INTO users (name, email) VALUES (?, ?)',
-          ['Usuário Demo', 'demo@fynx.com']
+          'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+          ['Usuário Demo', 'demo@fynx.com', defaultHash]
         );
 
         // Inserir pontuação inicial para o usuário

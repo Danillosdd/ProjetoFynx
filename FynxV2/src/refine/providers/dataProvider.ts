@@ -31,14 +31,13 @@ const RESOURCE_TO_PATH: Record<string, string> = {
 
 const resolvePath = (resource: string) => RESOURCE_TO_PATH[resource] ?? resource;
 
-// Interceptor para adicionar autenticação no futuro (se necessário)
+// Interceptor para adicionar autenticação
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Aqui você pode adicionar tokens de autenticação no futuro
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const token = localStorage.getItem('fynx_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -48,21 +47,30 @@ axiosInstance.interceptors.request.use(
 
 export const dataProvider: DataProvider = {
   getApiUrl: () => API_URL,
-  
+
   // GET /api/{resource} - Lista recursos
   getList: async ({ resource, pagination, filters, sorters, meta }) => {
     const url = `/${resolvePath(resource)}`;
-    
-    const params: any = {
-      userId: 1 // Default userId
-    };
-    
+
+    const params: any = {};
+
+    // Fallback para userId se não vier nos filtros (embora o ideal seja vir do contexto/hook)
+    const storedUser = localStorage.getItem('fynx_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.id) params.userId = user.id;
+      } catch (e) {
+        // ignore
+      }
+    }
+
     // Paginação - ajustado para o formato do backend
     if (pagination) {
       params.page = pagination.current || 1;
       params.limit = pagination.pageSize || 10;
     }
-    
+
     // Filtros - ajustado para o formato do backend
     if (filters) {
       filters.forEach((filter) => {
@@ -73,7 +81,7 @@ export const dataProvider: DataProvider = {
         }
       });
     }
-    
+
     // Ordenação - ajustado para o formato do backend
     if (sorters && sorters.length > 0) {
       params.sortBy = sorters[0].field;
@@ -82,12 +90,18 @@ export const dataProvider: DataProvider = {
 
     try {
       const { data } = await axiosInstance.get(url, { params });
-      
+
       return {
         data: Array.isArray(data) ? data : data.data || [],
         total: data.total || data.length || 0,
       };
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        return {
+          data: [],
+          total: 0,
+        };
+      }
       console.error(`Erro ao buscar ${resource}:`, error);
       throw error;
     }
@@ -96,14 +110,21 @@ export const dataProvider: DataProvider = {
   // GET /api/{resource}/{id} - Busca um recurso específico
   getOne: async ({ resource, id, meta }) => {
     const url = `/${resolvePath(resource)}/${id}`;
-    
-    const params = {
-      userId: 1 // Default userId
-    };
-    
+
+    const params: any = {};
+    const storedUser = localStorage.getItem('fynx_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.id) params.userId = user.id;
+      } catch (e) {
+        // ignore
+      }
+    }
+
     try {
       const { data } = await axiosInstance.get(url, { params });
-      
+
       return {
         data: data.data || data,
       };
@@ -116,17 +137,26 @@ export const dataProvider: DataProvider = {
   // POST /api/{resource} - Cria um novo recurso
   create: async ({ resource, variables, meta }) => {
     const url = `/${resolvePath(resource)}`;
-    
+
     // Adiciona userId padrão aos dados
     const typedVariables = variables as VariablesWithUserId;
-    const dataWithUserId = {
-      ...typedVariables,
-      userId: typedVariables.userId || 1
-    };
-    
+    const dataWithUserId = { ...typedVariables };
+
+    if (!dataWithUserId.userId) {
+      const storedUser = localStorage.getItem('fynx_user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user.id) dataWithUserId.userId = user.id;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
     try {
       const { data } = await axiosInstance.post(url, dataWithUserId);
-      
+
       return {
         data: data.data || data,
       };
@@ -139,17 +169,26 @@ export const dataProvider: DataProvider = {
   // PUT /api/{resource}/{id} - Atualiza um recurso
   update: async ({ resource, id, variables, meta }) => {
     const url = `/${resolvePath(resource)}/${id}`;
-    
+
     // Adiciona userId padrão aos dados
     const typedVariables = variables as VariablesWithUserId;
-    const dataWithUserId = {
-      ...typedVariables,
-      userId: typedVariables.userId || 1
-    };
-    
+    const dataWithUserId = { ...typedVariables };
+
+    if (!dataWithUserId.userId) {
+      const storedUser = localStorage.getItem('fynx_user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user.id) dataWithUserId.userId = user.id;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
     try {
       const { data } = await axiosInstance.put(url, dataWithUserId);
-      
+
       return {
         data: data.data || data,
       };
@@ -162,14 +201,21 @@ export const dataProvider: DataProvider = {
   // DELETE /api/{resource}/{id} - Remove um recurso
   deleteOne: async ({ resource, id, meta }) => {
     const url = `/${resolvePath(resource)}/${id}`;
-    
-    const params = {
-      userId: 1 // Default userId
-    };
-    
+
+    const params: any = {};
+    const storedUser = localStorage.getItem('fynx_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.id) params.userId = user.id;
+      } catch (e) {
+        // ignore
+      }
+    }
+
     try {
       const { data } = await axiosInstance.delete(url, { params });
-      
+
       return {
         data: data.data || { id },
       };
@@ -182,7 +228,19 @@ export const dataProvider: DataProvider = {
   // Para múltiplas deleções
   deleteMany: async ({ resource, ids }) => {
     try {
-      const deletePromises = ids.map(id => axiosInstance.delete(`/${resolvePath(resource)}/${id}`, { params: { userId: 1 } }));
+      const deletePromises = ids.map(id => {
+        const params: any = {};
+        const storedUser = localStorage.getItem('fynx_user');
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            if (user.id) params.userId = user.id;
+          } catch (e) {
+            // ignore
+          }
+        }
+        return axiosInstance.delete(`/${resolvePath(resource)}/${id}`, { params });
+      });
       await Promise.all(deletePromises);
       return { data: ids.map(id => ({ id })) as any };
     } catch (error) {
@@ -212,10 +270,22 @@ export const dataProvider: DataProvider = {
   // Para buscar múltiplos recursos por IDs
   getMany: async ({ resource, ids }) => {
     try {
-      const promises = ids.map(id => axiosInstance.get(`/${resolvePath(resource)}/${id}`, { params: { userId: 1 } }));
+      const promises = ids.map(id => {
+        const params: any = {};
+        const storedUser = localStorage.getItem('fynx_user');
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            if (user.id) params.userId = user.id;
+          } catch (e) {
+            // ignore
+          }
+        }
+        return axiosInstance.get(`/${resolvePath(resource)}/${id}`, { params });
+      });
       const responses = await Promise.all(promises);
       const data = responses.map(response => response.data);
-      
+
       return { data };
     } catch (error) {
       console.error(`Erro ao buscar múltiplos ${resource}:`, error);

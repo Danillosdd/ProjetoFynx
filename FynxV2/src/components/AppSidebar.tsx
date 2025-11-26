@@ -1,10 +1,22 @@
 import {
-  BarChart3, Trophy, Target, Settings, Zap, Menu, X
+  BarChart3, Trophy, Target, Settings, Zap, Menu, X, LogOut
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import goatLogo from "@/assets/FYNX CABRA SF.png"
+import { useAuth } from "@/context/AuthContext"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
@@ -19,6 +31,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
   const location = useLocation()
+  const { logout } = useAuth()
   const currentPath = location.pathname
 
   const isActive = (path: string) => currentPath === path
@@ -80,7 +93,34 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
         </nav>
       </div>
 
-
+      <div className={`${isCollapsed ? 'px-2' : 'px-4'} py-4 border-t border-border`}>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className={`w-full ${isCollapsed ? 'justify-center px-2' : 'justify-start gap-3'} text-muted-foreground hover:text-destructive hover:bg-destructive/10`}
+              title={isCollapsed ? "Sair" : undefined}
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span className="font-medium">Sair</span>}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sair da conta?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você será desconectado do sistema. Tem certeza que deseja continuar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={logout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Sair
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   )
 }
