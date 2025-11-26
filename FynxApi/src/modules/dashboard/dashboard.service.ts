@@ -46,6 +46,31 @@ interface TransactionRow {
 }
 
 /**
+ * Formata um valor monetário para o padrão brasileiro (R$ 1.234,56).
+ * @param {number} value - O valor a ser formatado.
+ * @returns {string} O valor formatado.
+ */
+const formatCurrency = (value: number): string => {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+/**
+ * Formata um número para o padrão brasileiro (1.234,5).
+ * @param {number} value - O valor a ser formatado.
+ * @param {number} decimals - Número de casas decimais (padrão: 1).
+ * @returns {string} O valor formatado.
+ */
+const formatNumber = (value: number, decimals: number = 1): string => {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+};
+
+/**
  * Calcula os dados do overview (Balanço Total, Renda Mensal, Despesas Mensais, Taxa de Poupança).
  * @param {number} userId - ID do usuário.
  * @returns {Promise<OverviewData[]>} Os dados calculados para o overview.
@@ -107,27 +132,27 @@ const calculateOverview = async (userId: number): Promise<OverviewData[]> => {
 
   return [
     { 
-      title: "Monthly Balance", 
-      value: `$${totalBalance.toFixed(2)}`, 
-      change: `${balanceChange >= 0 ? '+' : ''}${balanceChange.toFixed(1)}% vs last month`, 
+      title: "Balanço Mensal", 
+      value: `R$ ${formatCurrency(totalBalance)}`, 
+      change: `${balanceChange >= 0 ? '+' : ''}${formatNumber(balanceChange)}% vs mês passado`, 
       trend: balanceChange >= 0 ? 'up' : 'down' 
     },
     { 
-      title: "Total Income", 
-      value: `$${monthlyIncome.toFixed(2)}`, 
-      change: `${incomeChange >= 0 ? '+' : ''}${incomeChange.toFixed(1)}% vs last month`, 
+      title: "Receita Total", 
+      value: `R$ ${formatCurrency(monthlyIncome)}`, 
+      change: `${incomeChange >= 0 ? '+' : ''}${formatNumber(incomeChange)}% vs mês passado`, 
       trend: incomeChange >= 0 ? 'up' : 'down' 
     },
     { 
-      title: "Total Expense", 
-      value: `$${monthlyExpenses.toFixed(2)}`, 
-      change: `${expensesChange >= 0 ? '+' : ''}${expensesChange.toFixed(1)}% vs last month`, 
+      title: "Despesa Total", 
+      value: `R$ ${formatCurrency(monthlyExpenses)}`, 
+      change: `${expensesChange >= 0 ? '+' : ''}${formatNumber(expensesChange)}% vs mês passado`, 
       trend: expensesChange <= 0 ? 'up' : 'down' // Menos despesas é melhor
     },
     { 
-      title: "Saving Rate", 
-      value: `${savingsRate.toFixed(1)}%`, 
-      change: `${savingsChange >= 0 ? '+' : ''}${savingsChange.toFixed(1)}% vs last month`, 
+      title: "Taxa de Poupança", 
+      value: `${formatNumber(savingsRate)}%`, 
+      change: `${savingsChange >= 0 ? '+' : ''}${formatNumber(savingsChange)}% vs mês passado`, 
       trend: savingsChange >= 0 ? 'up' : 'down' 
     },
   ];
@@ -228,7 +253,7 @@ const getPerformanceData = async (userId: number): Promise<{ dailyPerformance: D
     ORDER BY month_key ASC
   `, [userId]);
   
-  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const monthlyPerformance: MonthlyData[] = monthlyResults.map((row: MonthlyRow) => ({
     month: row.month_num ? monthNames[parseInt(row.month_num) - 1] || 'N/A' : 'N/A',
     income: row.income,

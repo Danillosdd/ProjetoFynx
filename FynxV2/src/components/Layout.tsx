@@ -15,12 +15,12 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen w-full">
       <AppSidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />
       <div className="flex-1 flex flex-col">
-        <header className="border-b border-border bg-background px-6 py-3">
-          <div className="flex items-center justify-between gap-4">
+        <header className="h-[73px] border-b border-border bg-background px-6 flex items-center">
+          <div className="flex items-center justify-between gap-4 w-full">
             <h1 className="text-lg font-semibold">
               {location.pathname === '/dashboard' && 'Dashboard'}
               {location.pathname === '/ranking' && 'Ranking'}
-              {location.pathname === '/goals' && 'Metas'}
+              {location.pathname === '/metas' && 'Metas'}
             </h1>
             <TourButton />
           </div>
