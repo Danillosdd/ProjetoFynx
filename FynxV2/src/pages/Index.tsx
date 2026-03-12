@@ -97,6 +97,7 @@ const Index = () => {
   const [chartView, setChartView] = React.useState<"income" | "expense">("income")
   const [monthlyTimeRange, setMonthlyTimeRange] = React.useState("12m")
   const [isAddTransactionOpen, setIsAddTransactionOpen] = React.useState(false)
+  const [isCreateGoalOpen, setIsCreateGoalOpen] = React.useState(false)
   const [initialTransactionData, setInitialTransactionData] = React.useState<InitialTransactionData | null>(null);
   const { user } = useAuth()
   const { data: dashboardData } = useDashboard()
@@ -122,12 +123,12 @@ const Index = () => {
     if (goalData.goalType === 'saving') {
       const payload = {
         title: goalData.name,
-        goalType: 'saving' as const,
+        goal_type: 'saving' as const,
         category: 'Outros',
-        targetAmount: goalData.target_value,
+        target_amount: goalData.target_value,
         period: 'monthly' as 'monthly' | 'weekly' | 'yearly',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0],
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0],
         description: goalData.description,
       }
       createGoal.mutate(payload, {
@@ -139,12 +140,12 @@ const Index = () => {
 
     const payload = {
       title: goalData.name,
-      goalType: 'spending' as const,
+      goal_type: 'spending' as const,
       category: goalData.category || 'Outros',
-      targetAmount: goalData.target_value,
+      target_amount: goalData.target_value,
       period: (goalData.period || 'monthly') as 'monthly' | 'weekly' | 'yearly',
-      startDate: goalData.start_date || new Date().toISOString().split('T')[0],
-      endDate: goalData.end_date || goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+      start_date: goalData.start_date || new Date().toISOString().split('T')[0],
+      end_date: goalData.end_date || goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
       description: goalData.description,
     }
     createGoal.mutate(payload, {
@@ -172,7 +173,7 @@ const Index = () => {
   const [selectedIds, setSelectedIds] = React.useState<Set<number>>(new Set())
   // Dados paginados da modal de transações
   const [page, setPage] = React.useState(1)
-  const [pageSize] = React.useState(100)
+  const [pageSize] = React.useState(10)
   const [items, setItems] = React.useState<any[]>([])
   const [searchDebounced, setSearchDebounced] = React.useState("")
 
@@ -234,7 +235,7 @@ const Index = () => {
           setPage((p) => p + 1)
         }
       },
-      { root: outer, rootMargin: "200px", threshold: 0 }
+      { root: outer, rootMargin: "400px", threshold: 0 }
     )
     const el = sentinelRef.current
     if (el) obs.observe(el)
@@ -794,6 +795,12 @@ const Index = () => {
             savingGoals={savingGoals}
             onAddTransaction={handleOpenTransactionSheet}
             onDeleteGoal={handleDeleteGoal}
+            onCreateGoalClick={() => setIsCreateGoalOpen(true)}
+          />
+          <CreateGoalSheet
+            open={isCreateGoalOpen}
+            onOpenChange={setIsCreateGoalOpen}
+            onCreateGoal={addNewGoal}
           />
         </div>
       </div>

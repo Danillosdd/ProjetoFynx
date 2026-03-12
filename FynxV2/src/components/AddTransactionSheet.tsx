@@ -119,6 +119,11 @@ export function AddTransactionSheet({
       type: 'income',
       isRecurring: false,
       date: new Date().toISOString().split('T')[0], // Data de hoje no formato YYYY-MM-DD
+      description: '',
+      amount: 0,
+      category: '',
+      spendingGoalId: '',
+      savingGoalId: '',
     },
   });
 
@@ -217,6 +222,11 @@ export function AddTransactionSheet({
         type: 'income',
         isRecurring: false,
         date: new Date().toISOString().split('T')[0],
+        description: '',
+        amount: 0,
+        category: '',
+        spendingGoalId: '',
+        savingGoalId: '',
       });
       setTypedAmount("");
       setLinkToSpendingLimit(false);
@@ -300,42 +310,42 @@ export function AddTransactionSheet({
           },
           {
             onSuccess: () => {
-          toast({
-            title: "Transação adicionada",
-            description: "Sua transação foi adicionada com sucesso.",
-          });
-          form.reset();
-          setTypedAmount("");
-          onOpenChange?.(false);
-          
-          // Invalidar cache do dashboard e transações
-          invalidate({
-            invalidates: ["list"],
-            resource: "dashboard",
-          });
-          invalidate({
-            invalidates: ["list"],
-            resource: "transactions",
-          });
-          invalidate({
-            invalidates: ["list"],
-            resource: "overview",
-          });
+              toast({
+                title: "Transação adicionada",
+                description: "Sua transação foi adicionada com sucesso.",
+              });
+              form.reset();
+              setTypedAmount("");
+              onOpenChange?.(false);
 
-          // Garantir refetch das queries do React Query usadas no dashboard
-          queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-          queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      // Also refetch goals so linked goals reflect updated progress immediately
-      queryClient.invalidateQueries({ queryKey: ["goals"] });
+              // Invalidar cache do dashboard e transações
+              invalidate({
+                invalidates: ["list"],
+                resource: "dashboard",
+              });
+              invalidate({
+                invalidates: ["list"],
+                resource: "transactions",
+              });
+              invalidate({
+                invalidates: ["list"],
+                resource: "overview",
+              });
+
+              // Garantir refetch das queries do React Query usadas no dashboard
+              queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+              queryClient.invalidateQueries({ queryKey: ["transactions"] });
+              // Also refetch goals so linked goals reflect updated progress immediately
+              queryClient.invalidateQueries({ queryKey: ["goals"] });
             },
             onError: (error) => {
-          toast({
-            title: "Erro ao adicionar transação",
-            description: "Ocorreu um erro ao tentar adicionar a transação.",
-            variant: "destructive",
-          });
-          console.error("Erro ao criar transação:", error);
-        },
+              toast({
+                title: "Erro ao adicionar transação",
+                description: "Ocorreu um erro ao tentar adicionar a transação.",
+                variant: "destructive",
+              });
+              console.error("Erro ao criar transação:", error);
+            },
           }
         );
       } catch (err) {
@@ -476,26 +486,26 @@ export function AddTransactionSheet({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                          {transactionType &&
-                            categories[transactionType].map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {category}
+                      {transactionType &&
+                        categories[transactionType].map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+
+                      {/* Custom categories (user-defined) */}
+                      {customCategories?.data && customCategories.data.length > 0 && (
+                        <>
+                          <div className="px-3 py-2 text-xs text-muted-foreground">Suas categorias</div>
+                          {customCategories.data
+                            .filter((c: any) => c.type === transactionType && c.isActive)
+                            .map((c: any) => (
+                              <SelectItem key={`custom:${c.id}`} value={`custom:${c.id}`}>
+                                {c.name}
                               </SelectItem>
                             ))}
-
-                          {/* Custom categories (user-defined) */}
-                          {customCategories?.data && customCategories.data.length > 0 && (
-                            <>
-                              <div className="px-3 py-2 text-xs text-muted-foreground">Suas categorias</div>
-                              {customCategories.data
-                                .filter((c: any) => c.type === transactionType && c.isActive)
-                                .map((c: any) => (
-                                  <SelectItem key={`custom:${c.id}`} value={`custom:${c.id}`}>
-                                    {c.name}
-                                  </SelectItem>
-                                ))}
-                            </>
-                          )}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </FormItem>

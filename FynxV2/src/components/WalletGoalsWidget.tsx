@@ -31,9 +31,10 @@ interface WalletGoalsWidgetProps {
     savingGoals: Goal[];
     onAddTransaction: (data: InitialTransactionData) => void;
     onDeleteGoal: (id: string) => void;
+    onCreateGoalClick?: () => void;
 }
 
-export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGoals, savingGoals, onAddTransaction, onDeleteGoal }) => {
+export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGoals, savingGoals, onAddTransaction, onDeleteGoal, onCreateGoalClick }) => {
     const [view, setView] = useState<'spending' | 'saving'>('spending');
     const [orderedGoals, setOrderedGoals] = useState<Goal[]>([]);
 
@@ -78,6 +79,14 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                     <Target className="w-5 h-5 text-accent" />
                     Minhas Metas
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 ml-2 text-muted-foreground hover:text-accent"
+                        onClick={onCreateGoalClick}
+                    >
+                        <Plus className="h-4 w-4" />
+                    </Button>
                 </CardTitle>
                 <div className="flex items-center bg-muted rounded-full p-1 relative">
                     {/* Animated background pill */}
@@ -274,7 +283,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                         ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-muted rounded-2xl bg-card/50">
                                 <p className="text-muted-foreground text-sm mb-4">Nenhuma meta encontrada.</p>
-                                <Button variant="outline" size="sm" className="gap-2">
+                                <Button variant="outline" size="sm" className="gap-2" onClick={onCreateGoalClick}>
                                     <Plus className="w-4 h-4" /> Criar Meta
                                 </Button>
                             </div>

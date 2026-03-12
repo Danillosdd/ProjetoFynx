@@ -39,12 +39,12 @@ const Goals = () => {
     if (goalData.goalType === 'saving') {
       const payload = {
         title: goalData.name,
-        goalType: 'saving' as const,
+        goal_type: 'saving' as const,
         category: 'Outros',
-        targetAmount: goalData.target_value,
+        target_amount: goalData.target_value,
         period: 'monthly' as 'monthly' | 'weekly' | 'yearly',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0],
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0],
         description: goalData.description,
       } as CreateSpendingGoalRequest
       createGoal.mutate(payload, {
@@ -60,12 +60,12 @@ const Goals = () => {
 
     const payload = {
       title: goalData.name,
-      goalType: 'spending' as const,
+      goal_type: 'spending' as const,
       category: goalData.category || 'Outros',
-      targetAmount: goalData.target_value,
+      target_amount: goalData.target_value,
       period: (goalData.period || 'monthly') as 'monthly' | 'weekly' | 'yearly',
-      startDate: goalData.start_date || new Date().toISOString().split('T')[0],
-      endDate: goalData.end_date || goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+      start_date: goalData.start_date || new Date().toISOString().split('T')[0],
+      end_date: goalData.end_date || goalData.target_date || new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
       description: goalData.description,
     } as CreateSpendingGoalRequest
     createGoal.mutate(payload, {

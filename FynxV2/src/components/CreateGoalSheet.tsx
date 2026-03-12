@@ -24,7 +24,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { ptBR } from "date-fns/locale"
 
 interface CreateGoalSheetProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   initialGoalType?: 'saving' | 'spending'
   onCreateGoal: (goalData: {
     goalType: 'saving' | 'spending'
@@ -37,9 +37,11 @@ interface CreateGoalSheetProps {
     description?: string
     target_date?: string
   }) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: CreateGoalSheetProps) {
+export function CreateGoalSheet({ children, initialGoalType, onCreateGoal, open, onOpenChange }: CreateGoalSheetProps) {
   const [name, setName] = useState("")
   const [targetValue, setTargetValue] = useState("")
   const [description, setDescription] = useState("")
@@ -52,19 +54,23 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
     const d = new Date(targetDate)
     return isNaN(d.getTime()) ? undefined : d
   })
-  const [goalType, setGoalType] = useState<'saving'|'spending'>(initialGoalType || 'saving')
+  const [goalType, setGoalType] = useState<'saving' | 'spending'>(initialGoalType || 'saving')
   const [category, setCategory] = useState('Outros')
-  const [period, setPeriod] = useState<'monthly'|'weekly'|'yearly'>('monthly')
-  const [isOpen, setIsOpen] = useState(false)
+  const [period, setPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly')
+  const [internalOpen, setInternalOpen] = useState(false)
+
+  const isControlled = open !== undefined
+  const isOpen = isControlled ? open : internalOpen
+  const setIsOpen = isControlled ? onOpenChange : setInternalOpen
   const { toast } = useToast()
 
   const formatCurrency = (value: string) => {
     // Remove non-numeric characters except dots and commas
     const numericValue = value.replace(/[^\d,]/g, '')
-    
+
     // Convert to number for validation
     const numberValue = parseFloat(numericValue.replace(',', '.'))
-    
+
     if (!isNaN(numberValue)) {
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -73,7 +79,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
         maximumFractionDigits: 0
       }).format(numberValue)
     }
-    
+
     return value
   }
 
@@ -96,7 +102,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
 
     // Convert target value to number
     const targetValueNumber = parseFloat(targetValue.replace(',', '.'))
-    
+
     if (targetValueNumber <= 0) {
       toast({
         title: "Valor inválido",
@@ -147,7 +153,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
     }
 
     onCreateGoal(payload)
-    
+
     toast({
       title: "Meta criada!",
       description: `Meta "${name}" criada com sucesso`,
@@ -158,7 +164,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
     setTargetValue("")
     setDescription("")
     setTargetDate("")
-    setIsOpen(false)
+    if (setIsOpen) setIsOpen(false)
   }
 
   const resetForm = () => {
@@ -173,12 +179,14 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => {
-      setIsOpen(open)
+      if (setIsOpen) setIsOpen(open)
       if (!open) resetForm()
     }}>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
+      {children && (
+        <SheetTrigger asChild>
+          {children}
+        </SheetTrigger>
+      )}
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
@@ -189,7 +197,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
             Defina seus objetivos financeiros e acompanhe seu progresso ao longo do tempo.
           </SheetDescription>
         </SheetHeader>
-        
+
         <div className="grid gap-6 py-4">
           {/* Goal Type selector */}
           <div className="grid gap-2">
@@ -232,7 +240,7 @@ export function CreateGoalSheet({ children, initialGoalType, onCreateGoal }: Cre
           {/* Description */}
           <div className="grid gap-2">
             <Label htmlFor="description">Descrição (opcional)</Label>
-            <Textarea 
+            <Textarea
               id="description"
               placeholder="Descreva sua meta e porque ela é importante para você..."
               value={description}

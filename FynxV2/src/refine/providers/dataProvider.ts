@@ -91,9 +91,17 @@ export const dataProvider: DataProvider = {
     try {
       const { data } = await axiosInstance.get(url, { params });
 
+      // Handle specific response format for transactions
+      if (data.transactions) {
+        return {
+          data: data.transactions,
+          total: data.totalCount || data.transactions.length,
+        };
+      }
+
       return {
         data: Array.isArray(data) ? data : data.data || [],
-        total: data.total || data.length || 0,
+        total: data.total || data.totalCount || (Array.isArray(data) ? data.length : 0),
       };
     } catch (error: any) {
       if (error.response && error.response.status === 404) {

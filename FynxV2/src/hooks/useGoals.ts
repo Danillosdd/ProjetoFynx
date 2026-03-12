@@ -55,11 +55,11 @@ export interface GoalsData {
 export interface CreateSpendingGoalRequest {
   title: string;
   category: string;
-  goalType?: 'spending' | 'saving';
-  targetAmount: number;
+  goal_type?: 'spending' | 'saving';
+  target_amount: number;
   period: 'monthly' | 'weekly' | 'yearly';
-  startDate: string;
-  endDate: string;
+  start_date: string;
+  end_date: string;
   description?: string;
 }
 

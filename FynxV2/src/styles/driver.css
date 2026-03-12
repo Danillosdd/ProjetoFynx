@@ -1,3 +1,5 @@
+@import "driver.js/dist/driver.css";
+
 /* Destaque manual animado para o campo de descrição durante o tour */
 .fynx-tour-manual-highlight {
     box-shadow: 0 0 0 4px #a78bfa, 0 0 16px 4px #a78bfa99, 0 0 0 8px #fff !important;
@@ -10,9 +12,15 @@
 }
 
 @keyframes fynx-pulse {
-    0% { box-shadow: 0 0 0 4px #a78bfa, 0 0 16px 4px #a78bfa99, 0 0 0 8px #fff; }
-    100% { box-shadow: 0 0 0 8px #a78bfa, 0 0 32px 8px #a78bfa99, 0 0 0 12px #fff; }
+    0% {
+        box-shadow: 0 0 0 4px #a78bfa, 0 0 16px 4px #a78bfa99, 0 0 0 8px #fff;
+    }
+
+    100% {
+        box-shadow: 0 0 0 8px #a78bfa, 0 0 32px 8px #a78bfa99, 0 0 0 12px #fff;
+    }
 }
+
 /* Força o input de descrição a ficar branco durante o tour, independente do tema */
 input[data-tour="transaction-description"].fynx-tour-highlight,
 .fynx-tour-highlight input[data-tour="transaction-description"] {
@@ -24,6 +32,7 @@ input[data-tour="transaction-description"].fynx-tour-highlight,
     position: relative !important;
     outline: 0 !important;
 }
+
 .fynx-tour-highlight.fynx-tour-highlight,
 .fynx-tour-highlight input,
 input.fynx-tour-highlight {
@@ -35,6 +44,7 @@ input.fynx-tour-highlight {
     position: relative !important;
     outline: 0 !important;
 }
+
 /* Destaque especial para campos em tour dentro de sheets ou painéis escuros */
 .fynx-tour-highlight {
     box-shadow: 0 0 0 5px #a78bfa, 0 0 24px 6px #a78bfa99 !important;
@@ -48,15 +58,15 @@ input.fynx-tour-highlight {
 }
 
 /* Garante que o input fique acima de overlays do driver.js */
-.fynx-tour-highlight, .fynx-tour-highlight input {
+.fynx-tour-highlight,
+.fynx-tour-highlight input {
     z-index: 2147483647 !important;
     background: #fff !important;
     color: #222 !important;
     position: relative !important;
     outline: 0 !important;
 }
-/* Import default driver styles if not already imported in JS */
-@import "driver.js/dist/driver.css";
+
 
 /* Custom Theme for Fynx */
 .fynx-driver-popover {
@@ -99,7 +109,7 @@ input.fynx-tour-highlight {
 }
 
 /* Container for navigation buttons on the left */
-.fynx-driver-popover .driver-popover-footer > button {
+.fynx-driver-popover .driver-popover-footer>button {
     order: 1 !important;
     margin-right: 4px !important;
     flex-shrink: 0 !important;
@@ -197,7 +207,7 @@ button.driver-next-btn svg {
     height: 22px !important;
     display: block !important;
     margin: 2px auto 0 auto !important;
-    vertical-align: middle !important;
+
 }
 
 .driver-popover-footer button.driver-prev-btn:hover,
@@ -214,14 +224,14 @@ button.driver-next-btn:hover {
 
 /* Close Button Style */
 .fynx-driver-popover .driver-popover-close-btn {
-        font-size: 1.3rem !important;
-        line-height: 1.7rem !important;
-        padding: 0 !important;
-        position: absolute;
-        right: 1rem;
-        top: 1rem;
-        width: 1.7rem;
-        height: 1.7rem;
+    font-size: 1.3rem !important;
+    line-height: 1.7rem !important;
+    padding: 0 !important;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    width: 1.7rem;
+    height: 1.7rem;
     border-radius: 0.375rem;
     display: flex;
     align-items: center;
@@ -252,7 +262,7 @@ button.driver-next-btn:hover {
     font-size: 1.1rem !important;
     display: block;
     margin: 0 auto;
-    vertical-align: middle;
+
 }
 
 /* Progress Text Style */
@@ -308,16 +318,18 @@ button.driver-next-btn:hover {
 .driver-active-element {
     position: relative;
     outline: 2px solid hsl(var(--primary)) !important;
-    box-shadow: 0 0 0 4px rgba(255,255,255,0.08), 0 0 0 8px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08), 0 0 0 8px rgba(0, 0, 0, 0.5) !important;
     filter: brightness(1.25) saturate(1.15);
-    background-color: rgba(255,255,255,0.02); /* leve iluminação interna */
+    background-color: rgba(255, 255, 255, 0.02);
+    /* leve iluminação interna */
     mix-blend-mode: normal;
     transition: filter .2s ease, outline-color .2s ease;
     z-index: 100000001 !important;
 }
 
 /* Força destaque quando driver injeta wrapper diferente */
-.driver-stage-element, .driver-highlighted-element {
+.driver-stage-element,
+.driver-highlighted-element {
     z-index: 100000000 !important;
 }
 
@@ -326,6 +338,7 @@ button.driver-next-btn:hover {
     backdrop-filter: blur(1px);
 }
 
-.driver-active-element * { /* slightly increase readability of inner text */
+.driver-active-element * {
+    /* slightly increase readability of inner text */
     color: inherit;
 }

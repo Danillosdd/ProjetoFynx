@@ -11,7 +11,8 @@ const createTransactionSchema = z.object({
   type: z.enum(['income', 'expense']),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   paymentMethod: z.enum(['cash', 'credit_card', 'debit_card', 'bank_transfer', 'pix', 'other']).default('credit_card'),
-  spendingGoalId: z.number().optional(),
+  spendingGoalId: z.union([z.string(), z.number()]).optional(),
+  savingGoalId: z.union([z.string(), z.number()]).optional(),
 });
 
 const updateTransactionSchema = z.object({
@@ -84,6 +85,9 @@ export class TransactionsController {
       if (data.spendingGoalId !== undefined) {
         serviceData.spendingGoalId = data.spendingGoalId.toString();
       }
+      if (data.savingGoalId !== undefined) {
+        serviceData.savingGoalId = data.savingGoalId.toString();
+      }
 
       const transaction = await TransactionsService.createTransaction(serviceData, userId);
 
@@ -142,7 +146,12 @@ export class TransactionsController {
   static async bulkOperation(req: AuthRequest, res: Response) {
     try {
       const userId = req.user!.id;
-      const { operations } = req.body;
+      let operations = req.body.operations;
+
+      // Fallback: if operations is undefined, try to use the body itself if it looks like a bulk operation
+      if (!operations && req.body.operation && req.body.transactionIds) {
+        operations = req.body;
+      }
 
       if (Array.isArray(operations)) {
         const results = [];
