@@ -474,26 +474,124 @@ Nesta seção, apresentamos os casos de uso detalhados, incluindo o novo módulo
 
 ---
 
-### 3.2. Mapeamento de Processos (Fluxogramas)
+### 3.2. Mapeamento de Processos (BPMN)
 
-Nesta etapa, visualizamos passo a passo os fluxos de processos que compõem os novos requisitos para o canal de WhatsApp (RF016 a RF019). O mapeamento garante que todas as ramificações e decisões possíveis previstas pelas regras de negócio (RN) foram identificadas. 
+Este manual define a modelagem dos processos do FYNX, separando as responsabilidades por **Raias (Lanes)** e detalhando a lógica de reprocessamento e gamificação baseada em percentis reais da codebase.
 
-#### Fluxo 1: Vinculação de Número de WhatsApp (Referente ao RF016)
-Este fluxo descreve como o usuário inicializa sua jornada no WhatsApp com alto grau de segurança.
+#### Definição Global das Raias (As "Pistas da Piscina")
 
-[![](https://mermaid.ink/img/pako:eNplk8tum0AUQH_lajZpJcfCYAhhkcgBJ3FSp1aTNlJLVY2ZaxjVzKABorSWPybquqvuuuXHOgwWRQoLXjrnvrjsSCIZkoCkihYZPESxAH3MvsTkY1k3L4pLoAmWJYWjUApMKqrgMaNVOSuKIxASHnEdk69wfHwGF9paiI1UOYW75m-OSkIic4iihUa6yBeGDDV5z8sKNZmiovD-YdUjoUGiAUITLgWFJVYUwq2sGcxWC0BA8cSNC-11WaZ9jMjEmA_bUJjgGg3dln3ooTfmxrgcGoVCFEmGkDR_GE8l6BpWW1rRrsWu886-NPbVLiZ6ShtUaBpfU5FIYAiMMlmex2Tf0d35Sjtwz3OjXmu1LQ2fC640fQ5vziZWzsXb3rpu-bvmlzTCQlf6AVM9IT2-T81vkdRb2XZWl6i-cdaXdj1Mc6OtuVIygPDQ0_yQsOcHxfXJbl9pC_HUvGz5K29h-Heaj2iZrSVVLOiHDYcVGlg33eZ0D7fdVyMjvY6ckWBDtyWOiF6knLbPZNdyMakyzDEmgb5lVH2PSSz2Wiqo-CxlToJK1VpTsk6zPkhdMFphxKne9P8ICoYqlLWoSOD4ExODBDvyTALXssfTU8dxps7piW353oj80G-9ses57tS1HcvyPN_ej8hPk9Qa-47repOJ69kntu_79ogg45VUy-4XS_Rm8JTs_wEiCBFg?type=png)](https://mermaid.live/edit#pako:eNplk8tum0AUQH_lajZpJcfCYAhhkcgBJ3FSp1aTNlJLVY2ZaxjVzKABorSWPybquqvuuuXHOgwWRQoLXjrnvrjsSCIZkoCkihYZPESxAH3MvsTkY1k3L4pLoAmWJYWjUApMKqrgMaNVOSuKIxASHnEdk69wfHwGF9paiI1UOYW75m-OSkIic4iihUa6yBeGDDV5z8sKNZmiovD-YdUjoUGiAUITLgWFJVYUwq2sGcxWC0BA8cSNC-11WaZ9jMjEmA_bUJjgGg3dln3ooTfmxrgcGoVCFEmGkDR_GE8l6BpWW1rRrsWu886-NPbVLiZ6ShtUaBpfU5FIYAiMMlmex2Tf0d35Sjtwz3OjXmu1LQ2fC640fQ5vziZWzsXb3rpu-bvmlzTCQlf6AVM9IT2-T81vkdRb2XZWl6i-cdaXdj1Mc6OtuVIygPDQ0_yQsOcHxfXJbl9pC_HUvGz5K29h-Heaj2iZrSVVLOiHDYcVGlg33eZ0D7fdVyMjvY6ckWBDtyWOiF6knLbPZNdyMakyzDEmgb5lVH2PSSz2Wiqo-CxlToJK1VpTsk6zPkhdMFphxKne9P8ICoYqlLWoSOD4ExODBDvyTALXssfTU8dxps7piW353oj80G-9ses57tS1HcvyPN_ej8hPk9Qa-47repOJ69kntu_79ogg45VUy-4XS_Rm8JTs_wEiCBFg)
+Ao desenhar qualquer processo abaixo, você deve considerar uma **Pool (Piscina)** chamada "Sistema FYNX" dividida nestas 5 Raias:
 
-#### Fluxo 2: Gerenciar Transações via WhatsApp com IA (Referente ao RF017)
-Responsável por garantir que a transcrição do LLM em formato livre possua todos os metadados antes de inserir a transação no banco.
+1.  **Raia do Usuário:** Ações humanas (clicar, digitar, ler).
+2.  **Raia do Frontend (Interface):** Validações visuais, botões, animações e alertas.
+3.  **Raia do Backend (Servidor):** Onde as regras de negócio e os cálculos acontecem.
+4.  **Raia do Banco de Dados (DB):** Onde a informação é gravada, apagada ou alterada.
+5.  **Raia Externa (WhatsApp/IA):** Sistemas de terceiros (Meta, Evolution, Robô de IA).
 
-[![](https://mermaid.ink/img/pako:eNptVFFO20AQvcpofwA1gBOTEPxRFBKSUpIQEkql4n6M7CVZYe9a63UUGuUwVT96gp6Ai3V2DW4KRNbaWc97b-bNrNcsUjFnAZtrzBZw0wsl0K9zF7IvefH0UwsFXC4FguEro0Aq-LpAk3eyLGTfYX__I5xR7IgbhM7kgmIjTIVcIGT4mCiMARWcYfTAZUyAkv3M4brrkE15yg2XhsOtkFGRYKxOQ7Ypw8q1S8EwfvqlHKh3Z0F5pmTMIVIpCJkbXTz9tgF2C2OkDQU25ZkwvBLtOfz57m7I-iIN2d7eG5WZSF1Qn0RmIjc8ReJfqghhOBxRRRpholXE8xw13FhDKvq-Qw6opvOV0SgKMCpWOdBFjmR0WwqDIn9d3sAK9zExmEIPLcLyfKIMrOS90im5AhOu54Ukj7sqzRIyjZ418FUAO9cFJoAkYvhcaYGnO1VOnxzXxVY1msdC80goiUAkOc55Wtb10lWIFbx0viK6cESfrXedeYE6RuCUirSixDRWSwTXldzga2ddgbPCmla28PK5tpgvVbLk1aAQ6Y1Gysk1s9K-dKAhGXuLiYjt2z88h-nY8-qHdvUrR4fPXtL0WczovzZaKxHOtXZzMuU08GXl79TriK5K5bFlwWT5fnblOnaRVxTZyRIRVVPipAZ0IO5ps5zR_qNcwSxSmsOHulfxXDmGCTEMuN7qDeF3ns07JIeLVP1r78RhrreP31gZp_W2pGsXPN0af1ajQy9iFtxjkvMaSzkZZP-ztYWEzCxo0EIW0GOM-iFkodwQKEP5TamUBXTuCKZVMV9UJEUW00z0BJK9abWr6fRz3VU0wizw2y1HwoI1W7Gg6TUOjk583z_yT44bnn35SLutg2bLbx41G77ntVrtxqbGfjhV76DtN5uter3Zahw32u12o8Zoqo3So_JL5j5om79cKocm?type=png)](https://mermaid.live/edit#pako:eNptVFFO20AQvcpofwA1gBOTEPxRFBKSUpIQEkql4n6M7CVZYe9a63UUGuUwVT96gp6Ai3V2DW4KRNbaWc97b-bNrNcsUjFnAZtrzBZw0wsl0K9zF7IvefH0UwsFXC4FguEro0Aq-LpAk3eyLGTfYX__I5xR7IgbhM7kgmIjTIVcIGT4mCiMARWcYfTAZUyAkv3M4brrkE15yg2XhsOtkFGRYKxOQ7Ypw8q1S8EwfvqlHKh3Z0F5pmTMIVIpCJkbXTz9tgF2C2OkDQU25ZkwvBLtOfz57m7I-iIN2d7eG5WZSF1Qn0RmIjc8ReJfqghhOBxRRRpholXE8xw13FhDKvq-Qw6opvOV0SgKMCpWOdBFjmR0WwqDIn9d3sAK9zExmEIPLcLyfKIMrOS90im5AhOu54Ukj7sqzRIyjZ418FUAO9cFJoAkYvhcaYGnO1VOnxzXxVY1msdC80goiUAkOc55Wtb10lWIFbx0viK6cESfrXedeYE6RuCUirSixDRWSwTXldzga2ddgbPCmla28PK5tpgvVbLk1aAQ6Y1Gysk1s9K-dKAhGXuLiYjt2z88h-nY8-qHdvUrR4fPXtL0WczovzZaKxHOtXZzMuU08GXl79TriK5K5bFlwWT5fnblOnaRVxTZyRIRVVPipAZ0IO5ps5zR_qNcwSxSmsOHulfxXDmGCTEMuN7qDeF3ns07JIeLVP1r78RhrreP31gZp_W2pGsXPN0af1ajQy9iFtxjkvMaSzkZZP-ztYWEzCxo0EIW0GOM-iFkodwQKEP5TamUBXTuCKZVMV9UJEUW00z0BJK9abWr6fRz3VU0wizw2y1HwoI1W7Gg6TUOjk583z_yT44bnn35SLutg2bLbx41G77ntVrtxqbGfjhV76DtN5uter3Zahw32u12o8Zoqo3So_JL5j5om79cKocm)
+#### MÓDULO 1: ACESSO E CONTA
 
-#### Fluxo 3: Consultas de Status Financeiro/Game (Referente ao RF018)
-Detalha como informações exclusivas e formatáveis (Rankings, Score, Metas) chegam até as mãos do usuário sem que ele abra o app.
+**Processo 1.1: Registro de Novo Usuário**
+*   **[Raia Usuário]**: Preenche formulário e clica em "Criar Conta".
+*   **[Raia Frontend]**: Valida formato do e-mail (Zod). Se erro, exibe alerta. Se ok, envia POST.
+*   **[Raia Backend]**: Recebe dados, verifica se o e-mail existe no Banco.
+*   **[Raia Backend]**: Aplica Criptografia na senha (Bcrypt).
+*   **[Raia Backend]**: Comando para inicializar Ranking (**Liga Bronze**, 0 Pontos).
+*   **[Raia Banco de Dados]**: Grava novo registro na tabela `users` e `user_scores`.
+*   **[Raia Backend]**: Gera Token JWT.
+*   **[Raia Frontend]**: Recebe Token, salva no navegador e abre o Dashboard.
 
-[![](https://mermaid.ink/img/pako:eNplk11v0zAUhv-K5atNdKNLlqzLBagftPtop7ICkyAInSVnrUViB9upxqr-GMQF4pq73eaPceKgqBu5sGznfZ_jc-yz4YlKkUd8qaFYsXejWDL6-p9i_t6U1Q8tFLuDBzZHvSylBTYWEmSCQgOTit2swJp-UcT8Mzs4eMUG5Jshyfrzc3aDtyulvrJr_FaisaRp4AMnHW5ifo05WpQW2QchkzKDVL2O-baRNeOQxOyq-qmcaeT40sASczaHVNc_UnSCg35Zs0RClDbWyNne7O3FfCzymO_v_wdfiNyJxsSeTmdM0Hl0oesswC1k9cuFATZU0pSZhRY_ds4JpbJQtxqZYpQqq36TM60e1yKF5_lM6pB1iYyznlHQQWkSYIu30zqTBayFXL5cFChTmrCJgsy08Zx7Arm4ozSbY9WU8ycUKk1pUH8xidJoGLJMLOEZ40wYW_3RImkAF08Akg5XPWZW5DRJ0RRodvzNeOZ8l-Sjoli8tyVk4oHSpuobR3nB5lrlhWUDMNi6zxtfs7jYXTTjpdua_ruLVZmDrLHEHDnyNVqlZT1tkVNnme0-vRGuVbZGUptCmZ0Lmznt1c574B16-yLl0R0VGjs8R51Dveab2hJzu6JXGvOIpinorzGP5ZZMBciPSuU8srokm1blctVCyiIFiyMB1FZ5u6vpTlEPFTUSj_zTroPwaMPveRR0vcPjU9_3j_3TE6_bCzv8O-2Gh0HoB8eB53e7Ydjzth3-4KJ2D3t-EIRHR0HonXi9Xs_rcEwFFWfWNLTr6-1fw4MyXA?type=png)](https://mermaid.live/edit#pako:eNplk11v0zAUhv-K5atNdKNLlqzLBagftPtop7ICkyAInSVnrUViB9upxqr-GMQF4pq73eaPceKgqBu5sGznfZ_jc-yz4YlKkUd8qaFYsXejWDL6-p9i_t6U1Q8tFLuDBzZHvSylBTYWEmSCQgOTit2swJp-UcT8Mzs4eMUG5Jshyfrzc3aDtyulvrJr_FaisaRp4AMnHW5ifo05WpQW2QchkzKDVL2O-baRNeOQxOyq-qmcaeT40sASczaHVNc_UnSCg35Zs0RClDbWyNne7O3FfCzymO_v_wdfiNyJxsSeTmdM0Hl0oesswC1k9cuFATZU0pSZhRY_ds4JpbJQtxqZYpQqq36TM60e1yKF5_lM6pB1iYyznlHQQWkSYIu30zqTBayFXL5cFChTmrCJgsy08Zx7Arm4ozSbY9WU8ycUKk1pUH8xidJoGLJMLOEZ40wYW_3RImkAF08Akg5XPWZW5DRJ0RRodvzNeOZ8l-Sjoli8tyVk4oHSpuobR3nB5lrlhWUDMNi6zxtfs7jYXTTjpdua_ruLVZmDrLHEHDnyNVqlZT1tkVNnme0-vRGuVbZGUptCmZ0Lmznt1c574B16-yLl0R0VGjs8R51Dveab2hJzu6JXGvOIpinorzGP5ZZMBciPSuU8srokm1blctVCyiIFiyMB1FZ5u6vpTlEPFTUSj_zTroPwaMPveRR0vcPjU9_3j_3TE6_bCzv8O-2Gh0HoB8eB53e7Ydjzth3-4KJ2D3t-EIRHR0HonXi9Xs_rcEwFFWfWNLTr6-1fw4MyXA)
+![Registro de Novo Usuário](./DA%20-%20Registro%20de%20Novo%20User.svg)
 
-#### Fluxo 4: Notificações Proativas (Referente ao RF019)
-Descreve processos reativos que acontecem *em background*, sem ação explícita do usuário no WhatsApp no momento do disparo.
+#### MÓDULO 2: INTEGRAÇÃO WHATSAPP [STATUS: PLANEJADO]
 
-[![](https://mermaid.ink/img/pako:eNqFlM1u00AQx19ltBJSK9I2seM09QGUr6bpZyAFBJjDYm-TFbbH2l1HhSgPgzhUPfTGG_jFGK-pm4IKPlje8cz_P_vzeFcsxEgwn80VzxZwOQxSoKv3MWCjpUgNwlDqjCseIWSooFfcFD8QaPVG58V3JXHvUiQZQorQ52mIAfsEOzsvoL8K2Kucx1DcAsKYGxkv8GXA1pVBde9TKgyFzoTmEPO0uOERL6WGfSsyoDbeCiWvZMhhgKnOE_KmR27EHJXk0DPkQZ6V3sBWDcl6yrXGHCIB-96zsmTGlzKdwxh5_GcXw7KLmUxs8Ygsx0KRciyU4T68ljrEUmikDeaKK7hQ1GdSwqmNrcSpTKSp8whRqXf4WA8GqrgzMkS_Tr82hB5jKngsd16Cti2l0UzGIg0lamxtbQXskJp9CAVse_svqmeCzEYhpsXPpKR3T3ePMIR5XHIutcebhKcK50poTcZ1K2ObdkRIe4YAyhxazeazB4RHm_Am95s9R2Ml7bT4VTP0_cI4L-7I-TlMaaQ-F7epro2Ont6z8_89j2zVMfnPRCwoJeVQDmZMk2Lt90ZLjHNDL6A3nUAvU7jcRH5YCVSLyeaiuh_b0AlxuB98mKLWuYSLzOxMSNXI5caAn2xyOaW-qv_Iju8jOsAR3i240b0sq7s5eRqG-y8Ypzb__e-UMs4a9GvLiPlXPNaiwRKhEl6u2aosCZhZiEQEzKfHiKsvAQvSNRVlPP2AmDDfqJzKFObzRS2SZxFxHUpOp0ZSR5VII6EGmKeG-e5B24owf8Wume81nd32geu6bfdg32l2Ow32laKdXa_jem3PcZvNTqfrrBvsm3Vt7nZdz-u0Wl7H2Xe63a7TYCKSBtVZdV7ZY2v9C1nJf2g?type=png)](https://mermaid.live/edit#pako:eNqFlM1u00AQx19ltBJSK9I2seM09QGUr6bpZyAFBJjDYm-TFbbH2l1HhSgPgzhUPfTGG_jFGK-pm4IKPlje8cz_P_vzeFcsxEgwn80VzxZwOQxSoKv3MWCjpUgNwlDqjCseIWSooFfcFD8QaPVG58V3JXHvUiQZQorQ52mIAfsEOzsvoL8K2Kucx1DcAsKYGxkv8GXA1pVBde9TKgyFzoTmEPO0uOERL6WGfSsyoDbeCiWvZMhhgKnOE_KmR27EHJXk0DPkQZ6V3sBWDcl6yrXGHCIB-96zsmTGlzKdwxh5_GcXw7KLmUxs8Ygsx0KRciyU4T68ljrEUmikDeaKK7hQ1GdSwqmNrcSpTKSp8whRqXf4WA8GqrgzMkS_Tr82hB5jKngsd16Cti2l0UzGIg0lamxtbQXskJp9CAVse_svqmeCzEYhpsXPpKR3T3ePMIR5XHIutcebhKcK50poTcZ1K2ObdkRIe4YAyhxazeazB4RHm_Am95s9R2Ml7bT4VTP0_cI4L-7I-TlMaaQ-F7epro2Ont6z8_89j2zVMfnPRCwoJeVQDmZMk2Lt90ZLjHNDL6A3nUAvU7jcRH5YCVSLyeaiuh_b0AlxuB98mKLWuYSLzOxMSNXI5caAn2xyOaW-qv_Iju8jOsAR3i240b0sq7s5eRqG-y8Ypzb__e-UMs4a9GvLiPlXPNaiwRKhEl6u2aosCZhZiEQEzKfHiKsvAQvSNRVlPP2AmDDfqJzKFObzRS2SZxFxHUpOp0ZSR5VII6EGmKeG-e5B24owf8Wume81nd32geu6bfdg32l2Ow32laKdXa_jem3PcZvNTqfrrBvsm3Vt7nZdz-u0Wl7H2Xe63a7TYCKSBtVZdV7ZY2v9C1nJf2g)
+**Processo 2.1: Vinculação de Número (OTP)**
+*   **[Raia Usuário]**: Digita número de telefone na tela de Perfil.
+*   **[Raia Backend]**: Gera código de 6 dígitos e inicia Cronômetro de 10 minutos.
+*   **[Raia Externa (WhatsApp)]**: Envia mensagem para o celular do usuário.
+*   **[Raia Usuário]**: Lê o código no celular e digita no site.
+*   **[Raia Backend]**: Valida código vs. Tempo expirado.
+*   **[Raia Banco de Dados]**: Atualiza status para `whatsapp_verified = true`.
+
+![Vinculação de Número](./DA%20-%20Vinculação%20de%20Numero.svg)
+
+#### MÓDULO 3: GESTÃO DE TRANSAÇÕES (INCLUINDO EXCLUSÃO)
+
+**Processo 3.1: Cadastro de Transação (O Fluxo de Entrada)**
+*   **[Raia Usuário]**: Abre o modal, preenche dados e escolhe se vincula a uma Meta.
+*   **[Raia Backend]**: Inicia uma **Transação Atômica SQL (BEGIN TRANSACTION)**.
+*   **[Raia Backend]**: Se houver Meta, calcula o novo progresso.
+*   **[Raia Banco de Dados]**: Tenta gravar a Transação e atualizar a Meta.
+*   **[Raia Backend]**: **[Gateway de Erro]** Deu erro no Banco?
+    *   *Sim:* Dispara **ROLLBACK** (Desfaz tudo no DB). Devolve erro ao Frontend.
+    *   *Não:* Dispara **COMMIT** (Grava tudo definitivamente).
+*   **[Raia Backend]**: (Background) Inicia Recalculo de Ranking e Pontuação.
+
+![Cadastro de Transação](./DA%20-%20Cadastro%20de%20Transacao.svg)
+
+**Processo 3.3: Exclusão de Transação (Fluxo de Reprocessamento Completo)**
+Este processo é crítico pois exige "voltar no tempo" para corrigir saldos e ligas.
+*   **[Raia Usuário]**: Clica no ícone de Lixeira em uma transação antiga.
+*   **[Raia Frontend]**: Exibe Modal de Confirmação: "Deseja realmente excluir?".
+*   **[Raia Backend]**: Recebe pedido de exclusão e inicia **Transação SQL**.
+*   **[Raia Backend]**: **[Passo de Auditoria]**: Verifica se essa transação estava vinculada a uma Meta.
+*   **[Raia Backend]**: **[Lógica de Estorno]**: 
+    *   Se era uma DESPESA: Soma o valor de volta à meta (devolve o saldo).
+    *   Se era uma RECEITA: Subtrai o valor da meta de economia.
+*   **[Raia Banco de Dados]**: Deleta o registro da transação.
+*   **[Raia Backend]**: **Reprocessamento de Ranking (Gatilho)**:
+    *   Calcula novamente a Taxa de Poupança do mês.
+    *   Subtrai os pontos que o usuário ganhou por aquela transação.
+    *   Verifica se a perda de pontos faz o usuário **Cair de Liga** (conforme percentis globais: Top 1%, 5%, 20%, 50%).
+*   **[Raia Banco de Dados]**: Atualiza a pontuação final e a liga do usuário.
+*   **[Raia Frontend]**: Remove a linha da tela e atualiza os gráficos instantaneamente.
+
+![Exclusão de Transação](./DA%20-%20Exclusao%20de%20Transacao.svg)
+
+#### MÓDULO 4: PLANEJAMENTO E METAS
+
+**Processo 4.2: Meta de Gastos (Spending Goals)**
+*   **[Raia Usuário]**: Define categoria e valor máximo.
+*   **[Raia Backend]**: Cria registro com `goal_type = 'spending'`.
+*   **[Raia Banco de Dados]**: Salva meta.
+*   **[Raia Backend]**: (Monitoramento) A cada nova transação na Raia 3.1, o sistema "pinga" aqui para ver se o limite foi atingido.
+
+![Meta de Gastos](./DA%20-%20Meta%20de%20Gastos.svg)
+
+#### MÓDULO 5: DASHBOARDS E RANKING (GAMIFICAÇÃO)
+
+**Processo 5.1: Carregamento do Painel**
+*   **[Raia Frontend]**: Ao abrir a tela, pede os dados (Request).
+*   **[Raia Backend]**: Faz a "Varredura" no Banco (SELECT SUM) por categoria.
+*   **[Raia Frontend]**: Recebe o JSON e "desenha" os gráficos de pizza e barras.
+
+![Carregamento do Painel](./DA%20-%20Carregamento%20do%20Painel.svg)
+
+**Processo 5.2: Robô de Gamificação (Cálculo de Pontos e Ligas)**
+*   **[Raia Backend]**: Calcula Score seguindo a fórmula: `(Economia + Consistência) - Penalidades`.
+    *   *Nota:* A **Penalidade** é multiplicada pelo nível da liga atual (Bronze: 1x, Prata: 1.5x, Ouro: 2x, Platina: 3x, Diamante: 5x).
+*   **[Raia Banco de Dados]**: Compara o Score do usuário com a pontuação global de todos os outros usuários.
+*   **[Raia Backend]**: **[Gateway Decisão]**: Em qual percentil o usuário se encontra?
+    *   **Top 1%**: Promove/Mantém em **Diamante**.
+    *   **Top 5%**: Promove/Mantém em **Platina**.
+    *   **Top 20%**: Promove/Mantém em **Ouro**.
+    *   **Top 50%**: Promove/Mantém em **Prata**.
+    *   **Abaixo de 50%**: Rebaixa/Mantém em **Bronze**.
+*   **[Raia Banco de Dados]**: Grava a nova Liga e o novo Score no perfil do usuário.
+
+![Robô de Gamificação](./DA%20-%20Robo%20de%20Gamificacao.svg)
+
+#### MÓDULO 6: NOTIFICAÇÕES E IA [STATUS: PLANEJADO]
+
+**Processo 6.1: Alertas de Teto de Gastos**
+*   **[Raia Backend]**: Verifica se saldo da Meta > 75% do limite.
+*   **[Raia Externa (WhatsApp)]**: Dispara mensagem de alerta para o celular.
+
+![Alertas de Gastos](./DA%20-%20%20Alertas%20de%20Gastos.svg)
+
+**Processo 6.2: Registro por Voz (WhatsApp + IA)**
+*   **[Raia Usuário]**: Manda áudio no WhatsApp.
+*   **[Raia Externa (IA)]**: Transcreve o áudio e extrai o valor e a categoria.
+*   **[Raia Backend]**: Recebe o texto da IA e inicia o **Processo 3.1 (Cadastro)**.
+*   **[Raia Externa (WhatsApp)]**: Responde ao usuário confirmando o registro.
+
+![Registro por Voz](./DA%20-%20Registro%20por%20Voz.svg)
