@@ -221,134 +221,233 @@ Destina-se a qualquer pessoa que busca estruturar e controlar suas finanças de 
 
 ## 2. Requisitos Não Funcionais (RNF)
 
-### 2.1. Performance
-
-**RNF001 - Tempo de Resposta da API**
-- **Critério**: Endpoints críticos (listagem, dashboard) devem responder em < 200ms.
-- **Implementação**: Otimização de queries SQL, uso de índices no SQLite e paginação de dados.
-
-**RNF002 - Renderização Frontend**
-- **Critério**: Interface fluida e sem travamentos.
-- **Implementação**:
-  - Uso de **Virtualização** (`react-window`) para listas longas de transações.
-  - **Lazy Loading** de rotas e componentes pesados.
-  - Gerenciamento de estado otimizado com **TanStack Query** (caching e deduping de requisições).
-
-**RNF003 - Tamanho do Bundle**
-- **Critério**: Carregamento inicial rápido.
-- **Implementação**: Build otimizado com **Vite**, tree-shaking de bibliotecas (lucide-react, recharts).
-
-### 2.2. Usabilidade e UX
-
-**RNF004 - Responsividade (Mobile-First)**
-- **Critério**: Layout adaptável a qualquer tamanho de tela (Mobile, Tablet, Desktop).
-- **Implementação**: Uso extensivo de classes utilitárias do **TailwindCSS** (`grid-cols-1 md:grid-cols-2 lg:grid-cols-4`).
-
-**RNF005 - Feedback Visual**
-- **Critério**: O usuário deve sempre saber o status de suas ações.
-- **Implementação**:
-  - Sistema de **Toasts** para sucesso/erro em operações.
-  - Skeletons e Spinners durante carregamento de dados.
-  - Confirmações (Dialogs) para ações destrutivas.
-
-**RNF006 - Tema e Acessibilidade**
-- **Critério**: Conforto visual e acessibilidade básica.
-- **Implementação**:
-  - Suporte a **Dark Mode** e Light Mode.
-  - Componentes baseados em **Radix UI** (focados em acessibilidade, navegação por teclado).
-
-### 2.3. Confiabilidade e Segurança
-
-**RNF007 - Persistência de Dados**
-- **Critério**: Garantia de que dados não sejam perdidos.
-- **Implementação**: Banco de dados relacional **SQLite** (arquivo `fynx.db`) com transações ACID.
-
-**RNF008 - Segurança de Dados Sensíveis**
-- **Critério**: Proteção de credenciais.
-- **Implementação**: Senhas armazenadas apenas como hash (**bcrypt**). Nenhuma senha em texto plano.
-
-**RNF009 - Validação de Dados**
-- **Critério**: Integridade dos dados inseridos.
-- **Implementação**: Validação dupla:
-  - **Frontend**: Zod schemas nos formulários.
-  - **Backend**: Zod middlewares nas rotas da API.
-
-**RNF010 - Tratamento de Erros**
-- **Critério**: O sistema não deve quebrar silenciosamente.
-- **Implementação**: Blocos try-catch nos controllers e Error Boundaries no React para capturar falhas de renderização.
-
-### 2.4. Canal WhatsApp
-
-**RNF011 - Processamento de Linguagem Natural (LLM)**
-- **Critério**: A IA deve interpretar corretamente ao menos 90% das mensagens de transação enviadas em linguagem natural.
-- **Implementação**:
-  - Uso de LLM com prompt de sistema estruturado, contendo as regras de negócio do FYNX (tipos de transação, categorias existentes do usuário, formato de datas).
-  - Fallback com solicitação de confirmação ao usuário quando a confiança da extração for baixa.
-  - Histórico de conversa mantido por sessão para suportar interações contextuais (ex.: *"edite o último registro"*).
-
-**RNF012 - Segurança e Autenticação do Canal**
-- **Critério**: Nenhuma operação de leitura ou escrita deve ser executada para um número não verificado.
-- **Implementação**:
-  - Toda mensagem recebida via webhook da Meta Cloud API é validada pelo `phone_number` do remetente contra a tabela de vínculos do banco de dados.
-  - Mensagens de números não vinculados recebem resposta padrão orientando o usuário a cadastrar o número na plataforma web.
-  - O código OTP de verificação (RF016) tem validade máxima de **10 minutos** e é invalidado após o primeiro uso.
-  - Comunicação entre o backend FYNX e as APIs (Meta / Evolution) realizada exclusivamente via HTTPS com tokens de acesso seguros armazenados em variáveis de ambiente.
-
-**RNF013 - Disponibilidade e Latência do Canal**
-- **Critério**: O canal WhatsApp deve ser responsivo para o usuário.
-- **Implementação**:
-  - Tempo de resposta da IA ao usuário: **< 10 segundos** para operações de registro e consulta.
-  - O sistema deve implementar timeout e mensagem de erro amigável caso a API da Meta ou o serviço de LLM não respondam dentro do prazo.
-  - As notificações proativas (RF019 / Evolution API) devem ser entregues em até **1 minuto** após o evento que as disparou.
-
-**RNF014 - Conformidade com Políticas da Meta (WhatsApp Business)**
-- **Critério**: O módulo deve operar dentro das diretrizes da plataforma WhatsApp Business.
-- **Implementação**:
-  - Uso exclusivo de **Meta Cloud API** oficial para o canal conversacional.
-  - Notificações proativas (RF019) devem utilizar **Message Templates** aprovados pela Meta (via Evolution API), respeitando a janela de 24h de sessão ativa.
-  - Armazenamento e processamento de dados dos usuários em conformidade com a **LGPD**, dado que números de telefone são dados pessoais sensíveis.
 
 ---
 
-## 2.3. Regras de Negócio (RN)
+### User
+**Descrição:** Representa o usuário do sistema, centralizando todas as informações cadastrais e de autenticação.
 
-### 2.3.1. Transações Financeiras
+**Atributos:**
+- id: string — Identificador único
+- name: string — Nome completo
+- email: string — Email de login (único)
+- password: string — Hash da senha (bcrypt)
+- whatsappPhone: string — Número de WhatsApp vinculado
+- whatsappVerified: boolean — Status de verificação do WhatsApp
+- whatsappOtp: string — Código OTP para verificação
+- otpExpiresAt: Date — Expiração do OTP
+- notificationsEnabled: boolean — Flag para notificações via WhatsApp
 
-**RN001 - Validação de Valores**
-- O valor de qualquer transação (receita ou despesa) deve ser estritamente positivo (> 0).
-- O sistema deve armazenar valores com precisão de 2 casas decimais.
+**Métodos:**
+- validarSenha(password: string): boolean
+- vincularWhatsApp(phone: string): void
+- verificarOtp(otp: string): boolean
 
-**RN002 - Categorização Obrigatória**
-- Toda transação deve pertencer a uma categoria.
-- Se uma categoria personalizada for excluída, as transações associadas devem ser preservadas (soft delete ou manutenção do histórico).
+---
 
-**RN003 - Tipagem Estrita**
-- Uma transação só pode ser do tipo 'income' (receita) ou 'expense' (despesa). Não há tipos híbridos.
+### UserScore
+**Descrição:** Gerencia a pontuação, nível e liga do usuário para gamificação.
 
-### 2.3.2. Metas e Orçamentos
+**Atributos:**
+- userId: string — FK para User
+- totalScore: number — Pontuação acumulada
+- level: number — Nível do usuário
+- league: string — Liga atual
+- updatedAt: Date — Última atualização
 
-**RN004 - Metas de Economia (Saving Goals)**
-- O progresso de uma meta de economia é calculado somando-se as receitas vinculadas explicitamente a ela.
-- Uma meta não pode ter data de término anterior à data de início.
+**Métodos:**
+- adicionarPontos(valor: number): void
+- removerPontos(valor: number): void
+- atualizarLiga(): void
 
-**RN005 - Metas de Gastos (Spending Goals)**
-- O progresso é calculado somando-se todas as despesas da categoria selecionada dentro do período definido.
-- O status da meta deve ser atualizado automaticamente para 'Excedido' se o valor atual ultrapassar o alvo.
+---
 
-### 2.3.3. Sistema de Gamificação
+### Transaction
+**Descrição:** Representa uma movimentação financeira (receita ou despesa) do usuário.
 
-**RN006 - Cálculo de Pontuação**
-- A pontuação é cumulativa e baseada em eventos (triggers):
-  - **Registro de Transação**: +10 pontos.
-  - **Meta Atingida**: +50 pontos.
-  - **Manter-se no Orçamento**: +20 pontos.
-  - **Estourar Orçamento**: -30 pontos.
+**Atributos:**
+- id: string
+- userId: string
+- type: 'income' | 'expense'
+- amount: number
+- description: string
+- category: string
+- subcategory: string
+- date: string
+- paymentMethod: string
+- isRecurring: boolean
+- spendingGoalId: string
+- savingGoalId: string
+- createdAt: Date
+- updatedAt: Date
 
-**RN007 - Progressão de Ligas**
-- A liga do usuário é determinada pela sua pontuação total atual:
-  - **Ferro**: 0 - 99 pontos.
-  - **Bronze**: 100 - 299 pontos.
-  - **Prata**: 300 - 599 pontos.
+**Métodos:**
+- criar(): void
+- editar(dados): void
+- deletar(): void
+
+---
+
+### TransactionCategory / TransactionSubcategory
+**Descrição:** Define a taxonomia de categorias e subcategorias padrão do sistema.
+
+**Atributos:**
+- id: string
+- name: string
+- parentCategoryId: string (para subcategoria)
+
+**Métodos:**
+- listarCategorias(): Category[]
+- listarSubcategorias(categoryId: string): Subcategory[]
+
+---
+
+### SpendingGoal
+**Descrição:** Meta de gasto ou economia vinculada a um usuário.
+
+**Atributos:**
+- id: string
+- userId: string
+- goalType: 'spending' | 'saving'
+- targetAmount: number
+- currentAmount: number
+- period: string
+- status: 'active' | 'completed' | 'paused'
+
+**Métodos:**
+- atualizarProgresso(valor: number): void
+- concluirMeta(): void
+
+---
+
+### Budget
+**Descrição:** Orçamento mensal recorrente por categoria.
+
+**Atributos:**
+- id: string
+- userId: string
+- category: string
+- allocatedAmount: number
+- spentAmount: number
+- remainingAmount: number
+
+**Métodos:**
+- atualizarGasto(valor: number): void
+- recalcularRestante(): void
+
+---
+
+### SpendingLimit
+**Descrição:** Limite rígido de gastos por categoria e período, com alertas automáticos.
+
+**Atributos:**
+- id: string
+- userId: string
+- category: string
+- limitAmount: number
+- currentSpent: number
+- status: 'active' | 'exceeded'
+
+**Métodos:**
+- verificarLimite(): void
+- dispararAlerta(): void
+
+---
+
+### CustomCategory
+**Descrição:** Categoria personalizada criada pelo usuário.
+
+**Atributos:**
+- id: string
+- userId: string
+- name: string
+- isActive: boolean
+
+**Métodos:**
+- ativar(): void
+- desativar(): void
+
+---
+
+### Badge
+**Descrição:** Insígnia de conquista desbloqueada por marcos específicos.
+
+**Atributos:**
+- id: string
+- name: string
+- category: string
+- description: string
+
+**Métodos:**
+- concederParaUsuario(userId: string): void
+
+---
+
+### Achievement
+**Descrição:** Conquista com progresso gradual e recompensa ao completar.
+
+**Atributos:**
+- id: string
+- name: string
+- progress: number
+- target: number
+- completed: boolean
+- rewardPoints: number
+
+**Métodos:**
+- atualizarProgresso(valor: number): void
+- concluir(): void
+
+---
+
+### UserRanking
+**Descrição:** Visão agregada da classificação do usuário, calculada dinamicamente.
+
+**Atributos:**
+- userId: string
+- position: number
+- league: string
+- monthlyScore: number
+- streak: number
+- badges: Badge[]
+- achievements: Achievement[]
+
+**Métodos:**
+- calcularRanking(): void
+- atualizarStreak(): void
+
+---
+
+### WhatsAppSession
+**Descrição:** Sessão de conversa entre usuário e IA, armazenando o histórico de mensagens.
+
+**Atributos:**
+- id: string
+- userId: string
+- conversationHistory: any[]
+- createdAt: Date
+- expiresAt: Date
+
+**Métodos:**
+- adicionarMensagem(mensagem: any): void
+- expirarSessao(): void
+
+---
+
+### WhatsAppNotificationLog
+**Descrição:** Log de auditoria de notificações enviadas via WhatsApp.
+
+**Atributos:**
+- id: string
+- userId: string
+- notificationType: string
+- status: 'sent' | 'failed'
+- sentAt: Date
+
+**Métodos:**
+- registrarEnvio(): void
+
+---
   - **Ouro**: 600 - 999 pontos.
   - **Diamante**: 1000+ pontos.
 - A atualização de liga deve ocorrer imediatamente após a mudança de pontuação.
@@ -373,104 +472,104 @@ Nesta seção, apresentamos os casos de uso detalhados, incluindo o novo módulo
 #### Detalhamento dos Casos de Uso
 
 **CSU01: Fazer Login**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Usuário registrado. |
+| Detalhe             | Descrição                                                                     |
+| :------------------ | :---------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                       |
+| **Pré-condições**   | Usuário registrado.                                                           |
 | **Fluxo Principal** | 1. Usuário informa credenciais.<br>2. Sistema valida.<br>3. Acesso concedido. |
-| **Pós-condições** | Usuário autenticado. |
+| **Pós-condições**   | Usuário autenticado.                                                          |
 
 **CSU02: Registrar Usuário**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Nenhuma. |
+| Detalhe             | Descrição                                                                                                                   |
+| :------------------ | :-------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                                                                     |
+| **Pré-condições**   | Nenhuma.                                                                                                                    |
 | **Fluxo Principal** | 1. Usuário preenche dados (nome, email).<br>2. Sistema cria registro no DB.<br>3. Sistema cria pontuação inicial (Level 1). |
-| **Pós-condições** | Novo usuário criado. |
+| **Pós-condições**   | Novo usuário criado.                                                                                                        |
 
 **CSU03: Adicionar Transação**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Usuário logado. |
+| Detalhe             | Descrição                                                                                                                                                                                                                                                                                                                                           |
+| :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                                                                                                                                                                                                                                                                                             |
+| **Pré-condições**   | Usuário logado.                                                                                                                                                                                                                                                                                                                                     |
 | **Fluxo Principal** | 1. Usuário acessa "Nova Transação".<br>2. Preenche valor, descrição, data e seleciona categoria.<br>3. (Opcional) Vincula a uma Meta de Economia — aciona **CSU06** via `<<extend>>`.<br>4. Confirma a operação.<br>5. Sistema valida dados (RN001, RN003).<br>6. Sistema persiste a transação.<br>7. Sistema atualiza saldo e pontuação (+10 pts). |
-| **Pós-condições** | Transação salva, saldo atualizado, pontuação incrementada. |
+| **Pós-condições**   | Transação salva, saldo atualizado, pontuação incrementada.                                                                                                                                                                                                                                                                                          |
 
 **CSU04: Criar Metas de Gasto (Orçamento)**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Usuário logado. |
+| Detalhe             | Descrição                                                                                                                        |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                                                                          |
+| **Pré-condições**   | Usuário logado.                                                                                                                  |
 | **Fluxo Principal** | 1. Usuário seleciona "Criar Meta de Gasto".<br>2. Define categoria e valor limite.<br>3. Sistema salva meta com type='spending'. |
-| **Pós-condições** | Limite de gasto ativo. |
+| **Pós-condições**   | Limite de gasto ativo.                                                                                                           |
 
 **CSU05: Criar Metas de Economia**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Usuário logado. |
+| Detalhe             | Descrição                                                                                                                  |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                                                                    |
+| **Pré-condições**   | Usuário logado.                                                                                                            |
 | **Fluxo Principal** | 1. Usuário seleciona "Criar Meta de Economia".<br>2. Define valor alvo e data.<br>3. Sistema salva meta com type='saving'. |
-| **Pós-condições** | Meta de economia ativa. |
+| **Pós-condições**   | Meta de economia ativa.                                                                                                    |
 
 **CSU06: Adicionar Transação a uma Meta**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Relacionamento** | `<<extend>>` de **CSU03** — acionado opcionalmente durante o registro de uma transação. |
-| **Pré-condições** | Usuário logado e pelo menos uma meta de economia ativa. |
+| Detalhe             | Descrição                                                                                                                                                                                                                                                                      |
+| :------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                                                                                                                                                                                                                        |
+| **Relacionamento**  | `<<extend>>` de **CSU03** — acionado opcionalmente durante o registro de uma transação.                                                                                                                                                                                        |
+| **Pré-condições**   | Usuário logado e pelo menos uma meta de economia ativa.                                                                                                                                                                                                                        |
 | **Fluxo Principal** | 1. Durante o fluxo de CSU03, usuário opta por vincular a transação a uma meta.<br>2. Sistema exibe as metas de economia disponíveis.<br>3. Usuário seleciona a meta desejada.<br>4. Sistema vincula o ID da meta à transação.<br>5. Sistema atualiza `current_amount` da meta. |
-| **Pós-condições** | Progresso da meta atualizado. |
+| **Pós-condições**   | Progresso da meta atualizado.                                                                                                                                                                                                                                                  |
 
 **CSU07: Visualizar Dashboard**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Usuário logado. |
+| Detalhe             | Descrição                                                                                                                                         |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Ator Primário**   | Usuário                                                                                                                                           |
+| **Pré-condições**   | Usuário logado.                                                                                                                                   |
 | **Fluxo Principal** | 1. Sistema busca saldo total.<br>2. Sistema busca últimas transações.<br>3. Sistema calcula totais por categoria.<br>4. Exibe gráficos e resumos. |
-| **Pós-condições** | Visão geral apresentada. |
+| **Pós-condições**   | Visão geral apresentada.                                                                                                                          |
 
 **CSU08: Visualizar Ranking Global**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Usuário logado. |
+| Detalhe             | Descrição                                                                                                                                                                                                                   |
+| :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                                                                                                                                                                     |
+| **Pré-condições**   | Usuário logado.                                                                                                                                                                                                             |
 | **Fluxo Principal** | 1. Usuário acessa "Ranking".<br>2. Sistema calcula pontuação total (FynxScore).<br>3. Sistema determina a Liga atual (RN007).<br>4. Sistema exibe lista ordenada de usuários.<br>5. Usuário vê sua posição e badge da liga. |
-| **Pós-condições** | Usuário ciente de sua classificação. |
+| **Pós-condições**   | Usuário ciente de sua classificação.                                                                                                                                                                                        |
 
 **CSU09: Vincular WhatsApp**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário |
-| **Pré-condições** | Usuário logado na plataforma web. |
+| Detalhe             | Descrição                                                                                                                                                                                                                                                                                                                                                      |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**   | Usuário                                                                                                                                                                                                                                                                                                                                                        |
+| **Pré-condições**   | Usuário logado na plataforma web.                                                                                                                                                                                                                                                                                                                              |
 | **Fluxo Principal** | 1. Usuário acessa seção "Conectar WhatsApp" no perfil.<br>2. Informa o número de telefone com DDI.<br>3. Sistema aciona o caso de uso **"Enviar OTP de Verificação"** via `<<include>>`, disparando o código via Meta API.<br>4. Usuário insere o OTP recebido na plataforma web.<br>5. Sistema valida o OTP (máx. 10 minutos de validade) e vincula o número. |
-| **Pós-condições** | Número de WhatsApp verificado e vinculado à conta do usuário. |
+| **Pós-condições**   | Número de WhatsApp verificado e vinculado à conta do usuário.                                                                                                                                                                                                                                                                                                  |
 
 **CSU10: Gerenciar Transações via WhatsApp**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário (WhatsApp) |
-| **Atores Secundários** | IA (LLM), via caso de uso *Processar Linguagem Natural (NLP)* |
-| **Pré-condições** | Número de WhatsApp vinculado e validado. |
-| **Fluxo Principal** | 1. Usuário envia mensagem textual de registro, edição ou exclusão.<br>2. Sistema valida remetente contra a tabela de vínculos.<br>3. Sistema aciona o caso de uso **"Processar Linguagem Natural (NLP)"** via `<<include>>`.<br>4. IA interpreta a intenção e extrai os parâmetros da operação.<br>5. (Opcional) IA solicita confirmação caso algum campo obrigatório não seja identificado.<br>6. Sistema processa a operação no DB.<br>7. Sistema responde ao usuário com resumo da operação realizada. |
-| **Pós-condições** | Transação registrada, alterada ou removida corretamente. |
+| Detalhe                | Descrição                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**      | Usuário (WhatsApp)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Atores Secundários** | IA (LLM), via caso de uso *Processar Linguagem Natural (NLP)*                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Pré-condições**      | Número de WhatsApp vinculado e validado.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Fluxo Principal**    | 1. Usuário envia mensagem textual de registro, edição ou exclusão.<br>2. Sistema valida remetente contra a tabela de vínculos.<br>3. Sistema aciona o caso de uso **"Processar Linguagem Natural (NLP)"** via `<<include>>`.<br>4. IA interpreta a intenção e extrai os parâmetros da operação.<br>5. (Opcional) IA solicita confirmação caso algum campo obrigatório não seja identificado.<br>6. Sistema processa a operação no DB.<br>7. Sistema responde ao usuário com resumo da operação realizada. |
+| **Pós-condições**      | Transação registrada, alterada ou removida corretamente.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 **CSU11: Consultar Status via WhatsApp**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Usuário (WhatsApp) |
-| **Atores Secundários** | IA (LLM), via caso de uso *Processar Linguagem Natural (NLP)* |
-| **Pré-condições** | Número de WhatsApp vinculado e validado. |
-| **Fluxo Principal** | 1. Usuário envia mensagem consultando metas, orçamentos, score ou ranking.<br>2. Sistema valida remetente contra a tabela de vínculos.<br>3. Sistema aciona o caso de uso **"Processar Linguagem Natural (NLP)"** via `<<include>>`.<br>4. IA interpreta a intenção de consulta.<br>5. Sistema busca os dados solicitados no banco.<br>6. IA formata a resposta em linguagem natural e envia ao usuário. |
-| **Pós-condições** | Usuário recebe a informação atualizada solicitada. |
+| Detalhe                | Descrição                                                                                                                                                                                                                                                                                                                                                                                                |
+| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**      | Usuário (WhatsApp)                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Atores Secundários** | IA (LLM), via caso de uso *Processar Linguagem Natural (NLP)*                                                                                                                                                                                                                                                                                                                                            |
+| **Pré-condições**      | Número de WhatsApp vinculado e validado.                                                                                                                                                                                                                                                                                                                                                                 |
+| **Fluxo Principal**    | 1. Usuário envia mensagem consultando metas, orçamentos, score ou ranking.<br>2. Sistema valida remetente contra a tabela de vínculos.<br>3. Sistema aciona o caso de uso **"Processar Linguagem Natural (NLP)"** via `<<include>>`.<br>4. IA interpreta a intenção de consulta.<br>5. Sistema busca os dados solicitados no banco.<br>6. IA formata a resposta em linguagem natural e envia ao usuário. |
+| **Pós-condições**      | Usuário recebe a informação atualizada solicitada.                                                                                                                                                                                                                                                                                                                                                       |
 
 **CSU12: Enviar Notificações Proativas**
-| Detalhe | Descrição |
-| :--- | :--- |
-| **Ator Primário** | Sistema FYNX |
-| **Atores Secundários** | Usuário (WhatsApp); Meta / Evolution API |
-| **Pré-condições** | Número de WhatsApp vinculado e validado. Notificações do tipo correspondente habilitadas pelo usuário. |
-| **Fluxo Principal** | 1. Sistema detecta evento gatilho (ex.: orçamento atinge 75%, meta concluída).<br>2. Sistema seleciona o *Message Template* correspondente ao evento.<br>3. Sistema aciona Meta / Evolution API via `<<include>>` para envio da mensagem.<br>4. Usuário recebe o alerta em seu WhatsApp. |
-| **Pós-condições** | Usuário notificado proativamente sobre o evento relevante. |
+| Detalhe                | Descrição                                                                                                                                                                                                                                                                                |
+| :--------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ator Primário**      | Sistema FYNX                                                                                                                                                                                                                                                                             |
+| **Atores Secundários** | Usuário (WhatsApp); Meta / Evolution API                                                                                                                                                                                                                                                 |
+| **Pré-condições**      | Número de WhatsApp vinculado e validado. Notificações do tipo correspondente habilitadas pelo usuário.                                                                                                                                                                                   |
+| **Fluxo Principal**    | 1. Sistema detecta evento gatilho (ex.: orçamento atinge 75%, meta concluída).<br>2. Sistema seleciona o *Message Template* correspondente ao evento.<br>3. Sistema aciona Meta / Evolution API via `<<include>>` para envio da mensagem.<br>4. Usuário recebe o alerta em seu WhatsApp. |
+| **Pós-condições**      | Usuário notificado proativamente sobre o evento relevante.                                                                                                                                                                                                                               |
 
 ---
 
@@ -595,3 +694,49 @@ Este processo é crítico pois exige "voltar no tempo" para corrigir saldos e li
 *   **[Raia Externa (WhatsApp)]**: Responde ao usuário confirmando o registro.
 
 ![Registro por Voz](./DA%20-%20Registro%20por%20Voz.svg)
+
+---
+
+### 3.3. Diagrama de Classes
+
+O diagrama de classes abaixo representa a arquitetura orientada a objetos do sistema FYNX organizado em três camadas principais — **Entidades de Domínio**, **Serviços (Services)** e **Controladores (Controllers)** — e incorpora o **Módulo WhatsApp** como extensão planejada do sistema existente.
+
+> **Legenda de estereótipos:**
+> - Classes sem estereótipo → **já implementadas** na codebase atual.
+> - `<<planned>>` → **novas classes** a serem criadas para o módulo WhatsApp.
+
+![Diagrama de Classes](./DC-WppClasses.svg)
+
+---
+
+#### 3.3.1. Visão Geral da Arquitetura do Sistema
+
+A arquitetura do FYNX é orientada a objetos e segmentada em três camadas lógicas e complementares, isolando as responsabilidades de negócio e restrições de controle.
+
+#### 3.3.2. Entidades de Domínio (Camada de Dados)
+
+Mapeiam a base de persistência SQLite, definindo as regras estruturais e os vínculos através de chaves estrangeiras.
+
+- **User**: Raiz do sistema, detém os dados essenciais e as chaves de segurança para sessões e integrações (OTP/WhatsApp).
+- **Transaction**: Entidade de maior volume. Armazena receitas e despesas vinculáveis estrategicamente a metas explícitas.
+- **Categorias (TransactionCategory e CustomCategory)**: Formam a hierarquia transacional. A categoria do sistema é imutável e a personalizada permite *soft-delete*.
+- **Goals e Limits (SpendingGoal, Budget e SpendingLimit)**: Balizadores financeiros para referenciar orçamentos estáticos temporais, acompanhar dinamicamente um projeto ou setar sentinelas de corte (limites).
+- **Gamificação (UserScore, UserRanking, Badge e Achievement)**: Controlam as amarrações do engajamento orgânico do usuário: pontuação contínua, ligas por percentis competitivos e chancelas de conquistas.
+- **Módulo WhatsApp (WhatsAppSession e WhatsAppNotificationLog)**: Guardam o histórico contextual em JSON (memória de curto prazo da IA) limitado formalmente às 24h e o documento transacional para rastreio dos pushs de conversas ativas.
+
+#### 3.3.3. Serviços de Negócio (Camada Intermediária)
+
+O encapsulamento de toda lógica negocial, cálculos fundamentais das pontuações e manuseio da integridade relacional SQL perene (*Fat Services*).
+
+- **Core de Domínio (`TransactionsService`, `GoalsService` e `RankingService`)**: Operam orquestrados executando transações atômicas de segurança (rollback/commits). Distribuem os estornos paralelos para refazer somas instantaneamente na gamificação subjacente.
+- **Módulo Interativo (`WhatsAppService` e `AIService`)**: Interceptam o front do webhook mapeando linguagem NLP puramente literária vinda do humano em fluxos formatados por LLM estruturando-os como requisições JSON legíveis pelas demais APIs clássicas base.
+- **Notificações (`NotificationService`)**: Trâmite híbrido programado assíncrono valendo-se da Evolution API ou infraestruturas Cloud ativando templates proativos quando eventos em sentinelas de orçamento atingirem níveis agressivos de consumo.
+
+#### 3.3.4. Controladores (Camada HTTP)
+
+A fronteira enxuta da rede HTTPS. Processa retornos mapeados enclausurando parâmetros puros validando estritamente credenciais sem carregar processamento intelectual corporativo intrínseco (*Thin Controllers*).
+
+- **Interface da Solução Web (`TransactionsController`, `GoalsController`, `DashboardController`, etc)**: Fazem ponte rotineira consumida no painel React mantendo barreira sob interceptadores atestando titularidades JWT em vigência no cabeçalho de usuário.
+- **Escuta Desatrelada (`AuthController`, `WhatsAppController`)**: Absorve gatilhos remotos por webhook sob veracidade garantida através de conferência em tempo real validando *checksums* de protocolos criptografados (ex: HMAC exigido das requests restritas Meta API).
+
+---
