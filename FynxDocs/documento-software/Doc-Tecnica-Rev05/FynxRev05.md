@@ -705,7 +705,7 @@ O diagrama de classes abaixo representa a arquitetura orientada a objetos do sis
 > - Classes sem estereótipo → **já implementadas** na codebase atual.
 > - `<<planned>>` → **novas classes** a serem criadas para o módulo WhatsApp.
 
-![Diagrama de Classes](./DC-WppClasses.svg)
+> ![Diagrama de Classes](./DC-WppClasses.svg)
 
 ---
 
