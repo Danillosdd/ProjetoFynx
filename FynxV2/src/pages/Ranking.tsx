@@ -196,7 +196,7 @@ const Ranking = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Ranking</h1>
+          <h1 className="text-4xl font-extrabold text-gradient">Ranking</h1>
           <p className="text-muted-foreground">Leaderboard dos usuários mais ativos</p>
         </div>
       </div>
@@ -204,7 +204,7 @@ const Ranking = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Ranking List */}
         <div className="lg:col-span-3">
-          <Card className="bg-card border-border">
+          <Card className="apple-glass border-none">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-primary" />
@@ -213,10 +213,16 @@ const Ranking = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                {globalLeaderboard.map((entry) => (
+                {globalLeaderboard.map((entry, index) => (
                   <div
                     key={entry.userId}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-lg apple-glass border-l-4 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl animate-slide-in-up ${
+                      index === 0 ? "border-yellow-400 bg-yellow-400/10" :
+                      index === 1 ? "border-slate-300 bg-slate-300/10" :
+                      index === 2 ? "border-orange-500 bg-orange-500/10" :
+                      "border-transparent hover:bg-white/5"
+                    }`}
+                    style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
                   >
                     <div className="flex items-center gap-4">
                       <div className="text-2xl font-bold text-primary w-8">
@@ -257,7 +263,7 @@ const Ranking = () => {
         {/* User Stats Sidebar */}
         <div className="space-y-6">
           {/* User Position Card */}
-          <Card className="bg-card border-border">
+          <Card className="apple-glass border-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Sua Posição</CardTitle>
             </CardHeader>
@@ -271,7 +277,7 @@ const Ranking = () => {
           </Card>
 
           {/* League Card */}
-          <Card className="bg-card border-border">
+          <Card className="apple-glass border-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Liga Atual</CardTitle>
             </CardHeader>
@@ -306,7 +312,7 @@ const Ranking = () => {
           </Card>
 
           {/* Streak Card */}
-          <Card className="bg-card border-border">
+          <Card className="apple-glass border-none">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Flame className="h-5 w-5 text-orange-500" />
@@ -326,11 +332,11 @@ const Ranking = () => {
                   values={contributionData}
                   until={new Date().toISOString().split('T')[0]}
                   panelColors={[
-                    "#00000033", // nível 0
-                    "#9AE6B4", // nível 1 - success/20
-                    "#68D391", // nível 2 - success/40  
-                    "#48BB78", // nível 3 - success/60
-                    "#22C55E", // nível 4 - success
+                    "rgba(255,255,255,0.03)", 
+                    "rgba(163, 230, 53, 0.4)", 
+                    "rgba(163, 230, 53, 0.6)", 
+                    "rgba(132, 204, 22, 0.8)", 
+                    "rgba(101, 163, 13, 1)",   
                   ]}
                   weekNames={["D", "S", "T", "Q", "Q", "S", "S"]}
                   monthNames={[
@@ -350,7 +356,7 @@ const Ranking = () => {
       {/* Conquistas e Badges */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Conquistas */}
-        <Card className="bg-card border-border lg:col-span-2">
+        <Card className="apple-glass border-none lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
@@ -364,7 +370,7 @@ const Ranking = () => {
               (user?.achievements ?? []).map((ach) => {
                 const percent = Math.min(100, Math.round((ach.progress / ach.target) * 100))
                 return (
-                  <div key={ach.id} className="p-4 rounded-lg bg-secondary/50">
+                  <div key={ach.id} className="p-4 rounded-lg apple-glass border-none hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-semibold text-foreground">{ach.title}</div>
@@ -381,7 +387,7 @@ const Ranking = () => {
         </Card>
 
         {/* Badges conquistados */}
-        <Card className="bg-card border-border lg:col-span-1">
+        <Card className="apple-glass border-none lg:col-span-1">
           <CardHeader>
             <CardTitle>Seus Badges</CardTitle>
           </CardHeader>
@@ -392,7 +398,7 @@ const Ranking = () => {
               (user?.badges ?? []).map((b) => {
                 const meta = getBadgeMeta(b.category)
                 return (
-                  <div key={b.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors border border-border">
+                  <div key={b.id} className="flex items-center gap-3 p-3 rounded-lg border-none apple-glass hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
                     <div className={`h-9 w-9 rounded-full flex items-center justify-center border ${meta.className}`}>
                       {meta.icon}
                     </div>
@@ -412,7 +418,7 @@ const Ranking = () => {
         </Card>
 
         {/* Badges disponíveis */}
-        <Card className="bg-card border-border lg:col-span-1">
+        <Card className="apple-glass border-none lg:col-span-1">
           <CardHeader>
             <CardTitle>Badges Disponíveis</CardTitle>
           </CardHeader>
@@ -423,7 +429,7 @@ const Ranking = () => {
               (data?.availableBadges ?? []).map((b) => {
                 const meta = getBadgeMeta(b.category)
                 return (
-                  <div key={b.id} className="relative flex items-center gap-3 p-3 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors border border-border">
+                  <div key={b.id} className="relative flex items-center gap-3 p-3 rounded-lg border-none apple-glass opacity-70 grayscale hover:grayscale-0 hover:opacity-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
                     <div className={`h-9 w-9 rounded-full flex items-center justify-center border ${meta.className} opacity-70 grayscale`}>
                       {meta.icon}
                     </div>

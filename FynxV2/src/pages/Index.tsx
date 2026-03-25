@@ -522,7 +522,7 @@ const Index = () => {
       {/* Header */}
       <div className="flex items-center justify-start">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Financial Overview</h1>
+          <h1 className="text-3xl font-bold text-gradient">Financial Overview</h1>
           <p className="text-muted-foreground">Track your financial performance</p>
         </div>
       </div>
@@ -542,7 +542,7 @@ const Index = () => {
           const tourAttr = tourKey ? ({ ['data-tour']: tourKey } as any) : {};
 
           return (
-            <Card key={index} {...tourAttr} className="bg-card border-border">
+            <Card key={index} {...tourAttr} className={`apple-glass transition-all duration-500 hover:border-primary/50 hover:-translate-y-1 hover:shadow-2xl animate-slide-in-up ${index === 0 ? 'delay-75' : index === 1 ? 'delay-150' : index === 2 ? 'delay-200' : 'delay-300'}`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-medium text-muted-foreground">{item.title}</h3>
@@ -570,7 +570,7 @@ const Index = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Category Breakdown Chart - First (1/4) */}
-        <Card data-tour="category-chart" className="bg-card border-border col-span-1">
+        <Card data-tour="category-chart" className="apple-glass col-span-1 transition-all duration-500 hover:border-primary/50 hover:-translate-y-1 hover:shadow-2xl animate-slide-in-up delay-500">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-2">
             <div className="flex-1">
               <CardTitle className="text-lg font-semibold">Breakdown por Categoria</CardTitle>
@@ -640,7 +640,7 @@ const Index = () => {
         </Card>
 
         {/* Daily Comparison Chart - Second (2/4) */}
-        <Card data-tour="revenue-chart" className="lg:col-span-2 bg-card border-border">
+        <Card data-tour="revenue-chart" className="lg:col-span-2 apple-glass transition-all duration-500 hover:border-primary/50 hover:-translate-y-1 hover:shadow-2xl animate-slide-in-up delay-600">
           <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
             <div className="grid flex-1 gap-1">
               <CardTitle className="text-lg font-semibold">Comparação Diária</CardTitle>
@@ -789,7 +789,7 @@ const Index = () => {
         </AlertDialog>
 
         {/* Wallet Goals Widget - Third (1/4) */}
-        <div className="col-span-1 h-full">
+        <div className="col-span-1 h-full animate-slide-in-up delay-1000">
           <WalletGoalsWidget
             spendingGoals={spendingGoals}
             savingGoals={savingGoals}
@@ -807,7 +807,7 @@ const Index = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Transactions */}
-        <Card data-tour="recent-transactions" className="lg:col-span-2 bg-card border-border">
+        <Card data-tour="recent-transactions" className="lg:col-span-2 apple-glass transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold">Recent Transactions</CardTitle>
           </CardHeader>

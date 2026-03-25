@@ -19,9 +19,10 @@ interface GoalSectionProps {
   goals: Goal[];
   onAddTransaction: (data: InitialTransactionData) => void;
   onDelete?: (id: string) => void;
+  compactLayout?: boolean;
 }
 
-export const GoalSection = ({ title, goals, onAddTransaction, onDelete }: GoalSectionProps) => {
+export const GoalSection = ({ title, goals, onAddTransaction, onDelete, compactLayout }: GoalSectionProps) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [showAll, setShowAll] = useState(false);
 
@@ -30,9 +31,11 @@ export const GoalSection = ({ title, goals, onAddTransaction, onDelete }: GoalSe
   }
 
   const renderGrid = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {goals.map((goal) => (
-        <GoalCard key={goal.id} goal={goal} onAddTransaction={onAddTransaction} onDelete={onDelete} />
+    <div className={compactLayout ? "flex flex-col gap-4" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}>
+      {goals.map((goal, index) => (
+        <div key={goal.id} className="animate-slide-in-up flex-shrink-0" style={{ animationDelay: `${200 + index * 50}ms`, animationFillMode: 'both' }}>
+          <GoalCard goal={goal} onAddTransaction={onAddTransaction} onDelete={onDelete} />
+        </div>
       ))}
     </div>
   );
@@ -41,8 +44,8 @@ export const GoalSection = ({ title, goals, onAddTransaction, onDelete }: GoalSe
     <div className="relative">
       <Carousel className="w-full" orientation="horizontal" opts={{ loop: goals.length > 1 }}>
         <CarouselContent className="-ml-2 md:-ml-4">
-          {goals.map((goal) => (
-            <CarouselItem key={goal.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/4">
+          {goals.map((goal, index) => (
+            <CarouselItem key={goal.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/4 animate-slide-in-up" style={{ animationDelay: `${200 + index * 100}ms`, animationFillMode: 'both' }}>
               <GoalCard goal={goal} onAddTransaction={onAddTransaction} onDelete={onDelete} />
             </CarouselItem>
           ))}

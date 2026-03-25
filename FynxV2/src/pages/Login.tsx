@@ -54,11 +54,10 @@ export default function LoginPage() {
 
   const { login } = useAuth()
 
-  /*
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
-  const rotateX = useTransform(mouseY, [-300, 300], [5, -5])
-  const rotateY = useTransform(mouseX, [-300, 300], [-5, 5])
+  const rotateX = useTransform(mouseY, [-300, 300], [2, -2])
+  const rotateY = useTransform(mouseX, [-300, 300], [-2, 2])
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -70,7 +69,6 @@ export default function LoginPage() {
     mouseX.set(0)
     mouseY.set(0)
   }
-  */
 
   const handleSocialLogin = (provider: string) => {
     setIsLoading(true)
@@ -187,9 +185,9 @@ export default function LoginPage() {
       <div className="flex items-center justify-center p-6" style={{ backgroundColor: "#14141A" }}>
         <motion.div className="w-full max-w-sm" style={{ perspective: 1500 }}>
           <motion.div
-          // style={{ rotateX, rotateY }}
-          // onMouseMove={handleMouseMove}
-          // onMouseLeave={handleMouseLeave}
+          style={{ rotateX, rotateY }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
           >
             <div className="relative group">
               {/* Card glow effect */}
@@ -268,7 +266,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              <Card className="bg-gray-900/40 backdrop-blur-xl border-purple-800/30 shadow-2xl relative overflow-hidden">
+              <Card className="apple-glass relative overflow-hidden rounded-2xl">
                 <div
                   className="absolute inset-0 opacity-[0.02] pointer-events-none"
                   style={{
@@ -283,7 +281,7 @@ export default function LoginPage() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="login" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-800/50 border-purple-700/30">
+                    <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/5 border-white/10">
                       <TabsTrigger
                         value="login"
                         className="text-gray-300 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
@@ -302,7 +300,7 @@ export default function LoginPage() {
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Button
                           variant="outline"
-                          className="w-full bg-gray-800/50 border-purple-700/30 text-white hover:bg-purple-900/20 hover:border-purple-600/50 transition-all duration-300 relative group/google"
+                          className="w-full bg-white/5 border-white/10 text-white hover:bg-purple-900/20 hover:border-purple-600/50 transition-all duration-300 relative group/google"
                           onClick={() => handleSocialLogin("google")}
                           disabled={isLoading}
                         >
@@ -338,7 +336,7 @@ export default function LoginPage() {
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Button
                           variant="outline"
-                          className="w-full bg-gray-800/50 border-purple-700/30 text-white hover:bg-purple-900/20 hover:border-purple-600/50 transition-all duration-300 relative group/apple"
+                          className="w-full bg-white/5 border-white/10 text-white hover:bg-purple-900/20 hover:border-purple-600/50 transition-all duration-300 relative group/apple"
                           onClick={() => handleSocialLogin("apple")}
                           disabled={isLoading}
                         >
@@ -366,7 +364,7 @@ export default function LoginPage() {
                       <motion.div
                         className="space-y-2"
                         whileFocus={{ scale: 1.01 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <Label htmlFor="email" className="text-gray-300 text-sm">
                           Email
@@ -385,7 +383,7 @@ export default function LoginPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocusedInput("email")}
                             onBlur={() => setFocusedInput(null)}
-                            className="pl-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
+                            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
                           />
                           {focusedInput === "email" && (
                             <motion.div
@@ -403,7 +401,7 @@ export default function LoginPage() {
                       <motion.div
                         className="space-y-2"
                         whileFocus={{ scale: 1.01 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <Label htmlFor="password" className="text-gray-300 text-sm">
                           Senha
@@ -422,7 +420,7 @@ export default function LoginPage() {
                             onChange={(e) => setPassword(e.target.value)}
                             onFocus={() => setFocusedInput("password")}
                             onBlur={() => setFocusedInput(null)}
-                            className="pl-10 pr-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
+                            className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
                           />
                           <button
                             type="button"
@@ -549,7 +547,7 @@ export default function LoginPage() {
                       <motion.div
                         className="space-y-2"
                         whileFocus={{ scale: 1.01 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <Label htmlFor="name" className="text-gray-300 text-sm">
                           Nome completo
@@ -563,7 +561,7 @@ export default function LoginPage() {
                             placeholder="Seu nome"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="pl-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
+                            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
                           />
                         </div>
                       </motion.div>
@@ -571,7 +569,7 @@ export default function LoginPage() {
                       <motion.div
                         className="space-y-2"
                         whileFocus={{ scale: 1.01 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <Label htmlFor="register-email" className="text-gray-300 text-sm">
                           Email
@@ -590,7 +588,7 @@ export default function LoginPage() {
                             onChange={(e) => setRegisterEmail(e.target.value)}
                             onFocus={() => setFocusedInput("register-email")}
                             onBlur={() => setFocusedInput(null)}
-                            className="pl-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
+                            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
                           />
                           {focusedInput === "register-email" && (
                             <motion.div
@@ -608,7 +606,7 @@ export default function LoginPage() {
                       <motion.div
                         className="space-y-2"
                         whileFocus={{ scale: 1.01 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <Label htmlFor="register-password" className="text-gray-300 text-sm">
                           Senha
@@ -627,7 +625,7 @@ export default function LoginPage() {
                             onChange={handlePasswordChange}
                             onFocus={() => setFocusedInput("register-password")}
                             onBlur={() => setFocusedInput(null)}
-                            className="pl-10 pr-10 bg-gray-800/50 border-purple-700/30 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
+                            className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500 focus:bg-gray-800 transition-all duration-300"
                           />
                           <button
                             type="button"

@@ -74,8 +74,8 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
     };
 
     return (
-        <Card className="bg-card border-border h-full flex flex-col overflow-hidden relative">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 z-10 bg-card/80 backdrop-blur-sm">
+        <Card className="apple-glass h-full flex flex-col overflow-hidden relative">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 z-10 bg-black/20 backdrop-blur-md border-b border-white/5">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                     <Target className="w-5 h-5 text-accent" />
                     Minhas Metas
@@ -161,7 +161,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                                         }}
                                         transition={{ type: "spring", stiffness: 200, damping: 20 }}
                                         className={cn(
-                                            "absolute inset-0 rounded-xl border p-5 shadow-xl flex flex-col justify-between transition-shadow hover:shadow-2xl bg-card",
+                                            "absolute inset-0 rounded-xl border border-white/10 p-5 shadow-xl flex flex-col justify-between transition-shadow hover:shadow-2xl bg-black/40 backdrop-blur-md",
                                             cardBg
                                         )}
                                         style={{
@@ -281,7 +281,7 @@ export const WalletGoalsWidget: React.FC<WalletGoalsWidgetProps> = ({ spendingGo
                                 );
                             })
                         ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-muted rounded-2xl bg-card/50">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-white/20 rounded-2xl bg-white/5">
                                 <p className="text-muted-foreground text-sm mb-4">Nenhuma meta encontrada.</p>
                                 <Button variant="outline" size="sm" className="gap-2" onClick={onCreateGoalClick}>
                                     <Plus className="w-4 h-4" /> Criar Meta
