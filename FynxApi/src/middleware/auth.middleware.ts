@@ -1,7 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fynx_secret_key_change_me';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    throw new Error('FATAL: JWT_SECRET environment variable is not defined!');
+}
 
 export interface AuthRequest extends Request {
     user?: {

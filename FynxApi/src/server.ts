@@ -1,6 +1,7 @@
 import 'dotenv/config'; // Carrega as variáveis do .env
 import express from 'express';
 import cors from 'cors';
+import { rateLimit } from 'express-rate-limit';
 import { logger } from './utils/logger.js';
 import routes from './routes/index.js';
 import './database/database.js'; // Inicializa o banco de dados
@@ -14,6 +15,24 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Habilita o Express a ler JSON no corpo das requisições
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Muitas requisições. Por favor, tente novamente mais tarde.' }
+});
+app.use('/api', limiter);
+
+// Stricter Rate Limiting for Auth
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    limit: 5, // Limit each IP to 5 login attempts per hour
+    message: { error: 'Muitas tentativas de login. Tente novamente em 1 hora.' }
+});
+app.use('/api/v1/auth/login', authLimiter);
 
 // Middleware de logging HTTP simples
 app.use((req, res, next) => {

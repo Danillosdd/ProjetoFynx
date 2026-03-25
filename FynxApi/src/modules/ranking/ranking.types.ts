@@ -69,6 +69,7 @@ export interface RankingData {
   achievements: Achievement[];
   availableBadges: Badge[];
   contributionData?: Record<string, number> | number[][];
+  recommendations?: string[];
   rankingStats: {
     totalUsers: number;
     averageScore: number;

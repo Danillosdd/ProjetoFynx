@@ -107,4 +107,14 @@ export class RankingController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  static async checkIn(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const result = await RankingService.checkIn(userId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

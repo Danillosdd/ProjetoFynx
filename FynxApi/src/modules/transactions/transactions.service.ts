@@ -65,25 +65,41 @@ export class TransactionsService {
       const countResult = await database.get(countSql, params);
       const totalCount = countResult.count;
 
+      // Calculate totals (summary) using SQL aggregation
+      const summarySql = sql.replace('SELECT *', `
+        SELECT 
+          SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as totalIncome,
+          SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as totalExpenses
+      `);
+      const summaryResult = await database.get(summarySql, params);
+
       // Add sorting and pagination
       const validSortFields = ['date', 'amount', 'description', 'category', 'type', 'created_at'];
       const sortField = validSortFields.includes(sortBy) ? sortBy : 'date';
-      sql += ` ORDER BY ${sortField} ${sortOrder.toUpperCase()}, created_at DESC`;
-      sql += ' LIMIT ? OFFSET ?';
-      params.push(limit, (page - 1) * limit);
+      let paginatedSql = sql + ` ORDER BY ${sortField} ${sortOrder.toUpperCase()}, created_at DESC`;
+      paginatedSql += ' LIMIT ? OFFSET ?';
+      const paginatedParams = [...params, limit, (page - 1) * limit];
 
-      const transactions = await database.all(sql, params);
+      const transactions = await database.all(paginatedSql, paginatedParams);
 
       // Convert database results to Transaction objects
       const formattedTransactions: Transaction[] = transactions.map(this.formatTransactionFromDB);
 
-      // Get all transactions for summary and stats (without pagination)
-      const allTransactionsSql = 'SELECT * FROM transactions WHERE user_id = ?';
-      const allTransactions = await database.all(allTransactionsSql, [userId]);
-      const allFormattedTransactions = allTransactions.map(this.formatTransactionFromDB);
+      const totalIncome = summaryResult.totalIncome || 0;
+      const totalExpenses = summaryResult.totalExpenses || 0;
+      const netAmount = totalIncome - totalExpenses;
 
-      const summary = await this.calculateSummary(allFormattedTransactions);
-      const stats = await this.calculateStats(allFormattedTransactions);
+      const summary: TransactionSummary = {
+        totalIncome,
+        totalExpenses,
+        netAmount,
+        transactionCount: totalCount,
+        averageTransaction: totalCount > 0 ? (totalIncome + totalExpenses) / totalCount : 0,
+        categoryBreakdown: [],
+        monthlyTrend: []
+      };
+
+      const stats = await this.getTransactionsStats(userId);
       const categories = await this.getCategories();
 
       const totalPages = Math.ceil(totalCount / limit);
@@ -120,10 +136,7 @@ export class TransactionsService {
 
   // Create new transaction
   static async createTransaction(data: CreateTransactionRequest, userId: number = 1): Promise<Transaction> {
-    // Make the insert + optional goal update atomic using a DB transaction
-    try {
-      await database.run('BEGIN TRANSACTION');
-
+    return database.withTransaction(async () => {
       const result = await database.run(
         `INSERT INTO transactions (
           user_id, amount, description, category, date, type, notes, spending_goal_id, saving_goal_id
@@ -147,11 +160,27 @@ export class TransactionsService {
       );
 
       if (!newTransaction) {
-        await database.run('ROLLBACK');
         throw new Error('Erro ao criar transação');
       }
 
       const formatted = this.formatTransactionFromDB(newTransaction);
+
+      // Award "Novato" badge on first transaction
+      const txCount = await database.get('SELECT COUNT(*) as count FROM transactions WHERE user_id = ?', [userId]);
+      if (txCount.count === 1) {
+        await RankingService.awardBadge(userId, 'badge_novice');
+      }
+
+      // Check for "Cofrinho Cheio" milestone (Total Savings > 1000)
+      const financials = await database.get(`
+        SELECT 
+          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) -
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as savings
+        FROM transactions WHERE user_id = ?
+      `, [userId]);
+      if (financials.savings >= 1000) {
+        await RankingService.awardBadge(userId, 'badge_saver');
+      }
 
       // If the transaction is linked to a spending goal, update goal progress
       if (newTransaction.spending_goal_id) {
@@ -163,23 +192,13 @@ export class TransactionsService {
         await GoalsService.updateGoalProgressByTransaction(newTransaction.saving_goal_id.toString(), formatted.amount, formatted.type);
       }
 
-      await database.run('COMMIT');
-
       // Calculate ranking asynchronously to not block response
       RankingService.calculateScore(userId).catch(err => {
         console.error('Error calculating ranking after transaction:', err);
       });
 
       return formatted;
-    } catch (error) {
-      try {
-        await database.run('ROLLBACK');
-      } catch (rbErr) {
-        console.error('Erro durante ROLLBACK:', rbErr);
-      }
-      console.error('Erro ao criar transação (atomic):', error);
-      throw new Error('Erro ao criar transação');
-    }
+    });
   }
 
   // Update transaction
@@ -330,13 +349,27 @@ export class TransactionsService {
   // Get transaction summary
   static async getTransactionsSummary(userId: number = 1): Promise<TransactionSummary> {
     try {
-      const transactions = await database.all(
-        'SELECT * FROM transactions WHERE user_id = ?',
-        [userId]
-      );
+      const summaryResult = await database.get(`
+        SELECT 
+          COUNT(*) as count,
+          SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as totalIncome,
+          SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as totalExpenses
+        FROM transactions WHERE user_id = ?
+      `, [userId]);
 
-      const formattedTransactions = transactions.map(this.formatTransactionFromDB);
-      return this.calculateSummary(formattedTransactions);
+      const totalIncome = summaryResult.totalIncome || 0;
+      const totalExpenses = summaryResult.totalExpenses || 0;
+      const count = summaryResult.count || 0;
+
+      return {
+        totalIncome,
+        totalExpenses: totalExpenses,
+        netAmount: totalIncome - totalExpenses,
+        transactionCount: count,
+        averageTransaction: count > 0 ? (totalIncome + totalExpenses) / count : 0,
+        categoryBreakdown: [],
+        monthlyTrend: []
+      };
     } catch (error) {
       console.error('Erro ao calcular resumo:', error);
       throw new Error('Erro ao calcular resumo');
@@ -346,13 +379,22 @@ export class TransactionsService {
   // Get transaction stats
   static async getTransactionsStats(userId: number = 1): Promise<TransactionStats> {
     try {
-      const transactions = await database.all(
-        'SELECT * FROM transactions WHERE user_id = ?',
-        [userId]
-      );
+      const statsResult = await database.get(`
+        SELECT 
+          AVG(amount) as dailyAverage,
+          MAX(amount) as maxAmount
+        FROM transactions WHERE user_id = ?
+      `, [userId]);
 
-      const formattedTransactions = transactions.map(this.formatTransactionFromDB);
-      return this.calculateStats(formattedTransactions);
+      // Simple implementation for now, can be expanded for full stats
+      return {
+          dailyAverage: statsResult.dailyAverage || 0,
+          weeklyAverage: (statsResult.dailyAverage || 0) * 7,
+          monthlyAverage: (statsResult.dailyAverage || 0) * 30,
+          mostExpensiveTransaction: { amount: statsResult.maxAmount || 0 } as any,
+          mostFrequentCategory: '',
+          paymentMethodBreakdown: []
+      };
     } catch (error) {
       console.error('Erro ao calcular estatísticas:', error);
       throw new Error('Erro ao calcular estatísticas');

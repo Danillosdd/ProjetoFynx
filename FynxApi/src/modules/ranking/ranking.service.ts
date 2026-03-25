@@ -117,8 +117,57 @@ export class RankingService {
       achievements: await this.getAchievements(userId),
       availableBadges,
       contributionData: await this.getContributionData(userId),
+      recommendations: await this.getPersonalizedRecommendations(userId),
       rankingStats
     };
+  }
+
+  // Handle daily check-in and streak
+  static async checkIn(userId: number): Promise<{ currentStreak: number, maxStreak: number, earnedPoints: number }> {
+    const db = database;
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+    const scores = await db.get('SELECT current_streak, max_streak, last_checkin, total_score FROM user_scores WHERE user_id = ?', [userId]);
+    
+    if (!scores) {
+      await db.run('INSERT INTO user_scores (user_id, current_streak, max_streak, last_checkin, total_score) VALUES (?, 1, 1, ?, 10)', [userId, today]);
+      return { currentStreak: 1, maxStreak: 1, earnedPoints: 10 };
+    }
+
+    if (scores.last_checkin === today) {
+      return { currentStreak: scores.current_streak, maxStreak: scores.max_streak, earnedPoints: 0 };
+    }
+
+    let newStreak = 1;
+    let earnedPoints = 10; // Base points for check-in
+
+    if (scores.last_checkin === yesterday) {
+      newStreak = scores.current_streak + 1;
+      // Bonus points for streaks
+      if (newStreak % 7 === 0) earnedPoints += 50;
+      if (newStreak % 30 === 0) earnedPoints += 200;
+    }
+
+    const newMaxStreak = Math.max(newStreak, scores.max_streak);
+    
+    await db.run(`
+      UPDATE user_scores 
+      SET 
+        current_streak = ?, 
+        max_streak = ?, 
+        last_checkin = ?, 
+        total_score = total_score + ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = ?
+    `, [newStreak, newMaxStreak, today, earnedPoints, userId]);
+
+    // Check for streak-based badges
+    if (newStreak >= 7) {
+      await this.awardBadge(userId, 'badge_fire');
+    }
+
+    return { currentStreak: newStreak, maxStreak: newMaxStreak, earnedPoints };
   }
 
   static async getContributionData(userId: number): Promise<Record<string, number>> {
@@ -250,74 +299,31 @@ export class RankingService {
 
   private static async calculateStreak(userId: number): Promise<{ currentStreak: number, daysWithTransaction: number }> {
     const db = database;
+    const scoreData = await db.get('SELECT current_streak, last_checkin FROM user_scores WHERE user_id = ?', [userId]);
+    
     const currentMonth = new Date().toISOString().slice(0, 7);
-
-    // Get all unique transaction dates for this user
-    const dates = await db.all(`
-      SELECT DISTINCT date(date) as tx_date 
+    const txCount = await db.get(`
+      SELECT COUNT(DISTINCT date(date)) as count 
       FROM transactions 
-      WHERE user_id = ? 
-      ORDER BY date DESC
-    `, [userId]) as any[];
+      WHERE user_id = ? AND date LIKE ?
+    `, [userId, `${currentMonth}%`]);
 
-    if (!dates || dates.length === 0) {
-      return { currentStreak: 0, daysWithTransaction: 0 };
-    }
-
-    // Calculate current streak
-    let streak = 0;
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-
-    // Check if last transaction was today or yesterday to keep streak alive
-    const lastTxDate = dates[0].tx_date;
-    if (lastTxDate !== today && lastTxDate !== yesterday) {
-      streak = 0;
-    } else {
-      // Count consecutive days
-      // This is a simple check. For robust streak, we need to iterate.
-      let currentDate = new Date(lastTxDate);
-
-      for (let i = 0; i < dates.length; i++) {
-        const txDate = new Date(dates[i].tx_date);
-        const diffTime = Math.abs(currentDate.getTime() - txDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (i === 0) {
-          streak = 1;
-        } else if (diffDays === 1) {
-          streak++;
-        } else {
-          break;
-        }
-        currentDate = txDate;
-      }
-    }
-
-    // Count days with transaction in current month
-    const daysInMonth = dates.filter(d => d.tx_date.startsWith(currentMonth)).length;
-
-    return { currentStreak: streak, daysWithTransaction: daysInMonth };
+    return { 
+      currentStreak: scoreData?.current_streak || 0, 
+      daysWithTransaction: txCount?.count || 0 
+    };
   }
 
   private static async calculateUserLeague(userId: number, score: number): Promise<string> {
     const db = database;
 
-    // Get all scores to determine percentiles
-    // We include the current user's NEW score in this calculation virtually
-    const otherScores = await db.all('SELECT total_score FROM user_scores WHERE user_id != ?', [userId]) as any[];
-    const allScores = [...otherScores.map(s => s.total_score), score].sort((a, b) => b - a); // Descending
-
-    const totalUsers = allScores.length;
-    const myRank = allScores.indexOf(score) + 1;
-    const percentile = (myRank / totalUsers) * 100; // Top X% (e.g. Rank 1 of 100 is 1%)
-
-    // Logic:
-    // Diamante: Top 1%
-    // Platina: Próximos 4% (Top 5%)
-    // Ouro: Próximos 15% (Top 20%)
-    // Prata: Próximos 30% (Top 50%)
-    // Bronze: Restante (Bottom 50%)
+    // Use a count query to find the rank more efficiently
+    const rankResult = await db.get('SELECT COUNT(*) + 1 as rank FROM user_scores WHERE total_score > ?', [score]);
+    const totalResult = await db.get('SELECT COUNT(*) as total FROM user_scores');
+    
+    const myRank = rankResult.rank;
+    const totalUsers = Math.max(1, totalResult.total);
+    const percentile = (myRank / totalUsers) * 100;
 
     if (percentile <= 1) return 'Diamante';
     if (percentile <= 5) return 'Platina';
@@ -412,80 +418,87 @@ export class RankingService {
   }
 
   static async getBadges(userId: number): Promise<Badge[]> {
-    const achievements = await this.getAchievements(userId);
-    const badges: Badge[] = [];
+    const db = database;
+    const userBadges = await db.all(`
+      SELECT b.*, ub.earned_at 
+      FROM badges b
+      JOIN user_badges ub ON b.id = ub.badge_id
+      WHERE ub.user_id = ?
+    `, [userId]);
 
-    if (achievements.find(a => a.id === 'first_tx' && a.completed)) {
-      badges.push({
-        id: 'badge_novice',
-        name: 'Novato',
-        description: 'Começou sua jornada financeira',
-        icon: 'star',
-        category: 'special',
-        unlockedAt: new Date().toISOString() // In real app, store this date
-      });
+    return userBadges.map(b => ({
+      id: b.id,
+      name: b.name,
+      description: b.description,
+      icon: b.icon,
+      category: b.category as any,
+      unlockedAt: b.earned_at
+    }));
+  }
+
+  static async awardBadge(userId: number, badgeId: string): Promise<boolean> {
+    const db = database;
+    try {
+      await db.run(
+        'INSERT OR IGNORE INTO user_badges (user_id, badge_id) VALUES (?, ?)',
+        [userId, badgeId]
+      );
+      return true;
+    } catch (err) {
+      console.error('Error awarding badge:', err);
+      return false;
     }
-
-    if (achievements.find(a => a.id === 'saver_1k' && a.completed)) {
-      badges.push({
-        id: 'badge_saver',
-        name: 'Cofrinho Cheio',
-        description: 'Economizou seus primeiros R$ 1.000',
-        icon: 'piggy-bank',
-        category: 'savings',
-        unlockedAt: new Date().toISOString()
-      });
-    }
-
-    if (achievements.find(a => a.id === 'streak_7' && a.completed)) {
-      badges.push({
-        id: 'badge_fire',
-        name: 'On Fire',
-        description: 'Sequência de 7 dias de atividade',
-        icon: 'flame',
-        category: 'streak',
-        unlockedAt: new Date().toISOString()
-      });
-    }
-
-    return badges;
   }
 
   static async getAvailableBadges(): Promise<Badge[]> {
-    return [
-      {
-        id: 'badge_novice',
-        name: 'Novato',
-        description: 'Começou sua jornada financeira',
-        icon: 'star',
-        category: 'special',
-        unlockedAt: ''
-      },
-      {
-        id: 'badge_saver',
-        name: 'Cofrinho Cheio',
-        description: 'Economizou seus primeiros R$ 1.000',
-        icon: 'piggy-bank',
-        category: 'savings',
-        unlockedAt: ''
-      },
-      {
-        id: 'badge_fire',
-        name: 'On Fire',
-        description: 'Sequência de 7 dias de atividade',
-        icon: 'flame',
-        category: 'streak',
-        unlockedAt: ''
-      },
-      {
-        id: 'badge_investor',
-        name: 'Investidor',
-        description: 'Crie sua primeira meta de investimento',
-        icon: 'trending-up',
-        category: 'goals',
-        unlockedAt: ''
+    const db = database;
+    const badges = await db.all('SELECT * FROM badges ORDER BY category');
+    return badges.map(b => ({
+      id: b.id,
+      name: b.name,
+      description: b.description,
+      icon: b.icon,
+      category: b.category as any,
+      unlockedAt: ''
+    }));
+  }
+
+  static async getPersonalizedRecommendations(userId: number): Promise<string[]> {
+    const db = database;
+    const recs: string[] = [];
+
+    // Check for high expense categories
+    const highExpenses = await db.all(`
+      SELECT category, SUM(amount) as total 
+      FROM transactions 
+      WHERE user_id = ? AND type = 'expense'
+      GROUP BY category 
+      ORDER BY total DESC 
+      LIMIT 1
+    `, [userId]);
+
+    if (highExpenses.length > 0) {
+      recs.push(`Seu maior gasto este mês é em "${highExpenses[0].category}". Tente reduzir 10% nesta categoria para ganhar a insignia de "Mestre da Economia"!`);
+    }
+
+    // Check for streak reset risk
+    const scoreData = await db.get('SELECT current_streak, last_checkin FROM user_scores WHERE user_id = ?', [userId]);
+    if (scoreData && scoreData.current_streak > 0) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (scoreData.last_checkin !== today) {
+        recs.push(`Sua sequência de ${scoreData.current_streak} dias está em risco! Faça seu check-in agora para mantê-la.`);
       }
-    ];
+    } else {
+      recs.push('Comece uma sequência de check-ins para subir de nível e ganhar pontos extras!');
+    }
+
+    // Check for goals
+    const activeGoals = await db.get('SELECT COUNT(*) as count FROM spending_goals WHERE user_id = ? AND status = "active"', [userId]);
+    if (activeGoals.count === 0) {
+      recs.push('Você não tem metas ativas. Criar uma meta de economia ajuda você a progredir mais rápido no ranking.');
+    }
+
+    return recs;
   }
 
   // Get user ranking by ID
