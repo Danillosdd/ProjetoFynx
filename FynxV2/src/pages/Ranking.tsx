@@ -10,11 +10,11 @@ import { useRanking, type LeaderboardEntry, type Achievement } from "@/hooks/use
 
 // ─── constants ───────────────────────────────────────────────────────────────
 const LEAGUE_META: Record<string, { label: string; color: string; border: string; bg: string }> = {
-  bronze:   { label: 'Bronze',   color: 'text-amber-400',  border: 'border-amber-400/30',  bg: 'bg-amber-400/10'  },
-  silver:   { label: 'Prata',    color: 'text-slate-300',  border: 'border-slate-300/30',  bg: 'bg-slate-300/10'  },
-  gold:     { label: 'Ouro',     color: 'text-yellow-400', border: 'border-yellow-400/30', bg: 'bg-yellow-400/10' },
-  platinum: { label: 'Platina',  color: 'text-cyan-400',   border: 'border-cyan-400/30',   bg: 'bg-cyan-400/10'   },
-  diamond:  { label: 'Diamante', color: 'text-[#C4FF0E]',  border: 'border-[#C4FF0E]/30',  bg: 'bg-[#C4FF0E]/10'  },
+  bronze: { label: 'Bronze', color: 'text-amber-400', border: 'border-amber-400/30', bg: 'bg-amber-400/10' },
+  silver: { label: 'Prata', color: 'text-slate-300', border: 'border-slate-300/30', bg: 'bg-slate-300/10' },
+  gold: { label: 'Ouro', color: 'text-yellow-400', border: 'border-yellow-400/30', bg: 'bg-yellow-400/10' },
+  platinum: { label: 'Platina', color: 'text-cyan-400', border: 'border-cyan-400/30', bg: 'bg-cyan-400/10' },
+  diamond: { label: 'Diamante', color: 'text-[#C4FF0E]', border: 'border-[#C4FF0E]/30', bg: 'bg-[#C4FF0E]/10' },
 }
 
 const LEAGUE_ORDER = ['bronze', 'silver', 'gold', 'platinum', 'diamond']
@@ -24,16 +24,16 @@ const LEAGUE_THRESHOLDS: Record<string, number> = {
 
 // ─── achievement icon map (API returns string names, not emojis) ─────────────
 const ACHIEVEMENT_ICON_MAP: Record<string, React.ReactNode> = {
-  'footprints':  <Footprints className="h-7 w-7" />,
-  'piggy-bank':  <PiggyBank  className="h-7 w-7" />,
-  'flame':       <Flame      className="h-7 w-7" />,
-  'trophy':      <Trophy     className="h-7 w-7" />,
-  'star':        <Star       className="h-7 w-7" />,
-  'target':      <Target     className="h-7 w-7" />,
-  'zap':         <Zap        className="h-7 w-7" />,
-  'rocket':      <Rocket     className="h-7 w-7" />,
-  'diamond':     <Diamond    className="h-7 w-7" />,
-  'award':       <Award      className="h-7 w-7" />,
+  'footprints': <Footprints className="h-7 w-7" />,
+  'piggy-bank': <PiggyBank className="h-7 w-7" />,
+  'flame': <Flame className="h-7 w-7" />,
+  'trophy': <Trophy className="h-7 w-7" />,
+  'star': <Star className="h-7 w-7" />,
+  'target': <Target className="h-7 w-7" />,
+  'zap': <Zap className="h-7 w-7" />,
+  'rocket': <Rocket className="h-7 w-7" />,
+  'diamond': <Diamond className="h-7 w-7" />,
+  'award': <Award className="h-7 w-7" />,
 }
 
 function renderAchIcon(icon: string) {
@@ -48,7 +48,7 @@ function getLeagueMeta(league: string) {
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 function TrendBadge({ trend, change }: { trend: string; change: number }) {
-  if (trend === 'up')   return <span className="flex items-center gap-0.5 text-emerald-400 text-[11px] font-bold tabular-nums">+{change}<ChevronUp className="h-3 w-3" /></span>
+  if (trend === 'up') return <span className="flex items-center gap-0.5 text-emerald-400 text-[11px] font-bold tabular-nums">+{change}<ChevronUp className="h-3 w-3" /></span>
   if (trend === 'down') return <span className="flex items-center gap-0.5 text-red-400   text-[11px] font-bold tabular-nums">{change}<ChevronDown className="h-3 w-3" /></span>
   return <Minus className="h-3 w-3 text-[#52525b]" />
 }
@@ -138,7 +138,7 @@ function AchievementRow({ a, index }: { a: Achievement; index: number }) {
             className={`absolute inset-y-0 left-0 rounded-full ${a.completed
               ? 'bg-gradient-to-r from-[#a3e635] to-[#C4FF0E] shadow-[0_0_8px_rgba(196,255,14,0.4)]'
               : 'bg-gradient-to-r from-purple-600 to-purple-400'
-            }`}
+              }`}
           >
             <div className="absolute right-0 top-0 h-full w-1.5 bg-white/40 blur-[1px]" />
           </motion.div>
@@ -163,11 +163,11 @@ function AchievementRow({ a, index }: { a: Achievement; index: number }) {
 // ─── main ─────────────────────────────────────────────────────────────────────
 export default function Ranking() {
   const { data, isLoading } = useRanking()
-  const [tab, setTab]           = useState<'global' | 'friends' | 'savings' | 'metas'>('global')
+  const [tab, setTab] = useState<'global' | 'friends' | 'savings' | 'metas'>('global')
   const [leagueFilter, setLeagueFilter] = useState<string>('all')
   const [conquestIndex, setConquestIndex] = useState(0)
 
-  const user  = data?.userRanking
+  const user = data?.userRanking
   const stats = data?.rankingStats
   const allAchievements = data?.achievements ?? []
 
@@ -175,8 +175,8 @@ export default function Ranking() {
     switch (tab) {
       case 'friends': return data?.friendsLeaderboard ?? []
       case 'savings': return data?.categoryLeaderboards?.savings ?? []
-      case 'metas':   return data?.categoryLeaderboards?.goals ?? []
-      default:        return data?.globalLeaderboard ?? []
+      case 'metas': return data?.categoryLeaderboards?.goals ?? []
+      default: return data?.globalLeaderboard ?? []
     }
   }, [tab, data])
 
@@ -184,10 +184,12 @@ export default function Ranking() {
     const alreadyIn = rawList.some(e => e.userId === user?.userId)
     const base = alreadyIn ? rawList : user ? [
       ...rawList,
-      { position: user.position, userId: user.userId, username: user.username,
+      {
+        position: user.position, userId: user.userId, username: user.username,
         avatar: user.avatar, score: user.score, level: user.level,
         league: (user.league?.toLowerCase() ?? 'bronze') as LeaderboardEntry['league'],
-        change: 0, trend: 'same' as const },
+        change: 0, trend: 'same' as const
+      },
     ].sort((a, b) => a.position - b.position) : rawList
     if (leagueFilter === 'all') return base
     return base.filter(e => e.league?.toLowerCase() === leagueFilter)
@@ -201,12 +203,12 @@ export default function Ranking() {
 
   // Fallback static achievements when API returns empty
   const staticAchievements: Achievement[] = [
-    { id:'1', title:'Early Adopter', description:'Membro fundador do Fynx', icon:'🚀', progress:1, target:1, completed:true, category:'special', reward:{ points:500 } },
-    { id:'2', title:'Cofrinho Cheio', description:'Economizou R$ 10.000', icon:'🐷', progress:10000, target:10000, completed:true, category:'savings', reward:{ points:1000 } },
-    { id:'3', title:'High Roller', description:'Realizou transação de R$ 100.000', icon:'💎', progress:42000, target:100000, completed:false, category:'transactions', reward:{ points:5000 } },
-    { id:'4', title:'G.O.A.T Status', description:'Top 1% no ranking anual', icon:'✨', progress: stats?.userPercentile ? Math.round((100 - stats.userPercentile)) : 13, target:99, completed:false, category:'ranking', reward:{ points:10000 } },
-    { id:'5', title:'Sequência Lendária', description:'30 dias consecutivos de login', icon:'🔥', progress:user?.streakDays ?? 0, target:30, completed:(user?.streakDays ?? 0) >= 30, category:'engagement', reward:{ points:2000 } },
-    { id:'6', title:'Caçador de Metas', description:'Conclua 5 metas financeiras', icon:'🎯', progress:user?.goalsCompleted ?? 0, target:5, completed:(user?.goalsCompleted ?? 0) >= 5, category:'goals', reward:{ points:3000 } },
+    { id: '1', title: 'Early Adopter', description: 'Membro fundador do Fynx', icon: '🚀', progress: 1, target: 1, completed: true, category: 'special', reward: { points: 500 } },
+    { id: '2', title: 'Cofrinho Cheio', description: 'Economizou R$ 10.000', icon: '🐷', progress: 10000, target: 10000, completed: true, category: 'savings', reward: { points: 1000 } },
+    { id: '3', title: 'High Roller', description: 'Realizou transação de R$ 100.000', icon: '💎', progress: 42000, target: 100000, completed: false, category: 'transactions', reward: { points: 5000 } },
+    { id: '4', title: 'G.O.A.T Status', description: 'Top 1% no ranking anual', icon: '✨', progress: stats?.userPercentile ? Math.round((100 - stats.userPercentile)) : 13, target: 99, completed: false, category: 'ranking', reward: { points: 10000 } },
+    { id: '5', title: 'Sequência Lendária', description: '30 dias consecutivos de login', icon: '🔥', progress: user?.streakDays ?? 0, target: 30, completed: (user?.streakDays ?? 0) >= 30, category: 'engagement', reward: { points: 2000 } },
+    { id: '6', title: 'Caçador de Metas', description: 'Conclua 5 metas financeiras', icon: '🎯', progress: user?.goalsCompleted ?? 0, target: 5, completed: (user?.goalsCompleted ?? 0) >= 5, category: 'goals', reward: { points: 3000 } },
   ]
   const achievements = allAchievements.length > 0 ? allAchievements : staticAchievements
 
@@ -299,16 +301,16 @@ export default function Ranking() {
         </div>
       </div>
 
-  {/* ══ BODY ═══════════════════════════════════════════════════════════════ */}
+      {/* ══ BODY ═══════════════════════════════════════════════════════════════ */}
       {/* CORREÇÃO DEFINITIVA: Container relativo. A esquerda dita a altura, a direita obedece. */}
-      <div className="relative w-full flex flex-col xl:block">
+      <div className="flex flex-col xl:flex-row gap-6 xl:items-stretch">
 
         {/* ── LEFT (Dita a altura total da tela) ─────────────────────────── */}
         {/* O width é a tela toda MENOS a largura da direita (380px) e o gap (24px) = 404px */}
-        <div className="w-full xl:w-[calc(100%-404px)] flex flex-col gap-6">
+        <div className="flex-1 flex flex-col gap-6">
 
           {/* CLASSIFICAÇÃO GLOBAL */}
-          <div className="apple-glass border-none rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+          <div className="apple-glass border-none rounded-2xl overflow-hidden shadow-2xl flex flex-col flex-1">
             <div className="flex flex-col gap-3 px-5 pt-5 pb-4 border-b border-white/[0.04]">
               <div className="flex items-center justify-between">
                 <h2 className="text-[14px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily: '"Space Grotesk",sans-serif' }}>
@@ -316,7 +318,7 @@ export default function Ranking() {
                 </h2>
                 <div className="flex bg-black/40 rounded-lg border border-white/[0.08] p-[3px] text-[8px] font-bold uppercase tracking-widest">
                   {(['global', 'friends', 'savings', 'metas'] as const).map(t => {
-                    const labels = { global:'Global', friends:'Amigos', savings:'Poupança', metas:'Metas' }
+                    const labels = { global: 'Global', friends: 'Amigos', savings: 'Poupança', metas: 'Metas' }
                     return (
                       <button key={t} onClick={() => setTab(t)}
                         className={`px-2.5 py-1.5 rounded-md transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30 ${tab === t ? 'bg-white/10 text-white' : 'text-[#71717a] hover:text-white'}`}>
@@ -353,8 +355,8 @@ export default function Ranking() {
               <span className="text-right">Pontos</span>
             </div>
 
-            {/* scrollable — Mantido seu max-height original para a tabela */}
-            <div className="overflow-y-auto" style={{ maxHeight: '280px' }}>
+            {/* scrollable — máximo 6 linhas visíveis, restante por scroll */}
+            <div className="overflow-y-auto" style={{ maxHeight: '336px' }}>
               {fullList.length === 0
                 ? <div className="py-10 text-center text-[#71717a] text-sm">Nenhum dado para este filtro.</div>
                 : fullList.map(entry => (
@@ -365,7 +367,7 @@ export default function Ranking() {
             {user && (
               <div className="border-t border-white/[0.04] px-5 py-3 flex items-center justify-between bg-purple-950/15">
                 <span className="text-[9px] font-bold text-[#a1a1aa] uppercase tracking-widest">Sua posição</span>
-                <span className="text-[13px] font-extrabold text-[#e9d5ff]" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
+                <span className="text-[13px] font-extrabold text-[#e9d5ff]" style={{ fontFamily: '"Space Grotesk",sans-serif' }}>
                   #{user.position} — {user.score.toLocaleString('pt-BR')} pts
                 </span>
               </div>
@@ -374,7 +376,7 @@ export default function Ranking() {
 
           {/* ── LEAGUE PATH — HORIZONTAL ────────────────── */}
           <div className="apple-glass border-none rounded-2xl p-5 shadow-xl">
-            <h2 className="text-[13px] font-extrabold text-white tracking-widest uppercase mb-5" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
+            <h2 className="text-[13px] font-extrabold text-white tracking-widest uppercase mb-5" style={{ fontFamily: '"Space Grotesk",sans-serif' }}>
               Caminho de Liga
             </h2>
 
@@ -387,21 +389,21 @@ export default function Ranking() {
                 const isCompleted = idx < currentLeagueIndex
                 const isLocked = idx > currentLeagueIndex
                 const icons: Record<string, React.ReactNode> = {
-                  bronze:   <Zap className="h-4 w-4" />,
-                  silver:   <CheckCircle className="h-4 w-4" />,
-                  gold:     <Award className="h-4 w-4" />,
+                  bronze: <Zap className="h-4 w-4" />,
+                  silver: <CheckCircle className="h-4 w-4" />,
+                  gold: <Award className="h-4 w-4" />,
                   platinum: <Trophy className="h-4 w-4" />,
-                  diamond:  <Star className="h-4 w-4" fill="currentColor" />,
+                  diamond: <Star className="h-4 w-4" fill="currentColor" />,
                 }
                 return (
                   <div key={lg} className="flex flex-col items-center flex-1 relative z-10">
                     <div className={`h-9 w-9 rounded-full border-2 flex items-center justify-center mb-3 transition-all
                         ${isCurrent
-                          ? 'bg-purple-600/30 border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.4)] ring-4 ring-purple-500/20'
-                          : isCompleted
+                        ? 'bg-purple-600/30 border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.4)] ring-4 ring-purple-500/20'
+                        : isCompleted
                           ? `${lm.bg} ${lm.border.replace('border-', 'border-')} border`
                           : 'bg-white/[0.03] border-white/10'
-                        }`}>
+                      }`}>
                       <span className={isCurrent ? 'text-[#e9d5ff]' : isCompleted ? lm.color : 'text-[#52525b]'}>
                         {isLocked ? <Lock className="h-3.5 w-3.5" /> : icons[lg]}
                       </span>
@@ -425,7 +427,7 @@ export default function Ranking() {
         </div>
 
         {/* ── RIGHT ─────────────────────────────────────── */}
-        <div className="w-full xl:w-[380px] static xl:absolute xl:right-0 xl:top-0 xl:bottom-0 flex flex-col gap-6 mt-6 xl:mt-0">
+        <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-6 mt-6 xl:mt-0">
 
           {/* CONQUISTAS */}
           <div
@@ -434,7 +436,7 @@ export default function Ranking() {
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-3 shrink-0">
-              <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
+              <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily: '"Space Grotesk",sans-serif' }}>
                 Conquistas
               </h2>
               <span className="text-[9px] font-bold text-[#52525b] tracking-widest">
@@ -458,17 +460,15 @@ export default function Ranking() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className={`flex-1 flex flex-col p-4 rounded-2xl border overflow-hidden ${
-                      a.completed
+                    className={`flex-1 flex flex-col p-4 rounded-2xl border overflow-hidden ${a.completed
                         ? 'border-[#C4FF0E]/20 bg-[#C4FF0E]/[0.03] shadow-[0_0_20px_rgba(196,255,14,0.05)]'
                         : 'border-white/[0.06] bg-white/[0.02]'
-                    }`}
+                      }`}
                   >
                     {/* Ícone + status */}
                     <div className="flex items-start justify-between mb-4 shrink-0">
-                      <div className={`h-14 w-14 rounded-2xl border flex items-center justify-center shrink-0 ${
-                        a.completed ? 'bg-[#C4FF0E]/10 border-[#C4FF0E]/20' : 'bg-white/[0.04] border-white/[0.06]'
-                      }`}>
+                      <div className={`h-14 w-14 rounded-2xl border flex items-center justify-center shrink-0 ${a.completed ? 'bg-[#C4FF0E]/10 border-[#C4FF0E]/20' : 'bg-white/[0.04] border-white/[0.06]'
+                        }`}>
                         <span className={a.completed ? 'text-[#C4FF0E]' : 'text-[#52525b]'}>
                           {renderAchIcon(a.icon)}
                         </span>
@@ -494,11 +494,10 @@ export default function Ranking() {
                           initial={{ width: 0 }}
                           animate={{ width: `${pct}%` }}
                           transition={{ duration: 0.9, ease: 'easeOut' }}
-                          className={`absolute inset-y-0 left-0 rounded-full ${
-                            a.completed
+                          className={`absolute inset-y-0 left-0 rounded-full ${a.completed
                               ? 'bg-gradient-to-r from-[#a3e635] to-[#C4FF0E] shadow-[0_0_8px_rgba(196,255,14,0.4)]'
                               : 'bg-gradient-to-r from-purple-600 to-purple-400'
-                          }`}
+                            }`}
                         >
                           <div className="absolute right-0 top-0 h-full w-1.5 bg-white/40 blur-[1px]" />
                         </motion.div>
@@ -532,9 +531,8 @@ export default function Ranking() {
                         <button
                           key={i}
                           onClick={() => setConquestIndex(i)}
-                          className={`rounded-full transition-all ${
-                            i === safeIdx ? 'h-1.5 w-5 bg-[#C4FF0E]' : 'h-1.5 w-1.5 bg-white/20 hover:bg-white/50'
-                          }`}
+                          className={`rounded-full transition-all ${i === safeIdx ? 'h-1.5 w-5 bg-[#C4FF0E]' : 'h-1.5 w-1.5 bg-white/20 hover:bg-white/50'
+                            }`}
                         />
                       ))}
                     </div>
@@ -555,7 +553,7 @@ export default function Ranking() {
           {/* MISSÕES ATIVAS — Não encolhe (shrink-0) */}
           <div className="apple-glass border-none rounded-2xl p-5 shadow-xl shrink-0">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
+              <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily: '"Space Grotesk",sans-serif' }}>
                 Missões Ativas
               </h2>
               <Target className="h-3.5 w-3.5 text-emerald-400" />
@@ -577,21 +575,21 @@ export default function Ranking() {
 
           {/* ESTATÍSTICAS — Não encolhe (shrink-0) */}
           <div className="apple-glass border-none rounded-2xl p-5 shadow-xl shrink-0">
-            <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase mb-3 text-wrap-balance" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
+            <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase mb-3 text-wrap-balance" style={{ fontFamily: '"Space Grotesk",sans-serif' }}>
               Estatísticas
             </h2>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label:'Total Usuários',   value: stats?.totalUsers?.toLocaleString('pt-BR') ?? '—', icon:<Users className="h-3 w-3 text-[#a1a1aa]"/> },
-                { label:'Top Pontuação',     value: stats?.topScore?.toLocaleString('pt-BR') ?? '—',   icon:<Trophy className="h-3 w-3 text-[#C4FF0E]"/> },
-                { label:'Metas Concluídas', value: user?.goalsCompleted ?? '—',                        icon:<Target className="h-3 w-3 text-emerald-400"/> },
-                { label:'Nível Atual',       value: user?.level ?? '—',                                icon:<Zap className="h-3 w-3 text-purple-400"/> },
+                { label: 'Total Usuários', value: stats?.totalUsers?.toLocaleString('pt-BR') ?? '—', icon: <Users className="h-3 w-3 text-[#a1a1aa]" /> },
+                { label: 'Top Pontuação', value: stats?.topScore?.toLocaleString('pt-BR') ?? '—', icon: <Trophy className="h-3 w-3 text-[#C4FF0E]" /> },
+                { label: 'Metas Concluídas', value: user?.goalsCompleted ?? '—', icon: <Target className="h-3 w-3 text-emerald-400" /> },
+                { label: 'Nível Atual', value: user?.level ?? '—', icon: <Zap className="h-3 w-3 text-purple-400" /> },
               ].map(({ label, value, icon }) => (
                 <div key={label} className="bg-black/20 rounded-xl p-3 border border-white/[0.04]">
                   <div className="flex items-center gap-1 mb-1.5">{icon}
                     <span className="text-[8px] font-bold text-[#52525b] uppercase tracking-widest">{label}</span>
                   </div>
-                  <span className="text-[18px] font-extrabold text-white leading-none tabular-nums" style={{ fontFamily:'"Space Grotesk",sans-serif', fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+                  <span className="text-[18px] font-extrabold text-white leading-none tabular-nums" style={{ fontFamily: '"Space Grotesk",sans-serif', fontVariantNumeric: 'tabular-nums' }}>{value}</span>
                 </div>
               ))}
             </div>
