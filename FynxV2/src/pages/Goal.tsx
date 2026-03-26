@@ -151,7 +151,7 @@ const Goals = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-in-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
           {/* Card 1: Total Savings */}
-          <div className="apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 border-purple-500 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group">
+          <div className="apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 border-purple-500 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <PiggyBank className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
               <span className="font-semibold uppercase tracking-wider text-xs">Total Acumulado</span>
@@ -161,7 +161,7 @@ const Goals = () => {
           </div>
 
           {/* Card 2: Savings Progress */}
-          <div className="apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 border-cyan-500 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group">
+          <div className="apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 border-cyan-500 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <TrendingUp className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
               <span className="font-semibold uppercase tracking-wider text-xs">Prog. Poupança</span>
@@ -173,7 +173,7 @@ const Goals = () => {
           </div>
 
           {/* Card 3: Total Spent vs Limits */}
-           <div className="apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 border-lime-500 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group">
+           <div className="apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 border-lime-500 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <Wallet className="w-4 h-4 text-lime-400 group-hover:scale-110 transition-transform" />
               <span className="font-semibold uppercase tracking-wider text-xs">Global de Gastos</span>
@@ -183,7 +183,7 @@ const Goals = () => {
           </div>
 
           {/* Card 4: Global Consumption / Warnings */}
-          <div className={`apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 ${spendingProgress > 100 ? 'border-destructive' : 'border-emerald-500'} hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group`}>
+          <div className={`apple-glass rounded-2xl p-5 flex flex-col justify-center border-l-4 ${spendingProgress > 100 ? 'border-destructive' : 'border-emerald-500'} hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)] relative overflow-hidden group`}>
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               {spendingProgress > 100 ? <AlertCircle className="w-4 h-4 text-destructive group-hover:scale-110 transition-transform animate-pulse" /> : <Activity className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />}
               <span className="font-semibold uppercase tracking-wider text-xs">Saúde do Mês</span>

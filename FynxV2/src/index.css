@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Using postcss-import compatible syntax to resolve IDE warnings */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 /* FinanceHub Design System - Dark Financial Dashboard Theme */
 
@@ -106,11 +107,12 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border) / 1); /* Equivalent to @apply border-border */
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background)); /* Equivalent to @apply bg-background */
+    color: hsl(var(--foreground)); /* Equivalent to @apply text-foreground */
   }
 }
 

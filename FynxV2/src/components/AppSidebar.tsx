@@ -37,7 +37,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
   const isActive = (path: string) => currentPath === path
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-64'} transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] apple-glass border-r-0 flex flex-col h-full`}>
+    <div className={`${isCollapsed ? 'w-16' : 'w-64'} transition-all duration-500 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)] apple-glass border-r-0 flex flex-col h-full`}>
       {/* Header */}
       <div className={`relative ${isCollapsed ? 'p-4' : 'p-6'} border-b border-border flex items-center`}>
         {isCollapsed ? (

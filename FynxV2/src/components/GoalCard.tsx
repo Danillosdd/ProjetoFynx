@@ -50,7 +50,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
     const isCompleted = percentage >= 100;
     
     const cardContainerClass = cn(
-      "group relative overflow-hidden rounded-xl p-5 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-2xl",
+      "group relative overflow-hidden rounded-xl p-5 transition-all duration-500 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-2xl",
       isCompleted 
         ? "bg-purple-950/20 border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)_inset] hover:border-purple-400" 
         : "apple-glass hover:border-white/20"
@@ -155,7 +155,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
 
           <div className="relative h-3 w-full overflow-hidden rounded-full bg-black/30 ring-1 ring-inset ring-white/10" data-tour="goal-progress-bar">
             <div
-              className={`absolute top-0 left-0 h-full ${isCompleted ? 'bg-gradient-to-r from-purple-600 to-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.7)]' : 'bg-gradient-to-r from-blue-600 to-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.7)]'} transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]`}
+              className={`absolute top-0 left-0 h-full ${isCompleted ? 'bg-gradient-to-r from-purple-600 to-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.7)]' : 'bg-gradient-to-r from-blue-600 to-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.7)]'} transition-all duration-1000 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)]`}
               style={{ width: `${percentage}%` }}
             >
               <div className="absolute right-0 top-0 h-full w-2 bg-white/50 blur-[2px]" />
@@ -178,7 +178,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
   const progressColor = isOverLimit ? "from-red-600 to-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.7)]" : percentage > 80 ? "from-orange-600 to-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.7)]" : "from-emerald-600 to-lime-400 shadow-[0_0_12px_rgba(163,230,53,0.7)]";
 
   const cardContainerClass = cn(
-    "group relative overflow-hidden rounded-xl p-5 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-2xl",
+    "group relative overflow-hidden rounded-xl p-5 transition-all duration-500 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-2xl",
     isOverLimit 
       ? "bg-red-950/30 border border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.1)_inset] hover:border-red-400" 
       : "apple-glass hover:border-white/20"
@@ -283,7 +283,7 @@ export const GoalCard = ({ goal, onAddTransaction, onDelete }: GoalCardProps) =>
 
         <div className="relative h-3 w-full overflow-hidden rounded-full bg-black/30 ring-1 ring-inset ring-white/10" data-tour="goal-progress-bar">
           <div
-            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${progressColor} transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]`}
+            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${progressColor} transition-all duration-1000 ease-[timing-function:cubic-bezier(0.16,1,0.3,1)]`}
             style={{ width: `${percentage}%` }}
           >
             <div className="absolute right-0 top-0 h-full w-2 bg-white/50 blur-[2px]" />
