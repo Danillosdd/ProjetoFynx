@@ -2,9 +2,9 @@ import * as React from "react"
 import { useState, useMemo } from "react"
 import { motion } from "framer-motion"
 import {
-  Flame, TrendingUp, Trophy, Sparkles, Award, Star,
+  Flame, TrendingUp, Trophy, Sparkles, Award, Star, Footprints,
   Rocket, PiggyBank, Diamond, CheckCircle, Target, Zap, Users,
-  ChevronUp, ChevronDown, Minus, SlidersHorizontal, Lock
+  ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Minus, SlidersHorizontal, Lock
 } from "lucide-react"
 import { useRanking, type LeaderboardEntry, type Achievement } from "@/hooks/useRanking"
 
@@ -20,6 +20,26 @@ const LEAGUE_META: Record<string, { label: string; color: string; border: string
 const LEAGUE_ORDER = ['bronze', 'silver', 'gold', 'platinum', 'diamond']
 const LEAGUE_THRESHOLDS: Record<string, number> = {
   bronze: 1000, silver: 5000, gold: 15000, platinum: 40000, diamond: Infinity,
+}
+
+// ─── achievement icon map (API returns string names, not emojis) ─────────────
+const ACHIEVEMENT_ICON_MAP: Record<string, React.ReactNode> = {
+  'footprints':  <Footprints className="h-7 w-7" />,
+  'piggy-bank':  <PiggyBank  className="h-7 w-7" />,
+  'flame':       <Flame      className="h-7 w-7" />,
+  'trophy':      <Trophy     className="h-7 w-7" />,
+  'star':        <Star       className="h-7 w-7" />,
+  'target':      <Target     className="h-7 w-7" />,
+  'zap':         <Zap        className="h-7 w-7" />,
+  'rocket':      <Rocket     className="h-7 w-7" />,
+  'diamond':     <Diamond    className="h-7 w-7" />,
+  'award':       <Award      className="h-7 w-7" />,
+}
+
+function renderAchIcon(icon: string) {
+  if (icon in ACHIEVEMENT_ICON_MAP) return ACHIEVEMENT_ICON_MAP[icon]
+  // emoji or unknown string → render directly
+  return <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{icon}</span>
 }
 
 function getLeagueMeta(league: string) {
@@ -145,6 +165,7 @@ export default function Ranking() {
   const { data, isLoading } = useRanking()
   const [tab, setTab]           = useState<'global' | 'friends' | 'savings' | 'metas'>('global')
   const [leagueFilter, setLeagueFilter] = useState<string>('all')
+  const [conquestIndex, setConquestIndex] = useState(0)
 
   const user  = data?.userRanking
   const stats = data?.rankingStats
@@ -278,15 +299,16 @@ export default function Ranking() {
         </div>
       </div>
 
-      {/* ══ BODY ═══════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+  {/* ══ BODY ═══════════════════════════════════════════════════════════════ */}
+      {/* CORREÇÃO DEFINITIVA: Container relativo. A esquerda dita a altura, a direita obedece. */}
+      <div className="relative w-full flex flex-col xl:block">
 
-        {/* ── LEFT ──────────────────────────────────────── */}
-        <div className="flex flex-col gap-6 flex-1">
+        {/* ── LEFT (Dita a altura total da tela) ─────────────────────────── */}
+        {/* O width é a tela toda MENOS a largura da direita (380px) e o gap (24px) = 404px */}
+        <div className="w-full xl:w-[calc(100%-404px)] flex flex-col gap-6">
 
           {/* CLASSIFICAÇÃO GLOBAL */}
           <div className="apple-glass border-none rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-            {/* header */}
             <div className="flex flex-col gap-3 px-5 pt-5 pb-4 border-b border-white/[0.04]">
               <div className="flex items-center justify-between">
                 <h2 className="text-[14px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily: '"Space Grotesk",sans-serif' }}>
@@ -323,7 +345,6 @@ export default function Ranking() {
               </div>
             </div>
 
-            {/* col headers */}
             <div className="px-5 py-2.5 text-[9px] font-bold text-[#52525b] uppercase tracking-[0.2em]"
               style={{ display: 'grid', gridTemplateColumns: '44px 1fr 90px 52px 80px' }}>
               <span>Pos</span><span>Usuário</span>
@@ -332,7 +353,7 @@ export default function Ranking() {
               <span className="text-right">Pontos</span>
             </div>
 
-            {/* scrollable — ~5 rows */}
+            {/* scrollable — Mantido seu max-height original para a tabela */}
             <div className="overflow-y-auto" style={{ maxHeight: '280px' }}>
               {fullList.length === 0
                 ? <div className="py-10 text-center text-[#71717a] text-sm">Nenhum dado para este filtro.</div>
@@ -341,7 +362,6 @@ export default function Ranking() {
                 ))}
             </div>
 
-            {/* my pinned position */}
             {user && (
               <div className="border-t border-white/[0.04] px-5 py-3 flex items-center justify-between bg-purple-950/15">
                 <span className="text-[9px] font-bold text-[#a1a1aa] uppercase tracking-widest">Sua posição</span>
@@ -358,9 +378,7 @@ export default function Ranking() {
               Caminho de Liga
             </h2>
 
-            {/* Horizontal strip */}
             <div className="relative flex items-start gap-0">
-              {/* connector line behind nodes */}
               <div className="absolute top-[18px] left-[18px] right-[18px] h-[2px] bg-gradient-to-r from-[#C4FF0E]/20 via-purple-500/40 to-white/[0.04] pointer-events-none" />
 
               {LEAGUE_ORDER.map((lg, idx) => {
@@ -377,7 +395,6 @@ export default function Ranking() {
                 }
                 return (
                   <div key={lg} className="flex flex-col items-center flex-1 relative z-10">
-                    {/* node circle */}
                     <div className={`h-9 w-9 rounded-full border-2 flex items-center justify-center mb-3 transition-all
                         ${isCurrent
                           ? 'bg-purple-600/30 border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.4)] ring-4 ring-purple-500/20'
@@ -389,7 +406,6 @@ export default function Ranking() {
                         {isLocked ? <Lock className="h-3.5 w-3.5" /> : icons[lg]}
                       </span>
                     </div>
-                    {/* label */}
                     <span className={`text-[10px] font-extrabold uppercase tracking-widest text-center leading-tight mb-0.5
                         ${isCurrent ? 'text-white' : isCompleted ? lm.color : 'text-[#52525b]'}`}>
                       {lm.label}
@@ -409,12 +425,16 @@ export default function Ranking() {
         </div>
 
         {/* ── RIGHT ─────────────────────────────────────── */}
-        <div className="flex flex-col gap-6 xl:w-[380px] h-full overflow-hidden shrink-0">
+        <div className="w-full xl:w-[380px] static xl:absolute xl:right-0 xl:top-0 xl:bottom-0 flex flex-col gap-6 mt-6 xl:mt-0">
 
-          {/* CONQUISTAS — spans row 1, taking all available space */}
-          <div className="apple-glass border-none rounded-2xl p-5 shadow-2xl flex flex-col min-h-0 overflow-hidden flex-1">
+          {/* CONQUISTAS */}
+          <div
+            className="apple-glass border-none rounded-2xl p-5 shadow-2xl flex flex-col"
+            style={{ flex: '1 1 0', minHeight: '260px', overflow: 'hidden' }}
+          >
+            {/* Header */}
             <div className="flex items-center justify-between mb-3 shrink-0">
-              <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase text-wrap-balance" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
+              <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
                 Conquistas
               </h2>
               <span className="text-[9px] font-bold text-[#52525b] tracking-widest">
@@ -422,15 +442,117 @@ export default function Ranking() {
               </span>
             </div>
 
-            {/* scrollable stack fills remaining space */}
-            <div className="flex flex-col gap-2 overflow-y-auto min-h-0 flex-1 pr-0.5">
-              {achievements
-                .sort((a, b) => (b.completed ? 1 : 0) - (a.completed ? 1 : 0))
-                .map((a, i) => <AchievementRow key={a.id} a={a} index={i} />)}
-            </div>
+            {/* Carrossel */}
+            {(() => {
+              const sorted = [...achievements].sort((a, b) => (b.completed ? 1 : 0) - (a.completed ? 1 : 0))
+              const total = sorted.length
+              if (total === 0) return null
+              const safeIdx = Math.min(conquestIndex, total - 1)
+              const a = sorted[safeIdx]
+              const pct = Math.min(100, (a.progress / Math.max(1, a.target)) * 100)
+              return (
+                <div className="flex flex-col flex-1 min-h-0">
+                  {/* Card da conquista — overflow:hidden garante que o conteúdo fica dentro da borda */}
+                  <motion.div
+                    key={a.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className={`flex-1 flex flex-col p-4 rounded-2xl border overflow-hidden ${
+                      a.completed
+                        ? 'border-[#C4FF0E]/20 bg-[#C4FF0E]/[0.03] shadow-[0_0_20px_rgba(196,255,14,0.05)]'
+                        : 'border-white/[0.06] bg-white/[0.02]'
+                    }`}
+                  >
+                    {/* Ícone + status */}
+                    <div className="flex items-start justify-between mb-4 shrink-0">
+                      <div className={`h-14 w-14 rounded-2xl border flex items-center justify-center shrink-0 ${
+                        a.completed ? 'bg-[#C4FF0E]/10 border-[#C4FF0E]/20' : 'bg-white/[0.04] border-white/[0.06]'
+                      }`}>
+                        <span className={a.completed ? 'text-[#C4FF0E]' : 'text-[#52525b]'}>
+                          {renderAchIcon(a.icon)}
+                        </span>
+                      </div>
+                      {a.completed
+                        ? <CheckCircle className="h-5 w-5 text-[#C4FF0E] shrink-0" />
+                        : <Lock className="h-4 w-4 text-[#52525b] shrink-0" />}
+                    </div>
+
+                    {/* Título + descrição */}
+                    <div className="flex flex-col gap-1 mb-5 shrink-0">
+                      <span className={`text-[13px] font-extrabold uppercase tracking-[0.08em] leading-tight ${a.completed ? 'text-white' : 'text-[#a1a1aa]'}`}>
+                        {a.title}
+                      </span>
+                      <span className="text-[10px] text-[#52525b] leading-snug">{a.description}</span>
+                    </div>
+
+                    {/* Barra de progresso + XP */}
+                    <div className="flex flex-col gap-1.5 shrink-0">
+                      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-black/40 ring-1 ring-inset ring-white/[0.05]">
+                        <motion.div
+                          key={`${a.id}-bar`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.9, ease: 'easeOut' }}
+                          className={`absolute inset-y-0 left-0 rounded-full ${
+                            a.completed
+                              ? 'bg-gradient-to-r from-[#a3e635] to-[#C4FF0E] shadow-[0_0_8px_rgba(196,255,14,0.4)]'
+                              : 'bg-gradient-to-r from-purple-600 to-purple-400'
+                          }`}
+                        >
+                          <div className="absolute right-0 top-0 h-full w-1.5 bg-white/40 blur-[1px]" />
+                        </motion.div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[9px] font-bold tabular-nums ${a.completed ? 'text-[#C4FF0E]' : 'text-[#52525b]'}`}>
+                          {pct.toFixed(0)}%
+                        </span>
+                        {a.reward?.points && (
+                          <div className="flex items-center gap-1">
+                            <Zap className="h-2.5 w-2.5 text-[#C4FF0E]" />
+                            <span className="text-[8px] font-bold text-[#C4FF0E] uppercase tracking-widest">+{a.reward.points} XP</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Navegação */}
+                  <div className="flex items-center justify-between mt-3 shrink-0">
+                    <button
+                      onClick={() => setConquestIndex(i => Math.max(0, i - 1))}
+                      disabled={safeIdx === 0}
+                      className="h-8 w-8 rounded-xl border border-white/[0.08] bg-white/[0.03] flex items-center justify-center transition-all hover:bg-white/[0.08] disabled:opacity-25 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-[#a1a1aa]" />
+                    </button>
+
+                    <div className="flex items-center gap-1.5">
+                      {sorted.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setConquestIndex(i)}
+                          className={`rounded-full transition-all ${
+                            i === safeIdx ? 'h-1.5 w-5 bg-[#C4FF0E]' : 'h-1.5 w-1.5 bg-white/20 hover:bg-white/50'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => setConquestIndex(i => Math.min(total - 1, i + 1))}
+                      disabled={safeIdx === total - 1}
+                      className="h-8 w-8 rounded-xl border border-white/[0.08] bg-white/[0.03] flex items-center justify-center transition-all hover:bg-white/[0.08] disabled:opacity-25 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="h-4 w-4 text-[#a1a1aa]" />
+                    </button>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
-          {/* MISSÕES ATIVAS — compact, shrink-0 */}
+          {/* MISSÕES ATIVAS — Não encolhe (shrink-0) */}
           <div className="apple-glass border-none rounded-2xl p-5 shadow-xl shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
@@ -453,7 +575,7 @@ export default function Ranking() {
             </div>
           </div>
 
-          {/* ESTATÍSTICAS — compact, shrink-0 */}
+          {/* ESTATÍSTICAS — Não encolhe (shrink-0) */}
           <div className="apple-glass border-none rounded-2xl p-5 shadow-xl shrink-0">
             <h2 className="text-[12px] font-extrabold text-white tracking-widest uppercase mb-3 text-wrap-balance" style={{ fontFamily:'"Space Grotesk",sans-serif' }}>
               Estatísticas
