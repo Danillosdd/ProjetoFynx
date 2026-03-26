@@ -740,3 +740,352 @@ A fronteira enxuta da rede HTTPS. Processa retornos mapeados enclausurando parâ
 - **Escuta Desatrelada (`AuthController`, `WhatsAppController`)**: Absorve gatilhos remotos por webhook sob veracidade garantida através de conferência em tempo real validando *checksums* de protocolos criptografados (ex: HMAC exigido das requests restritas Meta API).
 
 ---
+
+## 4. Projeto de Banco de Dados
+
+### 4.1. Justificativa e Seleção de Arquitetura (Database Selection)
+
+- **SGBDR:** O FYNX utiliza **SQLite** no ambiente de desenvolvimento atual e está planejado para migrar para **PostgreSQL** em produção (Rev05+).
+- **Decisão:** A escolha do Postgres para produção deve-se à sua alta confiabilidade no processamento simultâneo de transações financeiras e ao suporte nativo à coluna `JSONB`, que entrega indexação hiper-otimizada para o contexto variável das interações de IA (Chatbot NLP via WhatsApp).
+- **Tabelas do Sistema:** O banco de dados é composto por **14 tabelas**, sendo 12 já existentes e 2 planejadas para a integração WhatsApp (Rev05).
+
+| Tabela | Descrição | Status |
+|---|---|---|
+| `users` | Usuários do sistema | ✅ Existente |
+| `categories` | Categorias globais padrão | ✅ Existente |
+| `custom_categories` | Categorias personalizadas por usuário | ✅ Existente |
+| `transactions` | Transações financeiras (receitas e despesas) | ✅ Existente |
+| `spending_goals` | Metas financeiras (`saving` e `spending`) | ✅ Existente |
+| `spending_limits` | Limites de gastos por categoria e período | ✅ Existente |
+| `budgets` | Orçamentos mensais/anuais | ✅ Existente |
+| `user_scores` | Pontuação, nível, liga e streak do usuário | ✅ Existente |
+| `achievements` | Catálogo global de conquistas | ✅ Existente |
+| `user_achievements` | Conquistas desbloqueadas por usuário (N:N) | ✅ Existente |
+| `badges` | Catálogo global de badges | ✅ Existente |
+| `user_badges` | Badges conquistadas por usuário (N:N) | ✅ Existente |
+| `whatsapp_sessions` | Sessões de conversa com IA via WhatsApp | 🔜 Planejado Rev05 |
+| `whatsapp_notification_logs` | Log de notificações automáticas via WhatsApp | 🔜 Planejado Rev05 |
+
+---
+
+### 4.2. Modelo Conceitual (DER — Notação Peter Chen)
+
+O modelo conceitual abstrai tipos e chaves, focando puramente no domínio de negócio: quais entidades o sistema possui e como interagem. Os **retângulos** representam Entidades, os **losangos** representam Relacionamentos e os **ovais** representam Atributos principais.
+
+![DER - Banco de dados](DER%20-%20Banco%20de%20dados.svg)
+
+> 📄 Arquivo de referência: [`DER - Banco de dados.svg`](DER%20-%20Banco%20de%20dados.svg) — editável no draw.io.
+
+---
+
+### 4.3. Modelo Lógico (Diagrama Relacional)
+
+O modelo lógico mapeia todas as 14 tabelas com seus atributos tipados, Chaves Primárias (PK), Chaves Estrangeiras (FK) e cardinalidades de relacionamento.
+
+![Modelo Logico - Banco de dados](Modelo%20Logico%20-%20Banco%20de%20dados.svg)
+
+> 📄 Arquivo de referência: [`Modelo Logico - Banco de dados.svg`](Modelo%20Logico%20-%20Banco%20de%20dados.svg) — editável no draw.io.
+
+**Relacionamentos principais:**
+
+| De | Para | Cardinalidade | Semântica |
+|---|---|---|---|
+| `users` | `transactions` | 1:N | Usuário registra transações |
+| `users` | `spending_goals` | 1:N | Usuário define metas |
+| `users` | `spending_limits` | 1:N | Usuário define limites por categoria |
+| `users` | `budgets` | 1:N | Usuário cria orçamentos |
+| `users` | `custom_categories` | 1:N | Usuário cria categorias personalizadas |
+| `users` | `user_scores` | 1:1 | Usuário possui uma pontuação |
+| `users` | `user_achievements` | 1:N | Usuário desbloqueia conquistas |
+| `users` | `user_badges` | 1:N | Usuário ganha badges |
+| `users` | `whatsapp_sessions` | 1:N | Usuário conversa via WhatsApp IA |
+| `users` | `whatsapp_notification_logs` | 1:N | Usuário recebe notificações |
+| `achievements` | `user_achievements` | 1:N | Conquista concede ao usuário |
+| `badges` | `user_badges` | 1:N | Badge concede ao usuário |
+| `spending_goals` | `transactions` | 0:N | Meta vincula transações |
+| `custom_categories` | `transactions` | 0:N | Categoria organiza transações |
+
+---
+
+### 4.4. Modelo Físico (DDL — SQLite / PostgreSQL)
+
+Script de criação das tabelas conforme implementado em `FynxApi/src/database/schema.ts` e `database.ts`. Colunas WhatsApp serão adicionadas via migration no Rev05.
+
+```sql
+-- ============================================================
+-- 1. USUARIOS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS users (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,
+    email      TEXT    UNIQUE NOT NULL,
+    password   TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- [Rev05 Migration] WhatsApp Integration
+    whatsapp_phone       TEXT UNIQUE,
+    whatsapp_verified    INTEGER DEFAULT 0,
+    whatsapp_otp         TEXT,
+    otp_expires_at       DATETIME,
+    notifications_enabled INTEGER DEFAULT 1
+);
+
+-- ============================================================
+-- 2. CATEGORIAS GLOBAIS (seed do sistema)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS categories (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL UNIQUE,
+    type       TEXT    NOT NULL CHECK (type IN ('income', 'expense')),
+    color      TEXT,
+    icon       TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 3. CATEGORIAS CUSTOMIZADAS (por usuário)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS custom_categories (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    name       TEXT    NOT NULL,
+    type       TEXT    NOT NULL CHECK (type IN ('income', 'expense')),
+    is_active  INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- ============================================================
+-- 4. TRANSAÇÕES FINANCEIRAS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS transactions (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id          INTEGER NOT NULL,
+    amount           DECIMAL(10,2) NOT NULL,
+    description      TEXT    NOT NULL,
+    category         TEXT    NOT NULL,
+    date             DATE    NOT NULL,
+    type             TEXT    NOT NULL CHECK (type IN ('income', 'expense')),
+    notes            TEXT,
+    spending_goal_id INTEGER,
+    saving_goal_id   INTEGER,
+    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)          REFERENCES users (id),
+    FOREIGN KEY (spending_goal_id) REFERENCES spending_goals (id),
+    FOREIGN KEY (saving_goal_id)   REFERENCES spending_goals (id)
+);
+
+-- ============================================================
+-- 5. METAS FINANCEIRAS (poupança e gasto)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS spending_goals (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id        INTEGER NOT NULL,
+    title          TEXT    NOT NULL,
+    category       TEXT    NOT NULL,
+    goal_type      TEXT    DEFAULT 'spending',
+    target_amount  DECIMAL(10,2) NOT NULL,
+    current_amount DECIMAL(10,2) DEFAULT 0,
+    period         TEXT    NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
+    start_date     DATE,
+    end_date       DATE,
+    status         TEXT    NOT NULL CHECK (status IN ('active', 'completed', 'paused')),
+    description    TEXT,
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- ============================================================
+-- 6. LIMITES DE GASTO
+-- ============================================================
+CREATE TABLE IF NOT EXISTS spending_limits (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    category      TEXT    NOT NULL,
+    limit_amount  DECIMAL(10,2) NOT NULL,
+    current_spent DECIMAL(10,2) DEFAULT 0,
+    period        TEXT    NOT NULL,
+    start_date    DATE,
+    end_date      DATE,
+    status        TEXT    CHECK (status IN ('active', 'exceeded')) DEFAULT 'active',
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 7. ORÇAMENTOS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS budgets (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL,
+    name         TEXT    NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    spent_amount DECIMAL(10,2) DEFAULT 0,
+    period       TEXT    NOT NULL CHECK (period IN ('monthly', 'yearly')),
+    start_date   DATE    NOT NULL,
+    end_date     DATE    NOT NULL,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- ============================================================
+-- 8. PONTUAÇÃO / GAMIFICAÇÃO
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_scores (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id          INTEGER NOT NULL UNIQUE,
+    total_score      INTEGER DEFAULT 0,
+    carry_over_score INTEGER DEFAULT 0,
+    level            INTEGER DEFAULT 1,
+    league           TEXT    DEFAULT 'Bronze',
+    current_streak   INTEGER DEFAULT 0,
+    max_streak       INTEGER DEFAULT 0,
+    last_checkin     DATE,
+    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- ============================================================
+-- 9. CONQUISTAS — Catálogo Global
+-- ============================================================
+CREATE TABLE IF NOT EXISTS achievements (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL,
+    description TEXT,
+    icon        TEXT,
+    points      INTEGER DEFAULT 0,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 10. CONQUISTAS DO USUÁRIO (N:N)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_achievements (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id        INTEGER NOT NULL,
+    achievement_id INTEGER NOT NULL,
+    earned_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)        REFERENCES users (id),
+    FOREIGN KEY (achievement_id) REFERENCES achievements (id),
+    UNIQUE(user_id, achievement_id)
+);
+
+-- ============================================================
+-- 11. BADGES — Catálogo Global
+-- ============================================================
+CREATE TABLE IF NOT EXISTS badges (
+    id           TEXT    PRIMARY KEY,
+    name         TEXT    NOT NULL,
+    description  TEXT,
+    icon         TEXT,
+    category     TEXT,
+    requirements TEXT    -- JSON com critérios de desbloqueio
+);
+
+-- ============================================================
+-- 12. BADGES DO USUÁRIO (N:N)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_badges (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id   INTEGER NOT NULL,
+    badge_id  TEXT    NOT NULL,
+    earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)  REFERENCES users (id),
+    FOREIGN KEY (badge_id) REFERENCES badges (id),
+    UNIQUE(user_id, badge_id)
+);
+
+-- ============================================================
+-- 13. SESSÕES WHATSAPP / IA  [Rev05 — Planejado]
+-- ============================================================
+CREATE TABLE IF NOT EXISTS whatsapp_sessions (
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id              INTEGER NOT NULL,
+    phone_number         TEXT    NOT NULL,
+    conversation_history TEXT,   -- JSON: array de {role, content}
+    context_summary      TEXT,   -- Resumo comprimido para o prompt da IA
+    created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at           DATETIME NOT NULL,
+    updated_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- 14. LOG DE NOTIFICAÇÕES WHATSAPP  [Rev05 — Planejado]
+-- ============================================================
+CREATE TABLE IF NOT EXISTS whatsapp_notification_logs (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id           INTEGER NOT NULL,
+    notification_type TEXT    NOT NULL, -- goal_reached | limit_exceeded | weekly_summary
+    message           TEXT    NOT NULL,
+    status            TEXT    CHECK (status IN ('sent', 'failed', 'pending')) DEFAULT 'pending',
+    payload           TEXT,             -- JSON com dados de contexto
+    sent_at           DATETIME,
+    error_message     TEXT,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+```
+
+---
+
+### 4.5. Dicionário de Dados Estratégico
+
+Visão das colunas críticas onde densas regras de negócio foram traduzidas para validação via DDL.
+
+#### Tabela: `transactions`
+| Atributo | Tipo | Integridade | Descrição |
+|---|---|---|---|
+| `id` | INTEGER | PK, AUTOINCREMENT | Identificador único sequencial |
+| `type` | TEXT | CHECK(income\|expense) | Garante tipagem binária categórica |
+| `amount` | DECIMAL(10,2) | NOT NULL | Precisão decimal obrigatória para valores financeiros |
+| `spending_goal_id` | INTEGER | FK, nullable | Vincula transação a uma meta de gasto |
+| `saving_goal_id` | INTEGER | FK, nullable | Vincula transação a uma meta de poupança |
+
+#### Tabela: `spending_goals`
+| Atributo | Tipo | Integridade | Descrição |
+|---|---|---|---|
+| `goal_type` | TEXT | DEFAULT 'spending' | Discrimina meta de poupança (`saving`) vs. limite de gasto (`spending`) |
+| `status` | TEXT | CHECK(active\|completed\|paused) | Roteador base para CronJobs de notificação |
+| `period` | TEXT | CHECK(monthly\|weekly\|yearly) | Controla janela de acumulação do `current_amount` |
+
+#### Tabela: `user_scores`
+| Atributo | Tipo | Integridade | Descrição |
+|---|---|---|---|
+| `user_id` | INTEGER | FK, UNIQUE | Garante relação **1:1** com `users` |
+| `league` | TEXT | DEFAULT 'Bronze' | Liga atual: Bronze → Prata → Ouro → Diamante |
+| `current_streak` | INTEGER | DEFAULT 0 | Dias consecutivos de check-in ativo |
+| `carry_over_score` | INTEGER | DEFAULT 0 | Bônus acumulado entre períodos de liga |
+
+#### Tabela: `whatsapp_sessions` 🔜 Rev05
+| Atributo | Tipo | Integridade | Descrição |
+|---|---|---|---|
+| `conversation_history` | TEXT (JSON) | — | Matriz iterativa conversacional (`Session Memory`) |
+| `context_summary` | TEXT | — | Resumo comprimido para otimizar o prompt da IA (token saving) |
+| `expires_at` | DATETIME | NOT NULL | TTL obrigatório — job periódico limpa sessões expiradas |
+
+#### Tabela: `whatsapp_notification_logs` 🔜 Rev05
+| Atributo | Tipo | Integridade | Descrição |
+|---|---|---|---|
+| `notification_type` | TEXT | NOT NULL | Tipo do evento: `goal_reached`, `limit_exceeded`, `weekly_summary` |
+| `status` | TEXT | CHECK(sent\|failed\|pending) | Rastreabilidade do envio |
+| `payload` | TEXT (JSON) | — | Dados contextuais do evento (valor, categoria, etc.) |
+| `error_message` | TEXT | — | Diagnóstico em caso de falha no envio |
+
+---
+
+### 4.6. Políticas de Integridade e Regras de Negócio
+
+1. **Anti-Pattern N+1 evitado:** A tabela `user_scores` é uma desnormalização intencional. Calcular `SUM()` iterativo sobre transações ao vivo para exibir rankings no frontend geraria colapso de I/O. O score é mantido persistente e atualizado incrementalmente.
+
+2. **ON DELETE CASCADE para dados de usuário:** Remoção de um usuário propaga cascade para `transactions`, `spending_goals`, `user_scores`, `whatsapp_sessions` e `whatsapp_notification_logs` — garantindo consistência e evitando registros órfãos.
+
+3. **Unicidade de WhatsApp:** `users.whatsapp_phone` possui constraint `UNIQUE` — um número só pode ser vinculado a um único usuário, prevenindo conflitos de entrega de mensagens.
+
+4. **TTL de sessões WhatsApp:** `whatsapp_sessions.expires_at` é indexado e obrigatório. Um job periódico deve executar `DELETE FROM whatsapp_sessions WHERE expires_at < NOW()` para limpar contextos de IA abandonados.
+
+5. **OTP com expiração:** `users.whatsapp_otp` deve ser validado contra `otp_expires_at` antes de qualquer operação de verificação — OTP expirado é tratado como inválido, obrigando nova geração.
+
+
+
