@@ -18,6 +18,8 @@
 3.  **Modelagem e Design do Sistema**
     *   3.1. Diagramas de Caso de Uso
     *   3.2. Mapeamento de Processos (Fluxogramas)
+4.  **Projeto de Banco de Dados**
+5.  **Mapeamento do Fluxo do Usuário (Navegação)**
 
 ## 1. Descrição Geral do Sistema
 
@@ -772,9 +774,8 @@ A fronteira enxuta da rede HTTPS. Processa retornos mapeados enclausurando parâ
 
 O modelo conceitual abstrai tipos e chaves, focando puramente no domínio de negócio: quais entidades o sistema possui e como interagem. Os **retângulos** representam Entidades, os **losangos** representam Relacionamentos e os **ovais** representam Atributos principais.
 
-![DER - Banco de dados](DER%20-%20Banco%20de%20dados.svg)
+![DER - Banco de dados](modelo.svg)
 
-> 📄 Arquivo de referência: [`DER - Banco de dados.svg`](DER%20-%20Banco%20de%20dados.svg) — editável no draw.io.
 
 ---
 
@@ -1087,5 +1088,69 @@ Visão das colunas críticas onde densas regras de negócio foram traduzidas par
 
 5. **OTP com expiração:** `users.whatsapp_otp` deve ser validado contra `otp_expires_at` antes de qualquer operação de verificação — OTP expirado é tratado como inválido, obrigando nova geração.
 
+---
 
-
+## 5. Mapeamento do Fluxo do Usuário (Navegação e Interações)
+
+Este mapeamento detalha a jornada do usuário na plataforma Fynx através de capturas de tela reais e descrições detalhadas dos fluxos interativos de transações e metas.
+
+### 5.1. Telas Principais
+
+A plataforma apresenta um design focado na experiência de "Vault" (Cofre), utilizando o tema Sovereign.
+
+- **Login Screen**: Ponto de entrada com suporte a autenticação social e design focado em segurança.
+  ![Login Screen](./login_page_1775085944513.png)
+- **Dashboard**: Central financeira com visão geral de saldos, gastos e metas ativas.
+  ![Dashboard Screen](./dashboard_screen_1775085232737.png)
+- **Ranking**: Interface de gamificação onde o usuário visualiza sua liga e posição global.
+  ![Ranking Screen](./ranking_screen_1775085292682.png)
+- **Goals Index**: Listagem centralizada de todas as economias e limites de gasto.
+  ![Goals Screen](./goals_screen_1775085265889.png)
+
+### 5.2. Fluxos de Interação Detalhados
+
+Além da navegação, o sistema oferece fluxos granulares para gestão de dados.
+
+**A. Registro de Transação**
+Ativado pelo botão flutuante (+) no Dashboard, abre um Drawer lateral para inserção rápida de dados.
+- **Drawer Vazio**: Captura do estado inicial com campos para Descrição, Valor e Tipo.
+  ![Empty Modal](./empty_transaction_modal_1775085964132.png)
+- **Formulário Preenchido**: Exemplo de preenchimento de uma despesa com categoria vinculada.
+  ![Filled Form](./filled_transaction_form_1775085992614.png)
+
+**B. Criação de Metas Financeiras**
+Modal centralizado para definição de novos objetivos econômicos.
+![Goal Modal](./goal_creation_modal_1775086029638.png)
+
+### 5.3. Fluxograma Lógico
+
+#### Detalhamento do Fluxograma de Navegação
+  ![DF - Fluxograma de usuario](./DF%20-%20Fluxograma%20de%20usuario.svg)
+
+O diagrama acima ilustra os caminhos possíveis que o usuário pode percorrer dentro do sistema FYNX (jornada principal). O fluxo é estruturado da seguinte forma:
+
+1. **Ponto de Entrada (Vault Entry)**
+   - O aplicativo se inicia na tela de **Login** focada em segurança. O usuário acessa a plataforma via Autenticação Social (atualmente utilizando um bypass implementado com o Supabase/Google).
+
+2. **Hub Central (Dashboard)**
+   - Após a autenticação, o destino obrigatório é o **Dashboard**. Ele funciona como a "mesa de controle", de onde o usuário possui atalhos rápidos para as demais áreas do sistema.
+   - **Registro Dinâmico (Sub-fluxo)**: Do próprio Dashboard, com um único clique no botão flutuante (+), o usuário abre o **Formulário de Nova Transação** via Drawer/Modal sem perder o contexto da página de fundo. Após salvar a receita ou despesa, ele é retornado instantaneamente à atualização dinâmica do dashboard.
+
+3. **Navegação Lateral (Sidebar)**
+   - Através do menu lateral, há a rotação entre as três visões sistêmicas principais: `Dashboard`, `Ranking` e `Goals`. O usuário pode transitar livremente entre elas de forma fluida (Single Page Application).
+
+4. **Gestão de Metas (Goals)**
+   - Ao navegar para **Goals**, o usuário tem acesso às metas de economia e gastos. Semelhante ao dashboard, ele também possui o **Modal de Nova Meta (Sub-fluxo)**, que permite a inserção parametrizada de um novo objetivo financeiro ou teto de orçamento, retornando sempre à tela de consolidação de metas ao concluir.
+
+5. **Gamificação (Ranking)**
+   - A tela de **Ranking** apresenta o FynxScore atualizado e a "Liga" do usuário sem a necessidade de reprocessamento em tempo real (pois os cálculos já ocorrem incrementalmente em transações).
+
+6. **Log Out**
+   - De qualquer um dos três escopos, a navegação permite ao usuário acionar a saída segura (Sair), desfazendo as credenciais do JWT e retornando-o ao **Vault Entry**.
+
+### 5.4. Diagrama de Sequência: Ciclo de Vida da Requisição
+
+Exemplo de como uma requisição flui do componente React até o banco de dados.
+
+<img src="./transacao.png" alt="Ciclo de Vida da Requisição" />
+
