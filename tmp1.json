@@ -1,1 +1,7 @@
-﻿{ type:expense,amount:12.34,description:Bulk test A,category:Food,date:2025-10-17}
+﻿{
+    "type": "expense",
+    "amount": 12.34,
+    "description": "Bulk test A",
+    "category": "Food",
+    "date": "2025-10-17"
+}

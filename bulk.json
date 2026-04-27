@@ -1,1 +1,5 @@
-﻿{ userId:1,operation:delete,transactionIds:[]}
+﻿{
+    "userId": 1,
+    "operation": "delete",
+    "transactionIds": []
+}
