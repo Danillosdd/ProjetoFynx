@@ -1,142 +1,196 @@
-# FYNX Rev. 06 — Documentação Técnica Global
+# FYNX Rev. 06 - Documentacao Tecnica Global
 
-> **O Sistema Definitivo de Gestão Financeira Gamificada.** Um software corporativo que une inteligência financeira, Domain-Driven Design (DDD) e a teoria dos jogos para transformar o controle de despesas em uma jornada recompensadora.
-
----
-
-## 📑 Controle de Revisões e Status do Projeto
-
-| Revisão | Data | Responsáveis | Milestone | Status |
-|---|---|---|---|---|
-| **Rev. 05** | Abr/2026 | Matheus, Giulianna, Danilo | Projeto Original MVC (Transaction Script). Adição conceitual do módulo WhatsApp. | 🔴 Depreciado |
-| **Rev. 06** | Abr/2026 | Agentic AI (Orchestrator) | **Refatoração Clean Architecture & DDD**. Desacoplamento da gamificação, injeção de dependências e documentação distribuída. | 🟢 Ativo |
+> Hub principal da documentacao Rev06. A revisao consolida a migracao do backend para uma organizacao orientada a dominios, mantendo uma estrutura hibrida: DDD para arquitetura e rastreabilidade classica para requisitos, fluxos, banco e API.
 
 ---
 
-## 🧭 Sumário Executivo e Hub Documental
+## 1. Controle de Revisoes
 
-Para combater a complexidade estrutural e restaurar a profundidade técnica da Rev. 05, a documentação foi totalmente reescrita em módulos especializados de alto volume. **Este documento atua como o mapa raiz.**
-
-Navegue pela documentação específica conforme sua necessidade técnica:
-
-- 🏛️ **[Arquitetura e Padrões de Projeto (ARCHITECTURE.md)](./ARCHITECTURE.md)**: Diagrama de Classes exaustivo, Fluxo de Usuário completo, DDD Directory Map e 6 ADRs fundamentais.
-- 📐 **[Engenharia de Requisitos (BUSINESS_RULES.md)](./BUSINESS_RULES.md)**: Glossário técnico de 50+ termos, 20 Requisitos Funcionais, 8 RNF e 14 Regras de Negócio (Invariantes).
-- 🎮 **[Motor de Gamificação (GAMIFICATION_ENGINE.md)](./GAMIFICATION_ENGINE.md)**: Matemática do FYNX Score, Tabela de XP (Níveis 1-50+), Sistema de Ligas (Bronze-Diamante) e Catálogo de Badges.
-- 🗄️ **[Esquema de Banco de Dados (DATABASE_SCHEMA.md)](./DATABASE_SCHEMA.md)**: DDL físico das 12 tabelas, Dicionário de Dados, Estratégia de Performance (WAL) e Logs de Auditoria.
-- 🔄 **[Mapeamento de Processos (WORKFLOWS.md)](./WORKFLOWS.md)**: Restauração dos 12 Casos de Uso (CSU01-CSU12) originais e diagramas BPMN com rollback logic.
-- 🔌 **[Referência da API REST (API_REFERENCE.md)](./API_REFERENCE.md)**: Contratos exatos, exemplos JSON, tratamento de erros via Zod e webhooks de integração WhatsApp.
+| Revisao | Data | Objetivo | Status |
+|---|---|---|---|
+| Rev05 | Abril/2026 | Documento tecnico monolitico, com padrao classico. | Referencia historica |
+| Rev06 | Abril/2026 | Documentacao modular alinhada ao backend DDD. | Ativa |
 
 ---
 
-## 🚀 1. Quick Start (Subindo o Ambiente Local)
+## 2. Como Ler a Rev06
 
-O ambiente foi desenhado para ser *Zero-Config* utilizando SQLite, permitindo que qualquer desenvolvedor suba a aplicação em menos de 3 minutos.
-
-### 1.1. Pré-requisitos
-- **Node.js**: Versão `18.x` ou `20.x` (LTS).
-- **Gerenciador de Pacotes**: `npm` ou `yarn`.
-- **Git**: Para controle de versão.
-
-### 1.2. Configurando o Backend (FynxApi)
-1. Navegue até o diretório da API: `cd FynxApi`
-2. Instale as dependências: `npm install`
-3. Crie o arquivo de configuração: `cp .env.example .env`
-4. Preencha o `.env`:
-   ```env
-   PORT=3001
-   JWT_SECRET=super_secret_key_change_in_production
-   NODE_ENV=development
-   ```
-5. Inicie o servidor: `npm run dev`
-   *(O banco de dados `fynx.db` será gerado automaticamente na pasta `/data` e as tabelas serão sincronizadas).*
-
-### 1.3. Configurando o Frontend (FynxV2)
-1. Em um novo terminal, navegue até a interface: `cd FynxV2`
-2. Instale as dependências: `npm install`
-3. Verifique o `.env.local` apontando para a API: `VITE_API_URL=http://localhost:3001/api/v1`
-4. Inicie o cliente Vite: `npm run dev`
-5. Acesse `http://localhost:5173` no navegador.
-
----
-
-## 🧩 2. Features Core (O que o FYNX faz?)
-
-### 💰 Inteligência Financeira
-- **Lançamento Rápido**: Drawer flutuante para registro imediato de receitas e despesas.
-- **Spending Goals**: Criação de orçamentos (tetos de gastos) com alertas visuais baseados em % de consumo.
-- **Analytics Completo**: Gráficos construídos via `Recharts` que demonstram evolução diária de caixa, taxas de economia e agrupamento por categoria.
-- **Bulk Actions**: Exclusão massiva de registros simultâneos com alto desempenho.
-
-### 🏆 Gamificação Profunda
-- **Algoritmo de Score**: Diferente de apps comuns, o score não sobe para sempre. O FYNX pontua o spread financeiro (Lucro vs Despesa) e aplica punições matemáticas dependendo da Liga do jogador.
-- **Sistema de Ligas Elo**: De Bronze a Diamante, os usuários competem globalmente no Leaderboard.
-- **Check-ins e Streaks**: Recompensas pelo uso diário ininterrupto do aplicativo.
-
-### 📱 Integração Omnichannel (Em Breve)
-- A arquitetura está pronta para receber a Evolution API (WhatsApp), permitindo que o usuário envie um áudio dizendo *"Gastei 50 reais de ifood"* e a inteligência artificial (LLM) converta isso para uma transação contábil imediata.
-
----
-
-## 🛠 3. Stack Tecnológica Definitiva
-
-### Backend (`FynxApi`)
-O backend adota o **Domain-Driven Design (DDD)** para isolar o core contábil de integrações externas.
-
-| Ferramenta | Papel no Ecosistema | Justificativa |
+| Documento | Quando usar | Status |
 |---|---|---|
-| **Express.js (5.x)** | HTTP Router | Robustez. Camada periférica (Infrastructure) apenas para rede. |
-| **TypeScript (5.x)** | Tipagem Estrita | Reduz erros de runtime; os *Use Cases* dependem puramente das Interfaces. |
-| **SQLite 3** | Persistência (Dev) | Portabilidade local sem necessidade de Docker (`sqlite3`). |
-| **PostgreSQL** | Persistência (Prod) | Planejado via adoção transparente do *Repository Pattern*. |
-| **Zod** | Validação | *Contract-First*. Filtra anomalias no JSON antes de tocar no domínio. |
-| **Bcrypt + JWT** | Segurança Identity | Proteção contra ataque *rainbow table* e sessões stateless. |
+| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | Entender requisitos, regras, RNFs e rastreabilidade. | Refatorado |
+| [WORKFLOWS.md](./WORKFLOWS.md) | Entender casos de uso, sad paths e processos. | Refatorado |
+| [API_REFERENCE.md](./API_REFERENCE.md) | Consumir ou manter contratos HTTP. | Refatorado |
+| [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | Entender tabelas, migrations e lacunas de persistencia. | Refatorado |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Entender bounded contexts, pastas, patterns e ADRs. | Refatorado |
+| [GAMIFICATION_ENGINE.md](./GAMIFICATION_ENGINE.md) | Entender score, ranking, badges e temporadas. | Refatorado |
+| [llms.txt](./llms.txt) | Dar contexto rapido para agentes de IA. | Refatorado |
 
-### Frontend (`FynxV2`)
-O frontend é construído como uma SPA focada em estado assíncrono e responsividade.
-
-| Ferramenta | Papel no Ecosistema | Justificativa |
-|---|---|---|
-| **React (18.x) + Vite** | View Layer | Performance de HMR (Hot Module Replacement) imediata. |
-| **Tailwind CSS + shadcn/ui**| Design System | Componentes modulares, altamente acessíveis e sem CSS global. |
-| **TanStack Query** | Data Fetching | Elimina `useEffect` para chamadas de API; lida com Caching mágico e Stale Time. |
-| **Recharts** | Analytics | Biblioteca de data-visualization baseada em SVG. |
-| **Driver.js** | Onboarding | UX gamificada para introduzir novos usuários às features na primeira sessão. |
+**Ordem recomendada de leitura:** regras, workflows, API, banco, arquitetura, gamificacao.
 
 ---
 
-## 📂 4. Diretórios do Monorepo
+## 3. Escopo Atual do Sistema
 
-O projeto está configurado num pseudo-monorepo que contém as duas frentes principais:
+O FYNX e um sistema de gestao financeira gamificada com:
 
-```text
-ProjetoFynx/
-├── FynxApi/                      # REST API (Node.js)
-│   ├── src/
-│   │   ├── application/          # Orquestradores (Use Cases)
-│   │   ├── domains/              # O Coração: Entidades Puras e Lógica Math
-│   │   ├── infrastructure/       # Express, DB e Injeção de Dependência
-│   │   └── shared/               # Ferramentas globais
-│   └── data/                     # fynx.db gerado em runtime
-│
-├── FynxV2/                       # Interface de Usuário (SPA)
-│   ├── src/
-│   │   ├── components/           # UI Elements (Botões, Modais)
-│   │   ├── context/              # Autenticação e Theme
-│   │   ├── pages/                # Rotas React (Dashboard, Metas)
-│   │   └── services/             # Abstração do Axios e Contratos REST
-│
-└── FynxDocs/                     # Documentação de Engenharia de Software
+- autenticacao JWT;
+- cadastro e consulta de transacoes;
+- metas de gasto e economia;
+- budgets;
+- categorias globais e customizadas;
+- dashboard financeiro;
+- ranking, score, achievements e badges;
+- tours de onboarding no frontend;
+- modulo WhatsApp planejado.
+
+### 3.1. Status dos modulos
+
+| Modulo | Status | Observacao |
+|---|---|---|
+| Auth | Implementado | `/api/v1/auth`. |
+| Transactions | Implementado | CRUD, filtros, summary, stats e bulk. |
+| Goals/Budgets | Implementado | `/api/v1/goals`. |
+| Dashboard | Implementado | `/api/v1/dashboard`. |
+| Ranking/Gamification | Implementado | `/api/v1/ranking`. |
+| Custom Categories | Implementado | `/api/v1/categories/custom`. |
+| Spending Limits | Parcial | Existe dominio, mas rota central e tabela fisica estao pendentes. |
+| WhatsApp/IA | Planejado | Nao ha rota registrada no backend atual. |
+| Admin/Audit | Parcial/Planejado | Logs existem; auditoria persistida precisa evoluir. |
+
+---
+
+## 4. Quick Start
+
+### 4.1. Backend
+
+```bash
+cd FynxApi
+npm install
+npm run dev
+```
+
+O banco SQLite e inicializado em `FynxApi/src/data/fynx.db` por `infrastructure/database/database.ts`.
+
+### 4.2. Frontend
+
+```bash
+cd FynxV2
+npm install
+npm run dev
+```
+
+O frontend deve apontar para:
+
+```env
+VITE_API_URL=http://localhost:3001/api/v1
 ```
 
 ---
 
-## 🤝 5. Guia de Contribuição (Contributing)
+## 5. Stack Tecnologica
 
-Para manter o alto padrão estipulado pela arquitetura, todo PR (Pull Request) deve respeitar:
-1. **Nunca burle a injeção de dependência:** Não invoque repositórios concretos (`SqliteRepository`) direto nos Controllers.
-2. **Camada de Domínio Imaculada:** Arquivos na pasta `/domains/` nunca podem importar bibliotecas externas pesadas (como Express ou bibliotecas de SQL). O domínio deve rodar até mesmo num navegador se necessário.
-3. **Padrão de Nomeclatura:** `CamelCase` para variáveis, `PascalCase` para classes/interfaces, e inglês em 100% da codebase (com exceção das traduções de interface).
+### Backend - `FynxApi`
+
+| Tecnologia | Papel | Justificativa |
+|---|---|---|
+| Node.js | Runtime | Ecossistema simples para API REST. |
+| Express | HTTP server e roteamento | Leve e direto para rotas modulares. |
+| TypeScript | Tipagem | Melhora manutencao e contratos internos. |
+| SQLite | Persistencia atual | Baixo atrito local e seed simples. |
+| bcrypt | Hash de senha | Protege credenciais. |
+| JWT | Autenticacao stateless | Protege rotas sem sessao server-side. |
+| Zod/validacoes | Contrato de entrada | Deve ser usado para reduzir payload invalido. |
+
+### Frontend - `FynxV2`
+
+| Tecnologia | Papel | Justificativa |
+|---|---|---|
+| React | Interface | SPA com componentes reutilizaveis. |
+| Vite | Build/dev server | Desenvolvimento rapido. |
+| TypeScript | Tipagem | Contratos mais seguros. |
+| Tailwind CSS | Estilo | UI responsiva e utilitaria. |
+| shadcn/ui | Componentes | Base consistente de componentes. |
+| Refine | Recursos CRUD/admin | Telas de recursos no frontend. |
+| Driver.js | Tours | Onboarding guiado. |
 
 ---
 
-> *"Arquitetura limpa não é sobre como os arquivos são agrupados, mas sobre o que depende do quê."* — **FYNX Engineering Team.**
+## 6. Estrutura do Repositorio
+
+```text
+ProjetoFynx/
+├── FynxApi/
+│   ├── src/application/
+│   ├── src/domains/
+│   ├── src/infrastructure/
+│   └── src/shared/
+├── FynxV2/
+│   ├── src/components/
+│   ├── src/pages/
+│   ├── src/hooks/
+│   ├── src/refine/
+│   └── src/services/
+└── FynxDocs/
+    └── documento-software/Doc-Tecnica-Rev06/
+```
+
+Detalhes de pastas e responsabilidades estao em [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+---
+
+## 7. Rastreabilidade
+
+A Rev06 usa a seguinte cadeia:
+
+```text
+RF/RN -> CSU -> Endpoint -> Tabela -> Codigo
+```
+
+Exemplo:
+
+```text
+RF003 Cadastro de transacao
+-> CSU03 Cadastro de transacao financeira
+-> POST /api/v1/transactions
+-> transactions
+-> domains/financial/transactions/*
+```
+
+---
+
+## 8. Diretrizes de Atualizacao
+
+Ao alterar o sistema:
+
+1. Mudou rota: atualizar `API_REFERENCE.md`.
+2. Mudou regra de negocio: atualizar `BUSINESS_RULES.md`.
+3. Mudou fluxo de usuario: atualizar `WORKFLOWS.md`.
+4. Mudou tabela/migration: atualizar `DATABASE_SCHEMA.md`.
+5. Mudou arquitetura/pasta/pattern: atualizar `ARCHITECTURE.md`.
+6. Mudou score/ranking/badge: atualizar `GAMIFICATION_ENGINE.md`.
+7. Mudou contexto para agentes: atualizar `llms.txt`.
+
+---
+
+## 9. Lacunas Tecnicas Conhecidas
+
+| Lacuna | Documento fonte | Acao recomendada |
+|---|---|---|
+| `spending-limits` nao registrado no roteador central. | API, Architecture | Registrar rota ou marcar modulo como interno. |
+| `spending_limits` sem tabela fisica. | Database | Criar migration ou mapear para goals. |
+| Tipos de `transactions` possuem campos sem colunas fisicas. | API, Database | Persistir campos ou ajustar contrato. |
+| `budgets` diverge entre tipo TS e schema fisico. | API, Database | Normalizar nomes e periodos. |
+| WhatsApp documentado como planejado. | Workflows, API | Criar modulo antes de marcar como implementado. |
+| Reset de temporada precisa controle administrativo forte. | Business, Gamification | Adicionar autorizacao e auditoria. |
+
+---
+
+## 10. Criterio de Qualidade Rev06
+
+Um documento da Rev06 so deve ser considerado atualizado quando:
+
+- diferencia implementado, parcial e planejado;
+- aponta para codigo real quando falar de implementacao;
+- nao inventa endpoint ou tabela;
+- possui rastreabilidade com RF, CSU, endpoint e tabela quando aplicavel;
+- mantem linguagem tecnica consistente.

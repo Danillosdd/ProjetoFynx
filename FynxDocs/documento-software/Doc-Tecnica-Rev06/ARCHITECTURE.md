@@ -1,295 +1,245 @@
-# Arquitetura e Engenharia de Software — FYNX (Rev. 06)
+# Arquitetura e Engenharia de Software - FYNX Rev. 06
 
-> Documentação aprofundada da fundação técnica, decisões arquiteturais e design patterns que governam o projeto FYNX. Desenvolvida para garantir manutenibilidade, testabilidade e escalabilidade seguindo os moldes de engenharia de software corporativa.
+> Documento arquitetural da Rev06. Descreve a migracao de um desenho MVC/transaction script para uma organizacao orientada a dominios, com status explicito do que ja esta implementado e do que ainda e evolucao planejada.
 
 ---
 
-## 1. Visão Macro e Padrões Arquiteturais
+## 1. Visao Macro
 
-O sistema FYNX completou a transição de um padrão *Transaction Script* (MVC clássico fortemente acoplado) para uma **Clean Architecture (Onion Architecture)** orientada pelos princípios táticos e estratégicos do **Domain-Driven Design (DDD)**.
+O backend `FynxApi` esta organizado por dominios, com separacao entre:
 
-### 1.1. O Princípio da Dependência (Dependency Rule)
-A regra de ouro da arquitetura atual é que **as dependências de código fonte apontam apenas para dentro**, em direção às políticas de nível mais alto (Domínio).
+- `domains`: controllers, routes, services, types e elementos de dominio por contexto.
+- `application`: use cases especificos ja iniciados para operacoes financeiras.
+- `infrastructure`: Express, banco, repositorios concretos, container e middlewares.
+- `shared`: primitivas de dominio, configuracoes, constantes e utilitarios.
 
-```mermaid
-graph TD
-    subgraph "Infrastructure Layer (Outer Ring)"
-        HTTP[HTTP Routes / Express / Webhooks]
-        DB[SQLite / DB Driver]
-        DI[DI Container / Factory]
-    end
-    
-    subgraph "Application Layer (Middle Ring)"
-        UC[Use Cases / Application Services]
-    end
-    
-    subgraph "Domain Layer (Core Ring)"
-        ENT[Entities / Value Objects]
-        REPO[Repository Interfaces]
-        EVT[Domain Events]
-    end
+A Rev06 adota DDD de forma incremental. O projeto ja tem bounded contexts e algumas entidades/value objects, mas ainda possui services de dominio que acessam infraestrutura diretamente em alguns pontos. Portanto, a arquitetura deve ser lida como **DDD em consolidacao**, nao como Clean Architecture pura totalmente finalizada.
 
-    HTTP -->|Chama| UC
-    DB -.->|Implementa| REPO
-    UC -->|Orquestra| ENT
-    UC -->|Usa interface| REPO
-    
-    classDef infra fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef app fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-    classDef core fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    
-    class HTTP,DB,DI infra;
-    class UC app;
-    class ENT,REPO,EVT core;
+---
+
+## 2. Bounded Contexts
+
+| Contexto | Responsabilidade | Arquivos principais | Status |
+|---|---|---|---|
+| Identity & Access | Registro, login e JWT. | `domains/identity/auth/*`, `http/middleware/auth.middleware.ts` | Implementado |
+| Financial Core | Transacoes, metas, budgets, categorias customizadas e limites. | `domains/financial/*`, `application/financial/*` | Implementado com lacuna em spending limits |
+| Analytics | Dados agregados para dashboard. | `domains/analytics/dashboard/*` | Implementado |
+| Gamification | Ranking, score, ligas, achievements e badges. | `domains/gamification/*` | Implementado |
+| Infrastructure | HTTP, banco, logs e repositorios concretos. | `infrastructure/*` | Implementado |
+| Omnichannel | WhatsApp, NLP e notificacoes. | Sem modulo produtivo registrado | Planejado |
+
+---
+
+## 3. Regra de Dependencia
+
+A diretriz desejada e:
+
+```text
+HTTP/DB/Frameworks -> Application -> Domain
 ```
 
----
+Na pratica atual:
 
-## 2. Bounded Contexts (Limites de Contexto do DDD)
+- controllers e routes estao dentro de cada dominio;
+- services executam boa parte da regra de aplicacao;
+- `application/financial` possui use cases para criacao e delecao de transacoes;
+- repositories concretos SQLite ficam em `infrastructure/repositories`;
+- primitivas reutilizaveis ficam em `shared/domain`.
 
-Para combater a complexidade e evitar "God Objects" (classes que fazem tudo), o domínio do FYNX foi particionado estrategicamente. Cada contexto possui seu próprio `Ubiquitous Language` (Linguagem Ubíqua).
-
-| Contexto | Responsabilidade Core | Interação com outros domínios |
-|---|---|---|
-| **`identity`** | Autenticação, autorização, hash de senhas, ciclo de vida do usuário. | Fornece Tokens JWT validados para os outros domínios autorizarem ações. |
-| **`financial`** | Coração do sistema. Orçamentos, transações, receitas, despesas e metas de gastos. | Emite eventos de domínio quando o saldo muda. **Não sabe o que é um score.** |
-| **`gamification`** | Engajamento. Calcula o FYNX Score, gerencia Ligas (Bronze $\rightarrow$ Diamante), Streaks e Badges. | Ouve silenciosamente os eventos de `financial` para recalcular a pontuação do usuário. |
-| **`analytics`** | Leitura massiva de dados. Gera relatórios para os gráficos do Dashboard. | Agrega dados dos demais contextos de forma puramente otimizada para leitura (Read-Model). |
+**Diretriz de evolucao:** novos fluxos complexos devem preferir use cases em `application`, mantendo controllers finos e reduzindo SQL dentro de services de dominio.
 
 ---
 
-## 3. Padrões de Projeto (Design Patterns) Implementados
-
-A implementação limpa e sustentável exige o uso de Design Patterns maduros. Abaixo, os principais utilizados na Rev06.
-
-### 3.1. Injeção de Dependências (DI) e Inversão de Controle (IoC)
-A camada de aplicação não instancializa suas dependências. Nós invertemos o controle usando um contêiner (em `infrastructure/container.ts`). 
-
-**Exemplo Prático (Como funciona no FYNX):**
-```typescript
-// 1. A interface vive no Domínio (Core)
-export interface ITransactionRepository {
-  save(transaction: Transaction): Promise<void>;
-}
-
-// 2. O Use Case vive na Aplicação (Middle) - Ele exige a interface, mas não sabe qual é o BD!
-export class CreateTransactionUseCase {
-  constructor(private readonly transactionRepo: ITransactionRepository) {}
-  
-  async execute(data: CreateTransactionDTO) {
-    const transaction = new Transaction(data);
-    await this.transactionRepo.save(transaction);
-  }
-}
-
-// 3. A injeção ocorre na Infraestrutura (Outer)
-const sqliteRepo = new SqliteTransactionRepository();
-const createTransactionUseCase = new CreateTransactionUseCase(sqliteRepo);
-```
-> **Vantagem:** Para realizar Testes Unitários, basta injetar um `MockTransactionRepository` em memória, sem precisar tocar no SQLite.
-
-### 3.2. Repository Pattern
-Isola o código de regras de negócio das queries SQL. Toda interação com o banco de dados é feita através de métodos de negócio (ex: `findById`, `findByUserIdAndPeriod`) em vez de `SELECT * FROM...` espalhado no código.
-
-### 3.3. Unit of Work (Transações Atômicas)
-Em cenários onde múltiplos repositórios devem ser atualizados juntos (Ex: Criar Transação E Atualizar Meta de Economia), o sistema utiliza blocos `BEGIN TRANSACTION` e `COMMIT/ROLLBACK` gerenciados de forma abstrata, garantindo que o banco de dados não fique inconsistente caso ocorra um erro na metade do processo.
-
----
-
-## 4. Fluxo de Dados: A Anatomia de uma Requisição
-
-Como uma requisição HTTP percorre a arquitetura até o banco de dados e retorna:
-
-1. **Client (React)** envia um `POST /api/v1/transactions`.
-2. **Infrastructure / HTTP Router**: O Express recebe a requisição e passa pelo Middleware de Autenticação (`verifyToken`).
-3. **Infrastructure / Validador (Zod)**: O corpo da requisição é validado em runtime. Se for inválido, retorna `400 Bad Request` imediatamente.
-4. **Infrastructure / Controller**: Extrai os dados validados e invoca o `CreateTransactionUseCase`.
-5. **Application / Use Case**: Orquestra o fluxo. Pede à entidade `Transaction` para se instanciar.
-6. **Domain / Entity**: A entidade verifica as Regras de Negócio Puras (Ex: *O valor não pode ser negativo*).
-7. **Application / Use Case**: Chama `repository.save()`.
-8. **Infrastructure / Repository**: Converte a Entidade em linguagem SQL e executa o `INSERT` no SQLite.
-9. **Domain / Event**: Um evento `TransactionCreatedEvent` é disparado. O Módulo de Gamificação captura e atualiza o Score em background.
-10. **Controller**: Retorna `201 Created` para o Client.
-
----
-
-## 5. Topologia da Codebase (Directory Map)
-
-A estrutura de diretórios foi rigorosamente desenhada para espelhar as camadas do DDD.
+## 4. Topologia Real da Codebase
 
 ```text
 FynxApi/src/
-├── application/         # Camada de Aplicação (Use Cases)
-│   └── useCases/        # Orquestradores de regras de negócio
-├── domains/             # Camada de Domínio (Bounded Contexts)
+├── application/
+│   └── financial/
+│       ├── create-transaction.usecase.ts
+│       └── delete-transaction.usecase.ts
+├── domains/
+│   ├── analytics/dashboard/
+│   │   ├── dashboard.controller.ts
+│   │   ├── dashboard.routes.ts
+│   │   ├── dashboard.service.ts
+│   │   ├── dashboard.types.ts
+│   │   └── config/dashboard.config.ts
 │   ├── financial/
-│   │   ├── entities/    # Entidades e Value Objects puros
-│   │   └── repositories/# Interfaces dos repositórios
+│   │   ├── custom-categories/
+│   │   ├── entities/
+│   │   ├── events/
+│   │   ├── goals/
+│   │   ├── repositories/
+│   │   ├── spending-limits/
+│   │   ├── transactions/
+│   │   └── value-objects/
 │   ├── gamification/
-│   └── identity/
-├── infrastructure/      # Camada de Infraestrutura (Tecnologia Externa)
-│   ├── database/        # Conexão SQLite e Scripts DDL
-│   ├── http/            # Rotas Express, Middlewares e Controllers
-│   ├── repositories/    # Implementações SQL concretas (SqliteTransactionRepo)
-│   └── container.ts     # Injeção de Dependências global
-└── shared/              # Utilitários globais (Loggers, Constantes)
+│   │   ├── events/
+│   │   ├── handlers/
+│   │   ├── ranking/
+│   │   ├── repositories/
+│   │   └── value-objects/
+│   └── identity/auth/
+├── infrastructure/
+│   ├── container.ts
+│   ├── database/
+│   │   ├── database.ts
+│   │   ├── schema.ts
+│   │   └── seed.ts
+│   ├── http/
+│   │   ├── middleware/auth.middleware.ts
+│   │   ├── middlewares/
+│   │   ├── routes/index.ts
+│   │   └── server.ts
+│   └── repositories/
+│       ├── sqlite-category.repository.ts
+│       ├── sqlite-score.repository.ts
+│       └── sqlite-transaction.repository.ts
+└── shared/
+    ├── config/
+    ├── constants/
+    ├── domain/
+    ├── infrastructure/
+    └── utils/
 ```
 
----
+### 4.1. Responsabilidade por pasta
+
+| Pasta | Responsabilidade | Observacao |
+|---|---|---|
+| `application/financial` | Orquestracao de casos de uso financeiros. | Ainda nao cobre todos os fluxos. |
+| `domains/*/*.routes.ts` | Definicao de endpoints por contexto. | Registro final ocorre em `routes/index.ts`. |
+| `domains/*/*.controller.ts` | Adaptacao HTTP para service. | Deve permanecer fino. |
+| `domains/*/*.service.ts` | Regra de aplicacao/dominio. | Alguns services ainda acessam banco diretamente. |
+| `domains/*/*.types.ts` | Contratos TypeScript. | Nem todo campo existe fisicamente no banco. |
+| `domains/financial/entities` | Entidades ricas iniciadas. | `SavingGoal`, `SpendingLimit`. |
+| `domains/financial/value-objects` | Objetos de valor financeiros. | `Money`, `TransactionType`. |
+| `domains/gamification/value-objects` | Objetos de valor de gamificacao. | `Score`, `League`. |
+| `infrastructure/database` | SQLite, schema, migrations e seed. | Fonte da verdade fisica. |
+| `infrastructure/http/routes/index.ts` | Roteador central. | Define o que esta exposto em `/api/v1`. |
+| `shared/domain` | Primitivas DDD reutilizaveis. | `Entity`, `ValueObject`, `AggregateRoot`, `DomainError`. |
 
 ---
 
-## 6. Diagrama de Classes (Domínio Rico)
+## 5. Rotas Expostas
 
-O diagrama abaixo detalha as entidades do núcleo de negócio, seus atributos e comportamentos.
+| Prefixo | Registro central | Status |
+|---|---|---|
+| `/auth` | Sim | Implementado |
+| `/dashboard` | Sim | Implementado |
+| `/goals` | Sim | Implementado |
+| `/transactions` | Sim | Implementado |
+| `/ranking` | Sim | Implementado |
+| `/categories/custom` | Sim | Implementado |
+| `/spending-limits` | Nao | Parcial |
+| `/webhooks/whatsapp` | Nao | Planejado |
+
+Essa tabela e obrigatoria para evitar documentar uma rota como produtiva apenas porque existe arquivo `*.routes.ts`.
+
+---
+
+## 6. Fluxo de Requisicao
 
 ```mermaid
-classDiagram
-    class User {
-        +UUID id
-        +String name
-        +String email
-        +String whatsappPhone
-        +Boolean isVerified
-        +DateTime createdAt
-        +changePassword(new)
-        +verifyWhatsApp(code)
-    }
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant RT as Express Route
+    participant MW as Auth Middleware
+    participant CT as Controller
+    participant SV as Service/UseCase
+    participant DB as Database/Repository
 
-    class Transaction {
-        +UUID id
-        +Decimal amount
-        +String description
-        +Date date
-        +TransactionType type
-        +Category category
-        +UUID spendingGoalId
-        +validate()
-        +linkToGoal(goalId)
-    }
-
-    class Category {
-        +UUID id
-        +String name
-        +String type
-        +String color
-        +String icon
-        +Boolean isCustom
-    }
-
-    class Goal {
-        +UUID id
-        +String title
-        +Decimal target
-        +Decimal current
-        +GoalStatus status
-        +DateTime deadline
-        +addProgress(amount)
-        +checkCompletion()
-    }
-
-    class Score {
-        +UUID userId
-        +Integer total
-        +Integer level
-        +String league
-        +Integer streak
-        +calculateScore()
-        +processSeasonReset()
-    }
-
-    class Achievement {
-        +UUID id
-        +String name
-        +String trigger
-        +Integer points
-        +validateCriteria(user)
-    }
-
-    class Budget {
-        +UUID id
-        +String name
-        +Decimal totalLimit
-        +Decimal currentSpent
-        +calculatePercentage()
-    }
-
-    User "1" -- "*" Transaction
-    User "1" -- "1" Score
-    User "1" -- "*" Goal
-    User "1" -- "*" Category
-    User "1" -- "*" Budget
-    Transaction "*" -- "1" Category
-    Transaction "*" -- "0..1" Goal
-    Score "1" -- "*" Achievement : unlocks
+    FE->>RT: Request HTTP /api/v1/*
+    RT->>MW: Aplica autenticacao quando protegida
+    MW->>CT: Injeta userId
+    CT->>SV: Chama operacao de aplicacao
+    SV->>SV: Aplica regras e validacoes
+    SV->>DB: Consulta ou persiste
+    DB-->>SV: Resultado
+    SV-->>CT: DTO
+    CT-->>FE: Response JSON
 ```
 
 ---
 
-## 7. Fluxo do Usuário e Navegação
+## 7. Patterns Implementados
 
-Mapeamento de jornada desde o acesso até a gestão avançada.
-
-```mermaid
-graph TD
-    A[Vault Entry / Login] --> B{Autenticado?}
-    B -- Não --> C[Registro / OTP WhatsApp]
-    B -- Sim --> D[Dashboard Principal]
-    
-    D --> E[Lançamento Rápido]
-    D --> F[Gestão de Metas]
-    D --> G[Gamificação / Ligas]
-    D --> H[Configurações / Categorias]
-    
-    E --> E1[Modal de Transação]
-    E1 --> E2[Extrato / Timeline]
-    
-    F --> F1[Criar Meta de Economia]
-    F --> F2[Definir Limite de Gasto]
-    
-    G --> G1[Ranking Global]
-    G --> G2[Galeria de Badges]
-    
-    H --> H1[Customizar Categorias]
-    H --> H2[Segurança / Logs]
-```
+| Pattern | Onde aparece | Status | Observacao |
+|---|---|---|---|
+| Bounded Context | `domains/identity`, `financial`, `analytics`, `gamification` | Implementado | Organizacao por dominio. |
+| Repository Pattern | Interfaces em `domains/*/repositories`, concretos em `infrastructure/repositories` | Parcial | Nem todos os services usam repository abstrato. |
+| Use Case | `application/financial/*.usecase.ts` | Parcial | Deve expandir para fluxos complexos. |
+| Entity/Value Object | `shared/domain`, `domains/financial/entities`, `value-objects` | Implementado parcial | Nem todo dominio usa entidades ricas. |
+| Event Bus / Domain Events | `shared/infrastructure/event-bus.ts`, eventos em `domains/*/events` | Parcial | Documentar apenas onde usado de fato. |
+| Middleware | `infrastructure/http/middleware*` | Implementado | Auth, logs e performance. |
 
 ---
 
-## 8. Architectural Decision Records (ADR)
+## 8. Mapeamento de Responsabilidades
 
-### ADR-001: SQLite para Persistência
-- **Data:** Março de 2026
-- **Status:** ✅ Aceito
-- **Contexto:** Necessidade de uma base relacional leve, zero-config e compatível com ambientes de baixo custo.
-- **Decisão:** Uso do SQLite com modo WAL para suportar concorrência e integridade ACID.
+| Modulo | Controller | Service | Type/Entity | Persistencia |
+|---|---|---|---|---|
+| Auth | `auth.controller.ts` | `auth.service.ts` | - | `users` |
+| Transactions | `transactions.controller.ts` | `transactions.service.ts` | `transactions.types.ts`, use cases financeiros | `transactions` |
+| Goals | `goals.controller.ts` | `goals.service.ts` | `goals.types.ts`, `SavingGoal` | `spending_goals`, `budgets` |
+| Custom Categories | `customCategories.controller.ts` | `customCategories.service.ts` | `customCategories.types.ts` | `custom_categories` |
+| Spending Limits | `spending-limits.controller.ts` | `spending-limits.service.ts` | `spending-limits.types.ts`, `SpendingLimit` | Persistencia pendente |
+| Dashboard | `dashboard.controller.ts` | `dashboard.service.ts` | `dashboard.types.ts` | read model sobre `transactions` |
+| Ranking | `ranking.controller.ts` | `ranking.service.ts` | `ranking.types.ts`, `Score`, `League` | `user_scores`, `achievements`, `badges` |
 
-### ADR-002: JWT Stateless para Autenticação
-- **Data:** Março de 2026
-- **Status:** ✅ Aceito
-- **Contexto:** Escalar a API sem necessidade de sessões em memória no servidor.
-- **Decisão:** Tokens JWT assinados com expiração de 24h e Refresh Token.
+---
 
-### ADR-003: Comunicação Assíncrona via Domain Events
-- **Data:** Abril de 2026
-- **Status:** ✅ Aceito
-- **Contexto:** Atualizar o score e verificar conquistas durante a criação de uma transação aumentava a latência da API.
-- **Decisão:** O `UseCase` de transação salva no banco e dispara um evento. O `GamificationService` processa em background.
+## 9. ADRs
 
-### ADR-004: Validação de Schema no Runtime com Zod
-- **Data:** Abril de 2026
-- **Status:** ✅ Aceito
-- **Contexto:** TypeScript desaparece no runtime, deixando a API vulnerável a payloads malformados.
-- **Decisão:** Uso do Zod para validar todos os inputs de Controller e garantir Type-Safety real.
+### ADR-001 - SQLite no ambiente atual
 
-### ADR-005: LLM NER para WhatsApp NLP [NOVO]
-- **Data:** Abril de 2026
-- **Status:** ✅ Aceito
-- **Contexto:** Usuários preferem linguagem natural (ex: "gastei 50 no burger") em vez de formulários fixos.
-- **Decisão:** Integração com LLM (OpenAI/Anthropic) via Agent que extrai Entidades (Valor, Descrição, Categoria) e retorna JSON estruturado.
+**Status:** Aceito
+**Contexto:** projeto precisa rodar localmente com baixa friccao.
+**Decisao:** usar SQLite e inicializar banco via `database.ts`.
+**Alternativas descartadas:** PostgreSQL local obrigatorio, Supabase como unica fonte.
+**Consequencias:** setup simples; exige cuidado com concorrencia e migrations.
 
-### ADR-006: Padrão Repository e Unit of Work [NOVO]
-- **Data:** Abril de 2026
-- **Status:** ✅ Aceito
-- **Contexto:** Acoplamento excessivo de SQL dentro dos Services dificultava testes unitários.
-- **Decisão:** Abstração total via Repositórios. Transações multi-tabela gerenciadas pelo padrão Unit of Work.
+### ADR-002 - JWT stateless
+
+**Status:** Aceito
+**Contexto:** API precisa proteger rotas sem manter sessao em memoria.
+**Decisao:** usar JWT no header Bearer.
+**Alternativas descartadas:** sessao server-side.
+**Consequencias:** backend fica simples; revogacao imediata de token exige estrategia adicional.
+
+### ADR-003 - Documentacao hibrida DDD + classica
+
+**Status:** Aceito
+**Contexto:** Rev05 era completa, mas monolitica; Rev06 ficou modular, mas perdeu cobertura.
+**Decisao:** manter arquivos tematicos e adicionar rastreabilidade classica.
+**Consequencias:** melhor manutencao; exige links cruzados consistentes.
+
+### ADR-004 - Separar implementado, parcial e planejado
+
+**Status:** Aceito
+**Contexto:** havia conteudo WhatsApp, audit e spending limits documentado como ativo sem schema/rota central.
+**Decisao:** todo recurso deve carregar status explicito.
+**Consequencias:** documentacao fica mais confiavel e evita promessa falsa.
+
+### ADR-005 - Consolidar Use Cases progressivamente
+
+**Status:** Proposto
+**Contexto:** alguns services ainda concentram orquestracao e acesso a dados.
+**Decisao:** novos fluxos complexos devem ir para `application/*`.
+**Consequencias:** refatoracao incremental sem quebrar endpoints existentes.
+
+---
+
+## 10. Riscos Arquiteturais
+
+| Risco | Impacto | Mitigacao |
+|---|---|---|
+| Rota existe no dominio mas nao no roteador central. | Documentacao ou frontend chama endpoint inexistente. | Validar sempre `routes/index.ts`. |
+| Tipos TS mais ricos que schema fisico. | API promete campos nao persistidos. | Marcar divergencia em `DATABASE_SCHEMA.md`. |
+| Services acessam banco diretamente. | Testes e substituicao de persistencia ficam mais dificeis. | Mover fluxos para use cases/repositories. |
+| Endpoints administrativos sem autorizacao forte. | Risco de manipulacao de ranking. | Criar middleware de papel/admin. |
+| Recursos planejados misturados com implementados. | Perda de confianca documental. | Usar status obrigatorio. |
+
+

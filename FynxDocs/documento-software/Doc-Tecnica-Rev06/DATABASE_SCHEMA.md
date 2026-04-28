@@ -1,414 +1,303 @@
-# Projeto de Persistência e Banco de Dados — FYNX (Rev. 06)
+# Projeto de Persistencia e Banco de Dados - FYNX Rev. 06
 
-> Documentação exhaustiva do Schema de Banco de Dados, mapeamento Objeto-Relacional (Repository Pattern) e políticas de integridade aplicadas ao projeto FYNX sob as diretrizes do Domain-Driven Design (DDD).
-
----
-
-## 1. Estratégia Arquitetural de Persistência
-
-O sistema não se comunica com o Banco de Dados através de Controllers ou Entidades; toda a persistência está blindada pela camada de **Infraestrutura** via **Repository Pattern**. 
-
-### 1.1. SGBD de Desenvolvimento: SQLite 3
-O ambiente de desenvolvimento (e homologação local) roda sobre **SQLite 3** (`sqlite3` driver).
-- **Vantagens**: Instalação *Zero-Config*, sem containers Docker. O arquivo `fynx.db` vive isolado na raiz do projeto.
-- **Trade-offs (Trade-off Analysis)**: O SQLite lida mal com alta concorrência de escrita (`Database is locked`). Para contornar, a string de conexão força o Pragma `WAL` (Write-Ahead Logging) e o `FOREIGN_KEYS = ON`.
-
-### 1.2. SGBD de Produção: PostgreSQL (Planejado)
-A arquitetura DDD garante que trocar o banco signifique apenas escrever uma nova classe `PostgresTransactionRepository` que assine a interface `ITransactionRepository`. O `container.ts` injetará essa nova classe em Produção.
+> Documento do modelo de dados da Rev06, validado contra `FynxApi/src/infrastructure/database/schema.ts` e `database.ts`.
 
 ---
 
-## 2. Diagrama Entidade-Relacionamento (DER Lógico)
+## 1. Estrategia de Persistencia
 
-O modelo relacional obedece às regras de normalização de Boyce-Codd (3FN) para evitar anomalias de atualização, enquanto utiliza desnormalização controlada em `user_scores` para performance de leitura de rankings.
+O backend usa SQLite no ambiente atual. A inicializacao ocorre em `database.ts`, que executa:
+
+1. `createTables()` com as tabelas definidas em `schema.ts`.
+2. criacao complementar de `custom_categories` e `budgets`.
+3. `applyMigrations()` para colunas evolutivas.
+4. `seedInitialData()` para categorias, usuario demo, achievements e badges.
+
+O desenho arquitetural usa uma diretriz DDD: controllers e dominio nao devem depender diretamente de SQL. Sempre que possivel, a persistencia deve ser acessada por services/use cases e repositories.
+
+---
+
+## 2. Catalogo de Tabelas e Status Real
+
+| Tabela | Origem | Contexto | Status | Observacao |
+|---|---|---|---|---|
+| `users` | `schema.ts` | Identity | Implementado | Guarda usuario e credenciais. |
+| `categories` | `schema.ts` | Financial | Implementado | Categorias globais. |
+| `transactions` | `schema.ts` | Financial | Implementado | Lancamentos financeiros. |
+| `spending_goals` | `schema.ts` | Financial | Implementado | Metas de gasto e economia por `goal_type`. |
+| `user_scores` | `schema.ts` | Gamification | Implementado | Score, nivel, liga e streak. |
+| `achievements` | `schema.ts` | Gamification | Implementado | Catalogo de conquistas. |
+| `user_achievements` | `schema.ts` | Gamification | Implementado | Conquistas ganhas por usuario. |
+| `badges` | `schema.ts` | Gamification | Implementado | Catalogo visual de badges. |
+| `user_badges` | `schema.ts` | Gamification | Implementado | Badges ganhos por usuario. |
+| `custom_categories` | `database.ts` | Financial | Implementado | Criada fora de `SCHEMA`, como compatibilidade. |
+| `budgets` | `database.ts` | Financial | Implementado | Criada fora de `SCHEMA`, com nomes fisicos diferentes dos tipos TS. |
+| `spending_limits` | Nao encontrada | Financial | Pendente | Existe modulo de rota/service, mas nao ha tabela fisica no schema atual. |
+| `whatsapp_sessions` | Nao encontrada | Omnichannel | Planejado | Nao documentar como ativo. |
+| `whatsapp_notification_logs` | Nao encontrada | Omnichannel | Planejado | Nao documentar como ativo. |
+| `audit_logs` | Nao encontrada | Admin/Audit | Planejado | Requer migration propria. |
+
+---
+
+## 3. Modelo Conceitual
 
 ```mermaid
 erDiagram
-    USERS ||--o{ TRANSACTIONS : "registra"
-    USERS ||--o{ SPENDING_GOALS : "define"
-    USERS ||--o{ BUDGETS : "planeja"
-    USERS ||--|| USER_SCORES : "possui"
-    USERS ||--o{ CUSTOM_CATEGORIES : "cria"
-    USERS ||--o{ USER_ACHIEVEMENTS : "conquista"
-    USERS ||--o{ USER_BADGES : "ganha"
-    USERS ||--o{ WHATSAPP_SESSIONS : "interage"
-    USERS ||--o{ WHATSAPP_NOTIFICATION_LOGS : "recebe"
+    USERS ||--o{ TRANSACTIONS : owns
+    USERS ||--o{ SPENDING_GOALS : owns
+    USERS ||--o{ BUDGETS : owns
+    USERS ||--|| USER_SCORES : has
+    USERS ||--o{ CUSTOM_CATEGORIES : creates
+    USERS ||--o{ USER_ACHIEVEMENTS : earns
+    USERS ||--o{ USER_BADGES : earns
 
-    TRANSACTIONS }o--|| CATEGORIES : "pertence"
-    TRANSACTIONS }o--o| SPENDING_GOALS : "vincula"
-    
-    ACHIEVEMENTS ||--o{ USER_ACHIEVEMENTS : "cataloga"
-    BADGES ||--o{ USER_BADGES : "cataloga"
+    TRANSACTIONS }o--o| SPENDING_GOALS : spending_goal
+    TRANSACTIONS }o--o| SPENDING_GOALS : saving_goal
 
-    USERS {
-        int id PK
-        string name
-        string email UK
-        string password
-        string whatsapp_phone UK
-        int whatsapp_verified
-    }
-
-    TRANSACTIONS {
-        int id PK
-        int user_id FK
-        decimal amount
-        string type "income/expense"
-        string category
-        date date
-        int spending_goal_id FK
-        int saving_goal_id FK
-    }
-
-    SPENDING_GOALS {
-        int id PK
-        int user_id FK
-        string title
-        decimal target_amount
-        string goal_type "spending/saving"
-        string period "monthly/weekly/yearly"
-        string status
-    }
-
-    BUDGETS {
-        int id PK
-        int user_id FK
-        string name
-        decimal total_amount
-        decimal spent_amount
-        string period "monthly/yearly"
-    }
-
-    USER_SCORES {
-        int id PK
-        int user_id FK UK
-        int total_score
-        int level
-        string league
-        int current_streak
-    }
-
-    WHATSAPP_SESSIONS {
-        int id PK
-        int user_id FK
-        string phone_number
-        text conversation_history
-        datetime expires_at
-    }
+    ACHIEVEMENTS ||--o{ USER_ACHIEVEMENTS : catalog
+    BADGES ||--o{ USER_BADGES : catalog
 ```
 
----
+### 3.1. Cardinalidades
 
-## 3. Catálogo de Tabelas e Status de Implementação
-
-Abaixo, a listagem completa das 12 tabelas core do sistema, sua origem no domínio e o status atual da migração física.
-
-| Tabela | Contexto (Domain) | Descrição | Status | Origem |
-|---|---|---|---|---|
-| `users` | Identity | Armazena credenciais, perfis e tokens de acesso. | ✅ Ativa | Core |
-| `categories` | Financial | Categorias globais do sistema (fixas). | ✅ Ativa | Core |
-| `custom_categories` | Financial | Categorias personalizadas criadas por cada usuário. | ✅ Ativa | Extensão |
-| `transactions` | Financial | Lançamentos de crédito e débito. Tabela de maior volume. | ✅ Ativa | Core |
-| `spending_goals` | Financial | Metas de economia e tetos de gastos. | ✅ Ativa | Core |
-| `budgets` | Financial | Planejamento orçamentário periódico. | ✅ Ativa | Core |
-| `spending_limits` | Financial | Sentinelas de limite de gasto por categoria. | ✅ Ativa | Extensão |
-| `user_scores` | Gamification | Estado atual da pontuação, liga e streak do usuário. | ✅ Ativa | Gamif. |
-| `achievements` | Gamification | Catálogo de conquistas disponíveis no sistema. | ✅ Ativa | Gamif. |
-| `user_achievements` | Gamification | Tabela de junção (N:N) de conquistas desbloqueadas. | ✅ Ativa | Gamif. |
-| `whatsapp_sessions` | Infrastructure | Contexto de conversas e memória da IA. | ✅ Ativa | WhatsApp |
-| `whatsapp_notification_logs` | Infrastructure | Log de auditoria de mensagens enviadas. | ✅ Ativa | WhatsApp |
-
----
-
-## 4. Dicionário de Dados Exhaustivo
-
-Detalhamento técnico de cada atributo, constraints e lógica de persistência.
-
-### 4.1. Tabela: `users`
-| Coluna | Tipo | Null? | Default | Descrição |
-|---|---|---|---|---|
-| `id` | INTEGER | No | PK | Identificador único serial. |
-| `name` | TEXT | No | - | Nome completo exibido na interface. |
-| `email` | TEXT | No | - | Email (Unique) usado como login. |
-| `password` | TEXT | No | - | Hash Bcrypt da senha. |
-| `whatsapp_phone` | TEXT | Yes | NULL | Número internacional (E.164). |
-| `whatsapp_verified`| INTEGER | No | 0 | Booleano para status de verificação. |
-| `whatsapp_otp` | TEXT | Yes | NULL | Código temporário de 6 dígitos. |
-| `otp_expires_at` | DATETIME | Yes | NULL | Timestamp de expiração do OTP. |
-| `created_at` | DATETIME | No | CURRENT | Data de criação da conta. |
-
-### 4.2. Tabela: `transactions`
-| Coluna | Tipo | Null? | Default | Descrição |
-|---|---|---|---|---|
-| `id` | INTEGER | No | PK | Identificador único. |
-| `user_id` | INTEGER | No | FK | Vínculo com `users.id` (CASCADE). |
-| `amount` | DECIMAL | No | - | Valor absoluto. Constraint `> 0`. |
-| `description` | TEXT | No | - | Título da transação (ex: "Almoço"). |
-| `category` | TEXT | No | - | Nome da categoria vinculada. |
-| `date` | DATE | No | - | Data do fato gerador financeiro. |
-| `type` | TEXT | No | - | Enum: `income` ou `expense`. |
-| `notes` | TEXT | Yes | NULL | Detalhes adicionais/observações. |
-| `spending_goal_id` | INTEGER | Yes | FK | Meta de gasto vinculada (SET NULL). |
-| `saving_goal_id` | INTEGER | Yes | FK | Meta de economia vinculada (SET NULL). |
-
-### 4.3. Tabela: `spending_goals`
-| Coluna | Tipo | Null? | Default | Descrição |
-|---|---|---|---|---|
-| `id` | INTEGER | No | PK | Identificador único. |
-| `user_id` | INTEGER | No | FK | Vínculo com `users.id`. |
-| `title` | TEXT | No | - | Nome da meta (ex: "Viagem"). |
-| `goal_type` | TEXT | No | 'spending' | Enum: `spending` ou `saving`. |
-| `target_amount` | DECIMAL | No | - | Valor alvo a ser atingido. |
-| `current_amount` | DECIMAL | No | 0 | Valor acumulado/gasto até o momento. |
-| `period` | TEXT | No | - | Enum: `monthly`, `weekly`, `yearly`. |
-| `status` | TEXT | No | 'active' | Enum: `active`, `completed`, `paused`. |
-
-### 4.4. Tabela: `user_scores`
-| Coluna | Tipo | Null? | Default | Descrição |
-|---|---|---|---|---|
-| `id` | INTEGER | No | PK | Identificador único. |
-| `user_id` | INTEGER | No | FK | Vínculo 1:1 com `users.id`. |
-| `total_score` | INTEGER | No | 0 | Pontuação bruta acumulada. |
-| `level` | INTEGER | No | 1 | Nível atual do usuário. |
-| `league` | TEXT | No | 'Bronze' | Liga competitiva atual. |
-| `current_streak` | INTEGER | No | 0 | Contador de dias consecutivos. |
-| `max_streak` | INTEGER | No | 0 | Recorde histórico de streak. |
-| `last_checkin` | DATE | Yes | NULL | Data do último check-in realizado. |
-
-### 4.5. Tabelas de Gamificação (`achievements` & `user_achievements`)
-- **`achievements`**: Tabela estática com `name`, `description` e `points`.
-- **`user_achievements`**: Registra quando um `user_id` ganha um `achievement_id` em `earned_at`. Possui constraint `UNIQUE(user_id, achievement_id)` para evitar duplicidade de ganhos.
-
-### 4.6. Tabelas de Infraestrutura (`whatsapp_sessions` & `logs`)
-- **`whatsapp_sessions`**: Guarda `conversation_history` (TEXT/JSON) e `expires_at` para manter o contexto da IA.
-- **`whatsapp_notification_logs`**: Log de auditoria para `notification_type` e `status` de entrega.
-
-### 4.7. Tabela: `audit_logs` [NOVO]
-| Coluna | Tipo | Null? | Default | Descrição |
-|---|---|---|---|---|
-| `id` | INTEGER | No | PK | Identificador único. |
-| `user_id` | INTEGER | No | FK | Usuário que gerou a ação. |
-| `action` | TEXT | No | - | Ex: `PASSWORD_CHANGE`, `ACCOUNT_DELETE`. |
-| `ip_address` | TEXT | Yes | - | Endereço IP do solicitante. |
-| `user_agent` | TEXT | Yes | - | Navegador/Dispositivo usado. |
-| `payload` | TEXT | Yes | - | JSON com detalhes do antes/depois. |
-| `created_at` | DATETIME | No | CURRENT | Timestamp do evento. |
-
----
-
-## 4. DDL: Modelo Físico Completo (Migrations & Init)
-
-O script abaixo consolida as 12 tabelas originais, as extensões de infraestrutura e a camada de auditoria.
-
-```sql
-PRAGMA foreign_keys = ON;
-
--- [CORE] Identidade
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    whatsapp_phone TEXT UNIQUE,
-    whatsapp_verified INTEGER DEFAULT 0,
-    whatsapp_otp TEXT,
-    otp_expires_at DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- [FINANCIAL] Categorias e Transações
-CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-    color TEXT,
-    icon TEXT
-);
-
-CREATE TABLE IF NOT EXISTS custom_categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-    is_active INTEGER DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
-    description TEXT NOT NULL,
-    category TEXT NOT NULL,
-    date DATE NOT NULL,
-    type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-    notes TEXT,
-    spending_goal_id INTEGER,
-    saving_goal_id INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (spending_goal_id) REFERENCES spending_goals (id) ON DELETE SET NULL,
-    FOREIGN KEY (saving_goal_id) REFERENCES spending_goals (id) ON DELETE SET NULL
-);
-
--- [FINANCIAL] Planejamento
-CREATE TABLE IF NOT EXISTS spending_goals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    title TEXT NOT NULL,
-    category TEXT NOT NULL,
-    goal_type TEXT DEFAULT 'spending' CHECK (goal_type IN ('spending', 'saving')),
-    target_amount DECIMAL(10,2) NOT NULL,
-    current_amount DECIMAL(10,2) DEFAULT 0,
-    period TEXT NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
-    status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'paused')),
-    version INTEGER DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS budgets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    total_amount DECIMAL(10,2) NOT NULL,
-    spent_amount DECIMAL(10,2) DEFAULT 0,
-    period TEXT NOT NULL CHECK (period IN ('monthly', 'yearly')),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS spending_limits (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    category TEXT NOT NULL,
-    limit_amount DECIMAL(10,2) NOT NULL,
-    current_spent DECIMAL(10,2) DEFAULT 0,
-    period TEXT NOT NULL,
-    status TEXT CHECK (status IN ('active', 'exceeded')) DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- [GAMIFICATION] Progressão
-CREATE TABLE IF NOT EXISTS user_scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL UNIQUE,
-    total_score INTEGER DEFAULT 0,
-    level INTEGER DEFAULT 1,
-    league TEXT DEFAULT 'Bronze',
-    current_streak INTEGER DEFAULT 0,
-    max_streak INTEGER DEFAULT 0,
-    last_checkin DATE,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS achievements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    points INTEGER DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS user_achievements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    achievement_id INTEGER NOT NULL,
-    earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE,
-    UNIQUE(user_id, achievement_id)
-);
-
--- [INFRA] WhatsApp, IA e Auditoria
-CREATE TABLE IF NOT EXISTS whatsapp_sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    phone_number TEXT NOT NULL,
-    conversation_history TEXT,
-    context_summary TEXT,
-    expires_at DATETIME NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS whatsapp_notification_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    notification_type TEXT NOT NULL,
-    message TEXT NOT NULL,
-    status TEXT CHECK (status IN ('sent', 'failed', 'pending')) DEFAULT 'pending',
-    sent_at DATETIME,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS audit_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    action TEXT NOT NULL,
-    ip_address TEXT,
-    user_agent TEXT,
-    payload TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- [INDEXES] Performance
-CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, date);
-CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category);
-CREATE INDEX IF NOT EXISTS idx_goals_user_status ON spending_goals(user_id, status);
-CREATE INDEX IF NOT EXISTS idx_audit_user_action ON audit_logs(user_id, action);
-```
-
----
-
-## 5. Seed Data: Configurações Iniciais
-
-Para o sistema funcionar corretamente, as seguintes tabelas devem ser populadas na inicialização.
-
-### 5.1. Categorias Padrão (System Categories)
-| Name | Type | Icon | Color |
-|---|---|---|---|
-| Alimentação | expense | `utensils` | `#FF5733` |
-| Transporte | expense | `car` | `#33B5FF` |
-| Moradia | expense | `home` | `#75FF33` |
-| Salário | income | `wallet` | `#33FF57` |
-| Investimentos | income | `chart-line` | `#FF33E9` |
-
-### 5.2. Catálogo de Conquistas (Achievements)
-| Name | Description | Points |
+| Relacao | Cardinalidade | Regra |
 |---|---|---|
-| Primeiro Passo | Criou sua primeira transação no FYNX. | 50 |
-| Poupador Iniciante | Atingiu R$ 1.000,00 de saldo líquido. | 200 |
-| Mestre do Hábito | 30 dias seguidos de check-in. | 500 |
+| `users -> transactions` | 1:N | Toda transacao tem `user_id`. |
+| `users -> spending_goals` | 1:N | Metas pertencem a um usuario. |
+| `users -> budgets` | 1:N | Budgets pertencem a um usuario. |
+| `users -> user_scores` | 1:1 | `user_scores.user_id` e unico. |
+| `users -> custom_categories` | 1:N | Categorias customizadas sao isoladas por usuario. |
+| `transactions -> spending_goals` | N:0..1 | `spending_goal_id` e `saving_goal_id` sao opcionais. |
+| `achievements -> user_achievements` | 1:N | Catalogo e relacao de ganho. |
+| `badges -> user_badges` | 1:N | Catalogo e relacao de ganho. |
 
 ---
 
-## 6. Gestão de Concorrência e Performance
+## 4. Dicionario de Dados
 
-O uso do SQLite em um ambiente web exige cuidados específicos para evitar o erro `SQLITE_BUSY`.
+### 4.1. `users`
 
-### 6.1. Modo WAL (Write-Ahead Logging)
-O sistema ativa o modo WAL via Pragma na inicialização:
-```sql
-PRAGMA journal_mode = WAL;
-PRAGMA synchronous = NORMAL;
+| Coluna | Tipo | Null | Default | Regra |
+|---|---|---|---|---|
+| `id` | INTEGER | Nao | AUTOINCREMENT | PK. |
+| `name` | TEXT | Nao | - | Nome do usuario. |
+| `email` | TEXT | Nao | - | Unico. |
+| `password` | TEXT | Sim no schema | - | Deve guardar hash; apesar de nullable no schema, regra exige valor para login local. |
+| `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
+| `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
+
+### 4.2. `categories`
+
+| Coluna | Tipo | Null | Default | Regra |
+|---|---|---|---|---|
+| `id` | INTEGER | Nao | AUTOINCREMENT | PK. |
+| `name` | TEXT | Nao | - | Unico global. |
+| `type` | TEXT | Nao | - | `income` ou `expense`. |
+| `color` | TEXT | Sim | - | Uso de UI. |
+| `icon` | TEXT | Sim | - | Uso de UI. |
+| `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
+
+### 4.3. `transactions`
+
+| Coluna | Tipo | Null | Default | Regra |
+|---|---|---|---|---|
+| `id` | INTEGER | Nao | AUTOINCREMENT | PK. |
+| `user_id` | INTEGER | Nao | - | FK para `users.id`. |
+| `amount` | DECIMAL(10,2) | Nao | - | Regra RN001 exige valor maior que zero. |
+| `description` | TEXT | Nao | - | Descricao obrigatoria. |
+| `category` | TEXT | Nao | - | Categoria obrigatoria. |
+| `date` | DATE | Nao | - | Data do fato financeiro. |
+| `type` | TEXT | Nao | - | `income` ou `expense`. |
+| `notes` | TEXT | Sim | - | Observacao. |
+| `spending_goal_id` | INTEGER | Sim | - | FK opcional para `spending_goals.id`. |
+| `saving_goal_id` | INTEGER | Sim | - | FK opcional para `spending_goals.id`. |
+| `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
+| `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
+
+**Nota:** `transactions.types.ts` possui campos ricos como `paymentMethod`, `tags`, `location`, `recurring` e `attachments`. Esses campos nao aparecem no schema fisico atual. Devem ser documentados como contrato de tipo em evolucao, nao como colunas persistidas.
+
+### 4.4. `spending_goals`
+
+| Coluna | Tipo | Null | Default | Regra |
+|---|---|---|---|---|
+| `id` | INTEGER | Nao | AUTOINCREMENT | PK. |
+| `user_id` | INTEGER | Nao | - | FK para `users.id`. |
+| `title` | TEXT | Nao | - | Nome da meta. |
+| `category` | TEXT | Nao | - | Categoria relacionada. |
+| `goal_type` | TEXT | Sim | `spending` | `spending` ou `saving`. |
+| `target_amount` | DECIMAL(10,2) | Nao | - | Valor alvo. |
+| `current_amount` | DECIMAL(10,2) | Sim | 0 | Progresso atual. |
+| `period` | TEXT | Nao | - | `monthly`, `weekly`, `yearly`. |
+| `start_date` | DATE | Sim | - | Inicio. |
+| `end_date` | DATE | Sim | - | Fim. |
+| `status` | TEXT | Nao | - | `active`, `completed`, `paused`. |
+| `description` | TEXT | Sim | - | Observacao. |
+| `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
+| `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
+
+### 4.5. `user_scores`
+
+| Coluna | Tipo | Null | Default | Regra |
+|---|---|---|---|---|
+| `id` | INTEGER | Nao | AUTOINCREMENT | PK. |
+| `user_id` | INTEGER | Nao | - | FK unica para `users.id`. |
+| `total_score` | INTEGER | Sim | 0 | Score atual. |
+| `carry_over_score` | INTEGER | Sim | 0 | Pontos preservados entre temporadas. |
+| `level` | INTEGER | Sim | 1 | Nivel do usuario. |
+| `league` | TEXT | Sim | Bronze | Liga atual. |
+| `current_streak` | INTEGER | Sim | 0 | Sequencia atual. |
+| `max_streak` | INTEGER | Sim | 0 | Melhor sequencia. |
+| `last_checkin` | DATE | Sim | - | Ultimo check-in. |
+| `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
+
+### 4.6. `achievements` e `user_achievements`
+
+`achievements` e o catalogo de conquistas. `user_achievements` registra quais usuarios ganharam cada conquista.
+
+| Tabela | Colunas principais | Integridade |
+|---|---|---|
+| `achievements` | `id`, `name`, `description`, `icon`, `points` | Catalogo sem user_id. |
+| `user_achievements` | `user_id`, `achievement_id`, `earned_at` | `UNIQUE(user_id, achievement_id)`. |
+
+### 4.7. `badges` e `user_badges`
+
+`badges` e o catalogo visual. `user_badges` guarda os badges obtidos por usuario.
+
+| Tabela | Colunas principais | Integridade |
+|---|---|---|
+| `badges` | `id`, `name`, `description`, `icon`, `category`, `requirements` | `id` textual como PK. |
+| `user_badges` | `user_id`, `badge_id`, `earned_at` | `UNIQUE(user_id, badge_id)`. |
+
+### 4.8. `custom_categories`
+
+| Coluna | Tipo | Null | Default | Regra |
+|---|---|---|---|---|
+| `id` | INTEGER | Nao | AUTOINCREMENT | PK. |
+| `user_id` | INTEGER | Nao | - | FK para `users.id`. |
+| `name` | TEXT | Nao | - | Nome da categoria do usuario. |
+| `type` | TEXT | Nao | - | `income` ou `expense`. |
+| `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
+| `is_active` | INTEGER | Sim | 1 | Arquivamento logico. |
+
+### 4.9. `budgets`
+
+| Coluna | Tipo | Null | Default | Regra |
+|---|---|---|---|---|
+| `id` | INTEGER | Nao | AUTOINCREMENT | PK. |
+| `user_id` | INTEGER | Nao | - | FK para `users.id`. |
+| `name` | TEXT | Nao | - | Nome do budget. |
+| `total_amount` | DECIMAL(10,2) | Nao | - | Valor total planejado. |
+| `spent_amount` | DECIMAL(10,2) | Sim | 0 | Valor gasto. |
+| `period` | TEXT | Nao | - | `monthly` ou `yearly` no schema fisico atual. |
+| `start_date` | DATE | Nao | - | Inicio. |
+| `end_date` | DATE | Nao | - | Fim. |
+| `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
+| `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
+
+**Divergencia tecnica:** `goals.types.ts` usa `allocatedAmount`, `remainingAmount`, `status` e `period` incluindo `weekly`. O schema fisico usa `total_amount`, `spent_amount`, sem `status` e sem `weekly`. Esta divergencia deve ser resolvida em migration ou camada de mapeamento.
+
+---
+
+## 5. DDL Atual Consolidado
+
+O DDL fonte fica em `schema.ts` e `database.ts`. A regra documental e nao duplicar SQL completo sem necessidade; o trecho abaixo resume a divisao:
+
+```text
+schema.ts
+- users
+- categories
+- transactions
+- spending_goals
+- user_scores
+- achievements
+- user_achievements
+- badges
+- user_badges
+
+database.ts
+- custom_categories
+- budgets
+- migrations de user_scores
+- migrations de transactions
+- migrations de spending_goals.goal_type
 ```
-Isso permite que leitores não bloqueiem escritores e vice-versa, melhorando a escalabilidade para múltiplos usuários simultâneos.
-
-### 6.2. Estratégia de Indexação (Query Optimization)
-- **`idx_transactions_user_date`**: Otimiza a busca do histórico e o cálculo de saldo mensal no Dashboard.
-- **`idx_transactions_category`**: Acelera a filtragem por categoria e a geração de gráficos de pizza.
-- **`idx_goals_user_status`**: Melhora a performance ao listar apenas as metas ativas na barra lateral.
-
-### 6.3. Constraints e Gatilhos de Integridade
-Além das Foreign Keys, utilizamos `CHECK` constraints para garantir a qualidade dos dados no nível físico:
-- **`amount > 0`**: Impede que o sistema aceite transações negativas ou zeradas.
-- **`type IN ('income', 'expense')`**: Garante que o domínio financeiro não receba tipos desconhecidos.
-- **`UNIQUE(email)`**: Proteção de nível 1 contra duplicidade de contas.
 
 ---
 
-## 7. Cascateamento e Gestão do Ciclo de Vida (Lifecycle)
+## 6. Migrations Atuais
 
-A base possui inteligência DDL estrita para evitar **Orphan Records (Registros Órfãos)**:
-- **Exclusão de Usuário**: A política `ON DELETE CASCADE` apaga instantaneamente todas as transações, metas e pontuações de um usuário se ele cancelar a conta. Isso simplifica absurdamente o código da camada de aplicação e respeita leis de proteção de dados (LGPD/GDPR).
-- **Exclusão de Meta**: A política `ON DELETE SET NULL` na tabela `transactions` garante que se uma Meta for apagada, as transações vinculadas àquela meta perdem o vínculo (`goal_id = NULL`), mas **não são apagadas**, preservando o fluxo de caixa histórico do usuário.
-- **Versionamento (Optimistic Locking)**: A coluna `version` na tabela `spending_goals` é incrementada a cada atualização. O repositório executa `UPDATE ... SET version = version + 1 WHERE id = ? AND version = ?`. Se nenhuma linha for afetada, ocorreu um conflito de escrita, disparando um erro de domínio.
+| Migration | Arquivo | Objetivo |
+|---|---|---|
+| `user_scores.league` | `database.ts` | Adiciona liga quando ausente. |
+| `user_scores.carry_over_score` | `database.ts` | Adiciona carry-over. |
+| `transactions.saving_goal_id` | `database.ts` | Vincula transacao a meta de economia. |
+| `transactions.spending_goal_id` | `database.ts` | Vincula transacao a meta de gasto. |
+| `user_scores.current_streak` | `database.ts` | Adiciona streak atual. |
+| `user_scores.max_streak` | `database.ts` | Adiciona streak maximo. |
+| `user_scores.last_checkin` | `database.ts` | Registra ultimo check-in. |
+| `spending_goals.goal_type` | `database.ts` | Diferencia meta de gasto e economia. |
+
+---
+
+## 7. Migrations Recomendadas
+
+### 7.1. Consolidar `custom_categories` e `budgets` em `schema.ts`
+
+Motivo: reduzir divergencia entre schema base e tabelas complementares.
+
+### 7.2. Criar `spending_limits`, se o modulo continuar separado de goals
+
+```sql
+CREATE TABLE IF NOT EXISTS spending_limits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  limit_amount DECIMAL(10,2) NOT NULL,
+  current_spent DECIMAL(10,2) DEFAULT 0,
+  period TEXT NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('active', 'exceeded', 'paused')),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+```
+
+### 7.3. Alinhar `budgets` ao contrato TypeScript
+
+Opcoes:
+
+- adaptar `goals.types.ts` ao schema fisico atual; ou
+- migrar banco para `allocated_amount`, `remaining_amount`, `status` e `weekly`.
+
+### 7.4. WhatsApp e auditoria
+
+Criar apenas quando houver rota e service reais:
+
+- `whatsapp_sessions`
+- `whatsapp_notification_logs`
+- `audit_logs`
+
+---
+
+## 8. Indices Recomendados
+
+| Indice | Tabela | Justificativa |
+|---|---|---|
+| `idx_transactions_user_date` | `transactions(user_id, date)` | Dashboard e historico por periodo. |
+| `idx_transactions_user_type` | `transactions(user_id, type)` | Sumarizacao de receita/despesa. |
+| `idx_transactions_user_category` | `transactions(user_id, category)` | Breakdown por categoria. |
+| `idx_spending_goals_user_status` | `spending_goals(user_id, status)` | Listagem de metas ativas. |
+| `idx_custom_categories_user_active` | `custom_categories(user_id, is_active)` | Gerenciador de categorias. |
+| `idx_user_scores_score` | `user_scores(total_score DESC)` | Ranking global. |
+
+---
+
+## 9. Checklist de Integridade
+
+- Toda tabela multiusuario deve ter `user_id`.
+- Toda query multiusuario deve filtrar por `user_id`.
+- Campos existentes apenas em tipos TypeScript nao devem ser documentados como colunas.
+- Recursos planejados nao devem aparecer no catalogo como ativos.
+- Toda nova rota com persistencia exige atualizacao deste documento.

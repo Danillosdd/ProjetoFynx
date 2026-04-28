@@ -1,45 +1,95 @@
 # Fynx LLM AI Context & Map
 
-> **Objetivo:** Este arquivo é destinado à leitura automatizada por crawlers de Inteligência Artificial (Cursor, Copilot, Cline, Antigravity) para estabelecimento instantâneo de contexto técnico e regras fundamentais.
+Purpose: compact context for AI agents working on ProjetoFynx. Treat this file as an index, not as the full source of truth.
 
----
+## 1. Project
 
-## 1. Project Overview
-- **Name:** FYNX - Sistema de Gestão Financeira.
-- **Type:** Fullstack Web App (React + Node.js).
-- **Architecture Standard:** Domain-Driven Design (DDD) + Clean Architecture.
-- **Core Engine:** Gamified Finance (Finanças Pessoais orientadas a recompensas/pontuação).
-- **Status:** Em migração técnica ativa da arquitetura legada (MVC) para DDD.
+- Name: FYNX.
+- Type: fullstack finance app with gamification.
+- Backend: `FynxApi`.
+- Frontend: `FynxV2`.
+- Docs: `FynxDocs/documento-software/Doc-Tecnica-Rev06`.
+- Architecture: DDD-oriented, still being consolidated. Do not assume it is pure Clean Architecture everywhere.
 
-## 2. Tech Stack Core
-- **Backend:** Node.js, Express.js 5.x, TypeScript 5.x.
-- **Database:** SQLite3 nativo (sem ORM no momento, queries diretas via `sqlite3` driver).
-- **Frontend:** React 18, Vite, Tailwind CSS, shadcn/ui.
-- **Auth:** JWT (jsonwebtoken), Bcrypt.
+## 2. Main Docs
 
-## 3. Directory Topology (Backend - `FynxApi/src/`)
-- `application/`: Camada de Use Cases (Regras da aplicação orquestrando domínio e infra).
-- `domains/`: Bounded Contexts. Interfaces, Entities e Value Objects.
-  - `financial`: Transações (receitas/despesas), Metas, Orçamentos.
-  - `gamification`: FYNX Score, Ligas (Bronze a Diamante), Streaks, Conquistas.
-  - `identity`: Usuário, Segurança, Senhas.
-  - `analytics`: Dados do Dashboard.
-- `infrastructure/`: 
-  - `database/`: Schema DDL SQL, seeds e conexão DB (`database.ts`).
-  - `http/`: Roteamento Express (`routes/`), Middlewares e Controllers.
-  - `repositories/`: Implementação concreta de persistência de dados.
-  - `container.ts`: O arquivo de injeção de dependência (DI Container). Mapeia interfaces às implementações.
-- `shared/`: Constantes, utilitários, loggers.
+- `FynxRev06.md`: documentation hub.
+- `BUSINESS_RULES.md`: RF, RNF, RN, PI and traceability.
+- `WORKFLOWS.md`: use cases, sad paths and process flows.
+- `API_REFERENCE.md`: real HTTP contracts.
+- `DATABASE_SCHEMA.md`: real tables, migrations and persistence gaps.
+- `ARCHITECTURE.md`: bounded contexts, folders, patterns and ADRs.
+- `GAMIFICATION_ENGINE.md`: score, ranking, achievements and badges.
 
-## 4. Key Rules for AIs (Agent Directives)
-- **DO NOT** use `any` types. Strict typing is mandatory in TypeScript.
-- **DO NOT** couple layers. `Application` Use Cases cannot import Express `Response`/`Request` objects.
-- **Database Schema:** Rely on `DATABASE_SCHEMA.md` or `schema.ts`.
-- **Validation:** Use `Zod` in the Infrastructure HTTP layer before passing data to Use Cases.
-- **Gamification Logic:** See `GAMIFICATION_ENGINE.md`. Score updates happen asynchronously after financial events.
-- **Academic Format Constraint:** The user's professor requires specific markdown formats for Use Cases and BPMN. When generating docs, NEVER alter the formatting established in `BUSINESS_RULES.md` and `WORKFLOWS.md`.
+## 3. Backend Map
 
-## 5. Upcoming Feature (WhatsApp Module)
-- **Integration:** Meta Cloud API / Evolution API.
-- **Concept:** Allow users to add expenses via Natural Language processing on WhatsApp.
-- **Action:** Will be implemented as an isolated Infrastructure HTTP Webhook that calls existing Use Cases. No logic duplication allowed.
+```text
+FynxApi/src/
+- application/financial
+- domains/identity/auth
+- domains/financial/transactions
+- domains/financial/goals
+- domains/financial/custom-categories
+- domains/financial/spending-limits
+- domains/analytics/dashboard
+- domains/gamification/ranking
+- infrastructure/database
+- infrastructure/http
+- infrastructure/repositories
+- shared/domain
+```
+
+## 4. Exposed API Prefixes
+
+Registered in `FynxApi/src/infrastructure/http/routes/index.ts`:
+
+- `/api/v1/auth`
+- `/api/v1/dashboard`
+- `/api/v1/goals`
+- `/api/v1/transactions`
+- `/api/v1/ranking`
+- `/api/v1/categories/custom`
+
+Important:
+
+- `spending-limits` has route/controller/service files, but is not registered in the central router.
+- WhatsApp/webhook routes are planned, not registered.
+
+## 5. Database Truth
+
+Primary files:
+
+- `FynxApi/src/infrastructure/database/schema.ts`
+- `FynxApi/src/infrastructure/database/database.ts`
+- `FynxApi/src/infrastructure/database/seed.ts`
+
+Implemented tables:
+
+- `users`
+- `categories`
+- `transactions`
+- `spending_goals`
+- `user_scores`
+- `achievements`
+- `user_achievements`
+- `badges`
+- `user_badges`
+- `custom_categories`
+- `budgets`
+
+Not implemented as physical tables in the inspected schema:
+
+- `spending_limits`
+- `whatsapp_sessions`
+- `whatsapp_notification_logs`
+- `audit_logs`
+
+## 6. Agent Rules
+
+- Check code before documenting a feature as implemented.
+- Check `routes/index.ts` before claiming an endpoint is publicly exposed.
+- Check `schema.ts` and `database.ts` before claiming a table exists.
+- Mark features as Implemented, Partial or Planned.
+- Keep traceability: RF/RN -> CSU -> endpoint -> table -> code.
+- Do not invent WhatsApp, audit or spending-limits persistence details.
+- If TypeScript types contain fields not in the database, document the divergence.

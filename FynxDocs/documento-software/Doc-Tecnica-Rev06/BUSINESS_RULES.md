@@ -1,275 +1,487 @@
-# Engenharia de Requisitos e Regras de Negócio — FYNX (Rev. 06)
+# Engenharia de Requisitos e Regras de Negocio - FYNX Rev. 06
 
-> Documento de especificação corporativa. Centraliza a inteligência de requisitos do sistema FYNX. O levantamento de necessidades aqui presente obedece ao rigor acadêmico, porém foi refatorado para mapear os requisitos aos Bounded Contexts da arquitetura de Domain-Driven Design (DDD).
-
----
-
-## 1. Requisitos Funcionais (RF)
-
-### 1.1. Bounded Context: Identity & Access
-
-#### **RF001 - Autenticação de Usuário (Login)**
-- **Descrição**: O sistema deve prover um mecanismo de entrada criptograficamente seguro, prevenindo ataques de força bruta e enumeração.
-- **Atores**: Usuário Registrado.
-- **Critérios de Aceite**:
-  - Validação estrita do payload via Schema (Zod) antes de bater no banco.
-  - O sistema deve comparar a senha usando algoritmo Bcrypt. Em caso de falha, retornar mensagem genérica ("Credenciais Inválidas") para ocultar se o e-mail existe ou não.
-- **Detalhes Técnicos**: Retorna um Token JWT (HS256) com TTL de 24 horas. O token deve conter `userId` e `email` no payload.
-- **Prioridade**: Crítica.
-- **Status**: ✅ Implementado.
-
-#### **RF002 - Registro de Usuário e Inicialização de Gamificação**
-- **Descrição**: A criação de conta deve preparar todo o ecossistema do usuário no sistema, garantindo que ele comece com as configurações básicas de gamificação.
-- **Atores**: Visitante / Usuário não registrado.
-- **Critérios de Aceite**:
-  - O usuário preenche Nome, Email e Senha.
-  - Um usuário novo deve nascer já alocado na Liga Base (Bronze) com Score 0.
-  - Criação automática de categorias padrão (Alimentação, Transporte, Moradia, etc.) caso o usuário não as possua.
-- **Detalhes Técnicos**: Execução envolta em um **Unit of Work**. Dispara `UserRegisteredDomainEvent`.
-- **Prioridade**: Crítica.
-- **Status**: ✅ Implementado.
-
-### 1.2. Bounded Context: Financial Core
-
-#### **RF003 - Motor de Lançamento de Transações**
-- **Descrição**: Cadastro detalhado e rigoroso de entradas e saídas financeiras, servindo como base para todo o analytics e gamificação.
-- **Atores**: Usuário Autenticado.
-- **Critérios de Aceite**:
-  - Campos obrigatórios: Valor (> 0), Descrição, Categoria, Data e Tipo (income/expense).
-  - Campos opcionais: Notas, Vínculo com Meta.
-  - Impedir lançamentos sem categoria válida.
-- **Detalhes Técnicos**: Entidade `Transaction` valida invariantes no construtor. Dispara `TransactionCreatedEvent`.
-- **Prioridade**: Crítica.
-- **Status**: ✅ Implementado.
-
-#### **RF004 - Filtros Avançados e Paginação**
-- **Descrição**: Pesquisa eficiente em grandes volumes de transações para garantir usabilidade em contas com histórico longo.
-- **Atores**: Usuário Autenticado.
-- **Critérios de Aceite**:
-  - Paginação com `page` e `limit`.
-  - Filtros por intervalo de data, tipo, categoria e busca textual.
-- **Detalhes Técnicos**: Backend expõe query params: `page`, `limit`, `type`, `category`, `dateFrom/To`. Resposta inclui metadados de paginação (totalItems, totalPages).
-- **Prioridade**: Alta.
-- **Status**: ✅ Implementado.
-
-#### **RF005 - Operações em Lote (Bulk Actions)**
-- **Descrição**: Manipular múltiplos registros simultaneamente para otimizar a gestão de dados pelo usuário.
-- **Atores**: Usuário Autenticado.
-- **Critérios de Aceite**:
-  - Seleção múltipla na interface.
-  - Exclusão em lote com confirmação única.
-- **Detalhes Técnicos**: Endpoint `/bulk` recebe array de IDs e executa em transação única no banco.
-- **Prioridade**: Média.
-- **Status**: ✅ Implementado.
-
-#### **RF006 - Gestão de Metas de Economia (Saving Goals)**
-- **Descrição**: Objetivos para acumular dinheiro com barra de progresso e data alvo.
-- **Atores**: Usuário Autenticado.
-- **Critérios de Aceite**:
-  - Definição de nome, valor alvo e prazo.
-  - Visualização de progresso percentual.
-- **Prioridade**: Alta.
-- **Status**: ✅ Implementado.
-
-#### **RF007 - Gestão de Metas de Gastos (Spending Goals/Limits)**
-- **Descrição**: Estabelecer tetos de gastos mensais por categoria para controle de orçamento.
-- **Atores**: Usuário Autenticado.
-- **Critérios de Aceite**:
-  - Definição de limite por categoria.
-  - Alerta visual quando o gasto se aproxima do limite (ex: 80%).
-- **Prioridade**: Alta.
-- **Status**: ✅ Implementado.
-
-#### **RF008 - Dashboard e Analytics**
-- **Descrição**: Painel centralizado com KPIs e visualizações gráficas da saúde financeira.
-- **Atores**: Usuário Autenticado.
-- **Critérios de Aceite**:
-  - KPIs: Saldo Atual, Receita do Mês, Despesa do Mês.
-  - Gráficos: Distribuição por categoria (Pizza), Evolução diária (Área/Linha).
-- **Prioridade**: Crítica.
-- **Status**: ✅ Implementado.
-
-### 1.3. Bounded Context: Gamification
-
-#### **RF010 - Engine de Pontuação (FYNX Score)**
-- **Descrição**: Cálculo automático de pontos baseado em comportamento financeiro, consistência e disciplina.
-- **Critérios de Aceite**:
-  - O score aumenta com receitas e consistência de uso.
-  - O score diminui com despesas excessivas e falta de check-in.
-- **Prioridade**: Crítica.
-- **Status**: ✅ Implementado.
-
-#### **RF011 - Ranking Global e Ligas**
-- **Descrição**: Classificação competitiva em 5 Ligas (Bronze a Diamante) baseada no percentil global de score.
-- **Critérios de Aceite**:
-  - Atualização diária das posições.
-  - Rebaixamento e promoção ao fim de cada temporada (mês).
-- **Prioridade**: Alta.
-- **Status**: ✅ Implementado.
-
-#### **RF012 - Sistema de Conquistas (Achievements)**
-- **Descrição**: Desbloqueio de badges por marcos específicos que incentivam bons hábitos.
-- **Critérios de Aceite**:
-  - Badge "Primeiro Passo" ao criar a primeira transação.
-  - Badge "Poupador" ao atingir R$ 1.000,00 de saldo líquido.
-- **Prioridade**: Média.
-- **Status**: ✅ Implementado.
-
-### 1.4. Módulo Integração WhatsApp [PLANEJADO]
-
-#### **RF016 - Vinculação via OTP**
-- **Descrição**: Associar número de WhatsApp à conta via código de 6 dígitos enviado por SMS/WhatsApp.
-- **Critérios de Aceite**:
-  - Expiração do código em 10 minutos.
-  - Máximo de 3 tentativas de validação por código.
-- **Prioridade**: Alta.
-- **Status**: ⏳ Planejado.
-
-#### **RF017 - Registro via Linguagem Natural**
-- **Descrição**: Uso de IA (LLM) para extrair dados de mensagens de texto/voz e criar transações automaticamente.
-- **Critérios de Aceite**:
-  - Suporte a frases como "Gastei 30 reais em almoço hoje".
-  - Confirmação da transação via chat antes de salvar.
-- **Prioridade**: Alta.
-- **Status**: ⏳ Planejado.
-
-#### **RF018 - Consultas e Notificações Proativas**
-- **Descrição**: Alertas de orçamento estourado e consultas de saldo via chat de forma conversacional.
-- **Critérios de Aceite**:
-  - Notificação automática ao atingir 90% de um limite.
-  - Resposta a perguntas como "Quanto eu ainda posso gastar em Lazer?".
-- **Prioridade**: Média.
-- **Status**: ⏳ Planejado.
-
-### 1.5. Bounded Context: Admin & Audit [NOVO]
-
-#### **RF019 - Log de Auditoria de Eventos Críticos**
-- **Descrição**: Rastreabilidade total de alterações sensíveis (troca de senha, exclusão de conta, grandes movimentações).
-- **Atores**: Sistema / Auditor.
-- **Critérios de Aceite**:
-  - Registro de timestamp, IP, User-Agent e descrição da mudança.
-  - Imutabilidade do log no banco de dados.
-- **Prioridade**: Baixa.
-
-#### **RF020 - Gestão de Temporadas de Gamificação**
-- **Descrição**: Interface ou script para encerrar o mês, processar rankings e disparar o carry-over.
-- **Critérios de Aceite**:
-  - Execução atômica (tudo ou nada).
-  - Geração de relatório de performance global da comunidade.
-- **Prioridade**: Média.
+> Documento de requisitos da Rev06. Mantem a estrutura de Domain-Driven Design, mas recupera a rastreabilidade classica da Rev05: requisito, regra de negocio, caso de uso, endpoint, tabela e arquivo de codigo.
 
 ---
 
-## 2. Requisitos Não Funcionais (RNF)
+## 1. Convencoes
 
-| ID | Categoria | Especificação Técnica |
-|---|---|---|
-| **RNF001** | Performance | Latência < 300ms para 95% das leituras. Exige índices em `user_id` e `date`. |
-| **RNF002** | Segurança | Hash de senhas via Bcrypt (10 salt rounds). JWT stateless com rotação de segredo. |
-| **RNF003** | Arquitetura | Domain Isolation: Camada de domínio com zero dependências externas (POJO/POCO). |
-| **RNF004** | Resiliência | SQLite em modo `WAL` para suportar maior concorrência de escrita. Backup diário automático do arquivo `.db`. |
-| **RNF005** | Usabilidade | Interface Mobile-First com Tailwind CSS e acessibilidade WCAG 2.1 (Nível AA). |
-| **RNF006** | Integridade | Uso obrigatório de Transações SQL (ACID) em operações multi-tabela via Unit of Work. |
-| **RNF007** | Qualidade | TypeScript Strict Mode e cobertura de testes unitários > 80% no Domínio. |
-| **RNF008** | Disponibilidade | SLA alvo de 99.5% de uptime (excluindo janelas de manutenção planejada). |
-
----
-
-## 3. Regras de Negócio Core (RN)
-
-As regras abaixo são os invariantes do Domínio que garantem a consistência do sistema.
-
-### 3.1. Invariantes Financeiros
-- **RN001 - Valor Positivo**: Transações com valor $\le 0$ são proibidas. Validação na Entidade e Constraint no DB.
-- **RN002 - Temporalidade**: Permite datas retroativas e futuras. Datas futuras são marcadas como `Pending` e não afetam o saldo líquido atual até que a data chegue.
-- **RN003 - Unicidade de Vínculo**: Uma transação pertence a no máximo 1 meta de gasto ou 1 de economia. O vínculo é exclusivo para evitar dupla contagem.
-- **RN004 - Estorno em Exclusão**: Ao deletar uma transação, o progresso da meta vinculada deve ser subtraído (estornado). Se a meta já estiver concluída, ela deve retornar ao status `active`.
-- **RN005 - Categorização Obrigatória**: Toda transação deve possuir uma categoria válida, seja ela do sistema ou personalizada pelo usuário.
-- **RN006 - Bloqueio de Edição em Metas Concluídas**: Metas com status `completed` não permitem alteração de valor alvo para preservar o histórico de conquistas.
-- **RN013 - Rollover de Orçamento (Opcional)**: Ao fim do mês, o saldo positivo de um orçamento não é automaticamente somado ao próximo, a menos que o usuário ative a regra de "Rollover" específica por categoria.
-- **RN014 - Limite de Categorias Customizadas**: Para evitar poluição visual e de dados, cada usuário é limitado a 20 categorias personalizadas.
-
-### 3.2. Invariantes de Gamificação
-- **RN007 - A Fórmula do Score**: 
-  $Score = (\text{Receita} - \text{Despesa}) \times 0.5 + (\text{Check-in Streak} \times 10)$.
-- **RN008 - Multiplicador de Liga**: Despesas em ligas altas (Diamante) penalizam o score mais severamente (5x) que na Bronze (1x).
-- **RN009 - Reset Sazonal**: No 1º dia do mês, scores resetam para 20% do valor anterior (Carry-over). As ligas são recalculadas com base no ranking final do mês anterior.
-- **RN010 - Ganho Máximo Diário**: Para evitar manipulação, o ganho de score por transações é limitado a um teto diário de 500 pontos, exceto por bônus de conquistas.
-- **RN011 - Penalidade por Inatividade**: Usuários sem check-in por mais de 7 dias perdem 5% do score acumulado a cada dia extra de inatividade.
-- **RN012 - Elegibilidade de Recompensa**: Badges de valor monetário (ex: "Poupador") só são concedidas a usuários com WhatsApp verificado para evitar bots.
-
-### 3.3. Políticas de Integridade de Dados
-- **PI001 - Exclusão em Cascata**: Se um `User` for deletado, todos os seus dados dependentes (Transactions, Goals, Scores, Sessions) devem ser removidos via `ON DELETE CASCADE` para evitar registros órfãos.
-- **PI002 - Unicidade de Identidade**: As colunas `email` e `whatsapp_phone` na tabela `users` são estritamente `UNIQUE`. Não é permitido duplicidade de acesso.
-- **PI003 - Imutabilidade de Log de Auditoria**: Registros na tabela `whatsapp_notification_logs` e `audit_logs` não permitem `UPDATE`. A integridade do histórico é preservada.
-- **PI004 - TTL (Time-To-Live) de Contexto**: Sessões de conversa via WhatsApp (`whatsapp_sessions`) expiram em 1 hora. Um job periódico limpa sessões expiradas.
-- **PI005 - Validação Temporal de OTP**: O código de verificação (`whatsapp_otp`) só é válido se a data atual for menor que `otp_expires_at`.
-- **PI006 - Consistência Eventual de Score**: O cálculo do score é atualizado via Domain Events de forma assíncrona. A consistência é garantida no nível da aplicação.
-- **PI007 - Isolamento de Domínio (Multi-tenancy)**: Toda query de leitura ou escrita deve incluir obrigatoriamente o filtro `user_id` da sessão ativa, prevenindo vazamento de dados entre usuários.
-- **PI008 - Versionamento de Entidades (Optimistic Locking)**: Operações sensíveis de atualização de saldo em Metas usam uma coluna `version` para evitar o problema da "atualização perdida" em ambientes concorrentes.
-
----
-
-## 4. Glossário Técnico (Exaustivo)
-
-| Termo | Definição no Contexto FYNX |
+| Codigo | Significado |
 |---|---|
-| **Bounded Context** | Fronteira lógica que delimita um domínio (ex: Financial, Gamification). |
-| **FYNX Score** | Métrica proprietária que mede a saúde e engajamento financeiro do usuário. |
-| **Carry-over** | Parcela do score (20%) preservada entre temporadas para premiar o histórico. |
-| **Sad Path** | Caminho infeliz; fluxo de exceção onde algo falha (erro de validação, erro de rede). |
-| **Unit of Work** | Padrão que garante que uma operação multi-tabela (Ex: Salvar Transação + Atualizar Score) seja atômica. |
-| **LLM / NER** | Large Language Model usado para Named Entity Recognition (Extração de Entidades) no WhatsApp. |
-| **Evolution API** | Gateway de integração usado para disparar mensagens e notificações proativas via WhatsApp. |
-| **DTO (Data Transfer Object)** | Objeto simples usado para transportar dados entre as camadas de API e Aplicação. |
-| **JWT (JSON Web Token)** | Padrão de token para autenticação stateless, assinado com segredo HS256. |
-| **Bcrypt** | Algoritmo de hashing de senha com salt, resistente a ataques de dicionário e rainbow tables. |
-| **Check-in Streak** | Contador de dias consecutivos com atividade, gerando bônus progressivos de pontuação. |
-| **Liga** | Classificação competitiva: Bronze, Prata, Ouro, Platina e Diamante (baseado em percentil). |
-| **Saving Goal** | Meta de acumulação de dinheiro. O progresso cresce conforme receitas são vinculadas. |
-| **Spending Goal** | Teto de gastos por categoria. O progresso consome o limite conforme despesas ocorrem. |
-| **Budget** | Orçamento planejado para um período específico (mensal/anual). |
-| **OTP (One-Time Password)** | Código temporário de 6 dígitos para validação de posse do número de WhatsApp. |
-| **Vault Entry** | Nome conceitual da tela de login, reforçando o tema de "Cofre de Segurança". |
-| **Thin Controller** | Prática de manter Controllers enxutos, delegando toda lógica para os Services. |
-| **Fat Service** | Concentração da inteligência de negócio e regras de domínio na camada de serviço. |
-| **Atomic Transaction** | Operação de banco de dados que garante o princípio do "tudo ou nada" (Commit/Rollback). |
-| **Session Memory** | Armazenamento de contexto de conversa (JSON) para que a IA lembre de mensagens anteriores. |
-| **badge_novice** | Conquista automática concedida ao usuário após seu primeiro lançamento no sistema. |
-| **badge_saver** | Badge de mérito financeiro desbloqueada ao acumular um saldo líquido superior a R$ 1.000. |
-| **Zod Schema** | Biblioteca de declaração e validação de esquemas TypeScript usada no runtime. |
-| **WAL Mode** | Write-Ahead Logging; modo do SQLite que melhora drasticamente a performance de escrita concorrente. |
-| **Ubiquitous Language** | Linguagem comum compartilhada por desenvolvedores e especialistas de negócio no DDD. |
-| **Domain Event** | Algo que aconteceu no domínio e que outros componentes podem ter interesse (ex: `TransactionCreated`). |
-| **Value Object** | Objeto que não tem identidade própria e é definido apenas por seus atributos (ex: `Currency`). |
-| **Aggregate Root** | Entidade principal que garante a consistência de um grupo de objetos relacionados. |
-| **Inversion of Control** | Princípio onde o controle de fluxo é invertido, delegando a criação de objetos para um container. |
-| **Stateless Auth** | Autenticação onde o servidor não guarda estado da sessão, confiando apenas no Token enviado. |
-| **Rate Limit** | Restrição de frequência de requisições para proteger a API contra abusos. |
-| **BFF (Backend for Frontend)** | Padrão onde o backend é desenhado especificamente para as necessidades de uma interface. |
-| **CRUD** | Create, Read, Update, Delete; as quatro operações básicas de persistência de dados. |
-| **Soft Delete** | Prática de marcar um registro como deletado em vez de removê-lo fisicamente do banco. |
-| **ACID** | Propriedades de transações de banco de dados: Atomicidade, Consistência, Isolamento e Durabilidade. |
-| **Payload** | A parte útil dos dados transmitidos em uma requisição ou resposta de API. |
-| **Endpoint** | Ponto de acesso em uma API (URL) que responde a um verbo HTTP específico. |
-| **Middleware** | Função que intercepta a requisição antes que ela chegue ao Controller (ex: Validação, Auth). |
-| **ORM (Object-Relational Mapping)** | Técnica que permite mapear objetos de código para tabelas de banco de dados relacionais. |
-| **Dependency Injection** | Padrão onde as dependências de uma classe são fornecidas externamente em vez de criadas internamente. |
-| **Optimistic Locking** | Estratégia de concorrência que assume que conflitos são raros, usando versão para validar updates. |
-| **Pessimistic Locking** | Bloqueio direto do registro no banco para evitar que outros o leiam/editem simultaneamente. |
-| **Event Emitter** | Componente do Node.js usado para implementar o padrão Observer e disparar Domain Events. |
-| **Hydration** | Processo de transformar dados brutos do banco em instâncias ricas de classes de Domínio. |
-| **Anemic Domain Model** | Antipatadrão onde as entidades são apenas sacos de dados (getters/setters) sem lógica. |
-| **Rich Domain Model** | Prática recomendada onde as entidades contêm a lógica e as invariantes do negócio. |
-| **Factory Pattern** | Padrão de criação usado para instanciar objetos complexos ocultando a lógica de criação. |
-| **In-Memory Repository** | Implementação de repositório que guarda dados em arrays, usada para testes de performance. |
-| **SQL Injection** | Vulnerabilidade de segurança evitada no FYNX pelo uso de Prepared Statements no driver SQLite. |
-| **XSS (Cross-Site Scripting)** | Ataque evitado pelo React e por sanitização de strings na camada de infraestrutura. |
-| **CORS** | Cross-Origin Resource Sharing; política de segurança que restringe quais domínios acessam a API. |
-| **Bearer Token** | Tipo de token enviado no header `Authorization` para identificar o portador (Bearer). |
-| **Refresh Token** | Token de longa duração usado para obter novos Access Tokens sem exigir novo login. |
-| **Side Effect** | Qualquer mudança de estado fora da função principal (ex: Logar no console, Salvar no DB). |
-| **Idempotency** | Propriedade de uma operação que pode ser repetida várias vezes sem mudar o resultado final. |
-| **Tailwind CSS** | Framework CSS utility-first usado para construir a interface visual do FYNX. |
-| **Mermaid.js** | Ferramenta usada para gerar os diagramas desta documentação a partir de texto. |
+| `RF` | Requisito funcional. |
+| `RNF` | Requisito nao funcional. |
+| `RN` | Regra de negocio. |
+| `PI` | Politica de integridade de dados. |
+| `CSU` | Caso de uso em `WORKFLOWS.md`. |
+| `BC` | Bounded Context. |
 
+**Status permitidos:** Implementado, Parcial, Planejado, Legado, Nao registrado.
+
+---
+
+## 2. Visao por Bounded Context
+
+| Bounded Context | Responsabilidade | Modulos principais | Status |
+|---|---|---|---|
+| Identity & Access | Login, registro e protecao de rotas. | `identity/auth` | Implementado |
+| Financial Core | Transacoes, metas, budgets, categorias customizadas e limites. | `financial/*` | Implementado com lacunas em spending limits |
+| Analytics | Dashboard, indicadores e historico agregado. | `analytics/dashboard` | Implementado |
+| Gamification | Ranking, score, ligas, badges e achievements. | `gamification/ranking` | Implementado com controles administrativos a revisar |
+| Omnichannel WhatsApp | Registro e consulta por chat/voz. | Nao ha rota registrada | Planejado |
+| Admin & Audit | Auditoria, operacao e governanca. | Parcial por logs/middlewares | Planejado/Parcial |
+
+---
+
+## 3. Requisitos Funcionais
+
+### RF001 - Autenticacao de usuario
+
+**Contexto:** Identity & Access
+**Status:** Implementado
+**Endpoint:** `POST /api/v1/auth/login`
+**Codigo:** `FynxApi/src/domains/identity/auth`
+
+**Objetivo:** permitir que um usuario registrado acesse o sistema por email e senha, recebendo um JWT para consumir rotas protegidas.
+
+**Atores:** usuario registrado; API de autenticacao; middleware JWT.
+
+**Fluxo principal:**
+
+1. Usuario informa email e senha.
+2. Frontend envia `POST /api/v1/auth/login`.
+3. Controller valida payload minimo.
+4. Service busca usuario por email.
+5. Service compara senha enviada com hash persistido.
+6. API assina JWT com identificador do usuario.
+7. Frontend armazena token e redireciona para dashboard.
+
+**Fluxos alternativos:**
+
+- Email inexistente ou senha invalida retorna `401` com mensagem generica.
+- Payload incompleto retorna `400`.
+- Erro interno de banco retorna `500` e deve ser logado.
+
+**Criterios de aceite:**
+
+- Token deve permitir acesso a `/dashboard`, `/transactions`, `/goals`, `/ranking` e `/categories/custom`.
+- A resposta nao pode revelar se o email existe.
+- Nenhuma senha em texto puro pode ser persistida ou logada.
+
+### RF002 - Registro de usuario
+
+**Contexto:** Identity & Access
+**Status:** Implementado
+**Endpoint:** `POST /api/v1/auth/register`
+**Tabelas:** `users`, `user_scores`
+
+**Objetivo:** criar nova conta e preparar o usuario para os demais modulos.
+
+**Fluxo principal:**
+
+1. Visitante informa nome, email e senha.
+2. API valida obrigatoriedade e formato de email.
+3. Sistema verifica unicidade em `users.email`.
+4. Senha e convertida para hash.
+5. Registro e criado em `users`.
+6. Perfil inicial de gamificacao deve ser criado em `user_scores`.
+7. API retorna usuario e token.
+
+**Fluxos alternativos:**
+
+- Email duplicado retorna `409`.
+- Senha fraca ou payload incompleto retorna `400`.
+- Falha ao inicializar score deve impedir registro parcial ou ser tratada como pendencia transacional.
+
+**Criterios de aceite:**
+
+- Usuario novo inicia com `total_score = 0`, `level = 1`, `league = Bronze`.
+- Email fica unico.
+- Registro deve ser rastreavel em logs de erro, sem vazar senha.
+
+### RF003 - Cadastro de transacao financeira
+
+**Contexto:** Financial Core
+**Status:** Implementado
+**Endpoint:** `POST /api/v1/transactions`
+**Tabela:** `transactions`
+**CSU:** CSU03
+
+**Objetivo:** registrar receitas e despesas como base de analytics, metas e gamificacao.
+
+**Fluxo principal:**
+
+1. Usuario abre formulario de transacao.
+2. Informa tipo, valor, descricao, categoria e data.
+3. Opcionalmente informa observacao e meta vinculada.
+4. Frontend envia payload autenticado.
+5. Middleware injeta `userId`.
+6. Service valida `amount > 0`, tipo permitido e categoria.
+7. Registro e persistido em `transactions`.
+8. Sistema disponibiliza a nova transacao para dashboard e ranking.
+
+**Fluxos alternativos:**
+
+- Valor menor ou igual a zero retorna `400`.
+- Categoria ausente retorna `400`.
+- Meta vinculada inexistente retorna `404` ou `409`, conforme regra aplicada.
+
+**Criterios de aceite:**
+
+- Toda transacao pertence ao usuario autenticado.
+- Datas retroativas sao aceitas.
+- Transacoes futuras devem ter comportamento documentado antes de afetarem saldo corrente.
+
+### RF004 - Consulta, filtros e paginacao de transacoes
+
+**Contexto:** Financial Core
+**Status:** Implementado
+**Endpoint:** `GET /api/v1/transactions`
+
+**Objetivo:** permitir que o usuario encontre historico financeiro por periodo, tipo, categoria, texto e paginacao.
+
+**Criterios de aceite:**
+
+- Suportar filtros `type`, `category`, `dateFrom`, `dateTo` e `search`.
+- Retornar metadados de pagina.
+- Nunca retornar transacoes de outro usuario.
+- Manter performance aceitavel com indices por `user_id` e `date`.
+
+### RF005 - Operacoes em lote
+
+**Contexto:** Financial Core
+**Status:** Implementado
+**Endpoint:** `POST /api/v1/transactions/bulk`
+
+**Objetivo:** executar acoes massivas em transacoes selecionadas.
+
+**Criterios de aceite:**
+
+- Operacao deve receber lista de IDs.
+- Cada ID deve ser validado contra o usuario autenticado.
+- Falhas parciais devem ser comunicadas no response.
+- Operacoes que alteram saldo ou metas devem preservar integridade.
+
+### RF006 - Metas de economia
+
+**Contexto:** Financial Core
+**Status:** Implementado
+**Endpoints:** `/api/v1/goals/spending-goals` com `goalType = saving`
+
+**Objetivo:** permitir que o usuario defina objetivos de acumulacao de dinheiro.
+
+**Criterios de aceite:**
+
+- Meta possui titulo, categoria, valor alvo, periodo, inicio, fim e status.
+- Progresso pode ser atualizado diretamente ou por transacao.
+- Ao atingir o alvo, status pode mudar para `completed`.
+
+### RF007 - Metas de gasto e budgets
+
+**Contexto:** Financial Core
+**Status:** Implementado
+**Endpoints:** `/api/v1/goals/spending-goals`, `/api/v1/goals/budgets`
+
+**Objetivo:** planejar teto de gastos e orcamento por periodo.
+
+**Criterios de aceite:**
+
+- Meta de gasto usa `goalType = spending`.
+- Budget representa plano financeiro por periodo.
+- Deve haver calculo de gasto atual e restante.
+- Estouro de limite deve ser sinalizado ao usuario.
+
+### RF008 - Dashboard e analytics
+
+**Contexto:** Analytics
+**Status:** Implementado
+**Endpoints:** `/api/v1/dashboard`, `/api/v1/dashboard/overview`, `/api/v1/dashboard/transactions`
+
+**Objetivo:** consolidar indicadores financeiros para a tela principal.
+
+**Criterios de aceite:**
+
+- Exibir receitas, despesas, saldo e taxa de economia.
+- Exibir historico recente.
+- Exibir distribuicao por categoria.
+- Consultas devem filtrar obrigatoriamente por `user_id`.
+
+### RF009 - Onboarding e tour guiado
+
+**Contexto:** Frontend Experience
+**Status:** Implementado no frontend
+**Codigo:** `FynxV2/src/tours`, `FynxV2/src/hooks/useTour.ts`
+
+**Objetivo:** orientar novos usuarios nas telas principais.
+
+**Criterios de aceite:**
+
+- Tours devem existir para dashboard, transacoes, metas e ranking.
+- Usuario deve poder iniciar manualmente o tour.
+- Estado de conclusao nao deve bloquear uso da aplicacao.
+
+### RF010 - Engine de score
+
+**Contexto:** Gamification
+**Status:** Implementado
+**Endpoints:** `/api/v1/ranking`, `/api/v1/ranking/score/:userId`
+
+**Objetivo:** calcular score com base em comportamento financeiro, metas e consistencia.
+
+**Criterios de aceite:**
+
+- Score deve ser derivado de dados financeiros do usuario.
+- Alteracoes relevantes devem atualizar `user_scores`.
+- Formula documentada em `GAMIFICATION_ENGINE.md` deve bater com `ranking.service.ts`.
+
+### RF011 - Ranking e ligas
+
+**Contexto:** Gamification
+**Status:** Implementado
+**Endpoints:** `/api/v1/ranking/leaderboard/*`
+
+**Objetivo:** comparar usuarios por score e liga.
+
+**Criterios de aceite:**
+
+- Ranking global deve retornar posicao, usuario, score, nivel, liga e tendencia.
+- Ranking por categoria deve separar criterios de economia, metas e consistencia.
+- Dados sensiveis do usuario nao devem ser expostos.
+
+### RF012 - Achievements e badges
+
+**Contexto:** Gamification
+**Status:** Implementado
+**Endpoints:** `/api/v1/ranking/achievements/:userId`, `/api/v1/ranking/badges/:userId`
+
+**Objetivo:** premiar marcos de uso e comportamento financeiro.
+
+**Criterios de aceite:**
+
+- O mesmo achievement/badge nao pode ser concedido duas vezes ao mesmo usuario.
+- Tabelas `user_achievements` e `user_badges` devem garantir unicidade.
+- Catalogo deve ser semeado por `seed.ts`.
+
+### RF013 - Categorias customizadas
+
+**Contexto:** Financial Core
+**Status:** Implementado
+**Endpoint:** `/api/v1/categories/custom`
+
+**Objetivo:** permitir que usuarios criem categorias proprias de receita ou despesa.
+
+**Fluxo principal:**
+
+1. Usuario abre gerenciador de categorias.
+2. Informa nome e tipo.
+3. API valida duplicidade ativa por usuario.
+4. Categoria e salva em `custom_categories`.
+5. Categoria passa a aparecer nos formularios financeiros.
+
+**Criterios de aceite:**
+
+- Categoria customizada pertence a um unico usuario.
+- Arquivamento deve preservar historico quando usado.
+- Categoria duplicada ativa deve retornar conflito.
+
+### RF014 - Spending limits
+
+**Contexto:** Financial Core
+**Status:** Parcial
+**Codigo:** `financial/spending-limits` existe, mas nao esta registrado em `routes/index.ts`.
+
+**Objetivo:** controlar limite de gasto por categoria.
+
+**Lacunas atuais:**
+
+- Rota central nao registra `/spending-limits`.
+- Nao ha tabela `spending_limits` em `schema.ts` ou `database.ts` no estado inspecionado.
+
+**Criterios de aceite para concluir implementacao:**
+
+- Registrar rota no roteador central.
+- Criar tabela fisica ou mapear para estrutura existente.
+- Documentar regras de estouro, pausa e progresso.
+
+### RF015 - Importacao/exportacao financeira
+
+**Contexto:** Financial Core
+**Status:** Planejado
+**Base tecnica:** tipos `TransactionImport` existem em `transactions.types.ts`, mas nao ha rota registrada.
+
+**Objetivo:** permitir importacao de CSV, Excel ou OFX.
+
+**Criterios de aceite futuros:**
+
+- Validar mapeamento de colunas.
+- Prevenir duplicidades.
+- Gerar relatorio de sucesso e falha.
+
+### RF016 - Vinculacao WhatsApp via OTP
+
+**Contexto:** Omnichannel
+**Status:** Planejado
+
+**Objetivo:** associar numero de WhatsApp a conta do usuario.
+
+**Criterios de aceite futuros:**
+
+- OTP de uso unico com expiracao.
+- Tentativas limitadas.
+- Registro de auditoria de sucesso e falha.
+
+### RF017 - Registro por linguagem natural
+
+**Contexto:** Omnichannel
+**Status:** Planejado
+
+**Objetivo:** converter mensagens de texto/voz em transacoes financeiras.
+
+**Criterios de aceite futuros:**
+
+- Extrair valor, descricao, tipo, categoria e data.
+- Confirmar antes de persistir.
+- Reusar caso de uso de criacao de transacao.
+
+### RF018 - Consultas e notificacoes proativas
+
+**Contexto:** Omnichannel
+**Status:** Planejado
+
+**Objetivo:** responder consultas e enviar alertas de limite/meta.
+
+**Criterios de aceite futuros:**
+
+- Consultas devem respeitar autenticacao e vinculacao do numero.
+- Alertas devem evitar duplicidade.
+- Logs de envio devem ser persistidos.
+
+### RF019 - Auditoria de eventos criticos
+
+**Contexto:** Admin & Audit
+**Status:** Parcial/Planejado
+
+**Objetivo:** rastrear acoes sensiveis e falhas operacionais.
+
+**Criterios de aceite:**
+
+- Logs HTTP e erros devem existir para diagnostico.
+- Mudancas de score, reset de temporada e exclusoes devem ser auditaveis.
+- Tabela `audit_logs` deve ser criada se a auditoria for persistida no banco.
+
+### RF020 - Gestao de temporadas de gamificacao
+
+**Contexto:** Gamification/Admin
+**Status:** Implementado como endpoint sensivel a revisar
+**Endpoint:** `POST /api/v1/ranking/reset-season`
+
+**Objetivo:** recalcular temporada e carry-over.
+
+**Criterios de aceite:**
+
+- Endpoint deve exigir permissao administrativa.
+- Operacao deve ser atomica.
+- Deve gerar registro de auditoria.
+- Deve preservar historico ou documentar a ausencia dele.
+
+---
+
+## 4. Requisitos Nao Funcionais
+
+| ID | Categoria | Criterio mensuravel | Verificacao |
+|---|---|---|---|
+| RNF001 | Performance | Leituras comuns devem responder em ate 300 ms em base local de desenvolvimento. | Teste de carga local e analise de query. |
+| RNF002 | Seguranca | Senhas devem ser persistidas como hash; rotas protegidas exigem JWT. | Revisao de auth service e middleware. |
+| RNF003 | Isolamento multiusuario | Toda query de dado do usuario deve filtrar por `user_id`. | Revisao de services/repositories. |
+| RNF004 | Manutenibilidade | Controllers devem delegar regra para services/use cases. | Revisao de arquitetura. |
+| RNF005 | Persistencia | Operacoes multi-etapa devem usar transacao quando houver risco de estado parcial. | Revisao de `database.withTransaction`. |
+| RNF006 | Observabilidade | Falhas HTTP, banco e performance devem ser logaveis. | Middlewares em `infrastructure/http/middlewares`. |
+| RNF007 | UX responsiva | Telas principais devem funcionar em viewport mobile e desktop. | Testes manuais e automatizados no frontend. |
+| RNF008 | Documentacao viva | Mudanca em rota, schema ou RF exige atualizacao cruzada da Rev06. | Checklist documental. |
+
+---
+
+## 5. Regras de Negocio
+
+### 5.1. Financeiro
+
+| ID | Regra | Aplica-se a | Rastreabilidade |
+|---|---|---|---|
+| RN001 | Transacao deve ter valor maior que zero. | Transactions | RF003, CSU03, `transactions` |
+| RN002 | Toda transacao deve pertencer ao usuario autenticado. | Transactions | RF003, RF004, PI007 |
+| RN003 | Toda transacao deve ter tipo `income` ou `expense`. | Transactions | RF003 |
+| RN004 | Exclusao de transacao vinculada a meta deve estornar progresso quando a implementacao de vinculo estiver ativa. | Transactions, Goals | RF005, CSU de exclusao |
+| RN005 | Categoria e obrigatoria para transacoes. | Transactions, Categories | RF003, RF013 |
+| RN006 | Meta concluida nao deve ser alterada de forma que invalide historico sem regra explicita de reabertura. | Goals | RF006, RF007 |
+| RN007 | Budget deve calcular gasto acumulado e restante por periodo. | Goals/Budgets | RF007 |
+| RN008 | Categoria customizada ativa nao deve duplicar nome e tipo para o mesmo usuario. | Custom Categories | RF013 |
+
+### 5.2. Gamificacao
+
+| ID | Regra | Aplica-se a | Rastreabilidade |
+|---|---|---|---|
+| RN009 | Score e derivado de comportamento financeiro e consistencia. | Ranking | RF010 |
+| RN010 | Usuario possui uma linha unica em `user_scores`. | Ranking | RF010, `user_scores.user_id UNIQUE` |
+| RN011 | Badge e achievement nao podem ser concedidos duas vezes ao mesmo usuario. | Badges/Achievements | RF012 |
+| RN012 | Reset de temporada deve preservar regra de carry-over documentada ou declarar estrategia alternativa. | Ranking | RF020 |
+
+### 5.3. Planejado e Governanca
+
+| ID | Regra | Status | Rastreabilidade |
+|---|---|---|---|
+| RN013 | OTP de WhatsApp expira e tem tentativas limitadas. | Planejado | RF016 |
+| RN014 | Registro por linguagem natural exige confirmacao antes de salvar. | Planejado | RF017 |
+| RN015 | Endpoint administrativo de reset nao deve ficar aberto a qualquer usuario autenticado. | A revisar | RF020 |
+
+---
+
+## 6. Politicas de Integridade de Dados
+
+| ID | Politica | Estado atual |
+|---|---|---|
+| PI001 | `users.email` e unico. | Implementado em `schema.ts`. |
+| PI002 | `transactions.user_id` referencia `users.id`. | Implementado sem `ON DELETE CASCADE` explicito no schema atual. |
+| PI003 | `user_scores.user_id` e unico. | Implementado. |
+| PI004 | `user_achievements` usa `UNIQUE(user_id, achievement_id)`. | Implementado. |
+| PI005 | `user_badges` usa `UNIQUE(user_id, badge_id)`. | Implementado. |
+| PI006 | `custom_categories` pertence a `user_id`. | Implementado em `database.ts`. |
+| PI007 | Toda leitura/escrita multiusuario deve filtrar por `user_id`. | Obrigatorio por requisito; validar em services. |
+| PI008 | `spending_limits` precisa de modelo fisico antes de ser considerado persistido. | Pendente. |
+
+---
+
+## 7. Matriz de Rastreabilidade
+
+| Requisito | CSU | Endpoint | Tabela principal | Documento complementar |
+|---|---|---|---|---|
+| RF001 | CSU01 | `/auth/login` | `users` | `API_REFERENCE.md` |
+| RF002 | CSU02 | `/auth/register` | `users`, `user_scores` | `DATABASE_SCHEMA.md` |
+| RF003 | CSU03 | `/transactions` | `transactions` | `WORKFLOWS.md` |
+| RF004 | CSU07 | `/transactions`, `/dashboard` | `transactions` | `API_REFERENCE.md` |
+| RF006 | CSU05 | `/goals/spending-goals` | `spending_goals` | `DATABASE_SCHEMA.md` |
+| RF007 | CSU04 | `/goals/budgets` | `budgets` | `DATABASE_SCHEMA.md` |
+| RF010 | CSU08 | `/ranking/score/:userId` | `user_scores` | `GAMIFICATION_ENGINE.md` |
+| RF012 | CSU08 | `/ranking/achievements/:userId`, `/ranking/badges/:userId` | `achievements`, `badges` | `GAMIFICATION_ENGINE.md` |
+| RF013 | CSU13 | `/categories/custom` | `custom_categories` | `API_REFERENCE.md` |
+| RF014 | CSU14 | Nao registrado | Pendente | `API_REFERENCE.md` |
+| RF016-RF018 | CSU09-CSU12 | Planejado | Planejado | `WORKFLOWS.md` |
+
+---
+
+## 8. Glossario Tecnico
+
+| Termo | Definicao |
+|---|---|
+| Bounded Context | Fronteira semantica e tecnica de um dominio DDD. |
+| JWT | Token assinado usado para autenticacao stateless. |
+| User Score | Linha de estado de gamificacao em `user_scores`. |
+| Spending Goal | Meta de controle de gasto armazenada em `spending_goals` com `goalType = spending`. |
+| Saving Goal | Meta de acumulacao armazenada em `spending_goals` com `goalType = saving`. |
+| Budget | Planejamento por periodo armazenado em `budgets`. |
+| Custom Category | Categoria criada por usuario em `custom_categories`. |
+| Spending Limit | Modulo parcial de limites por categoria; ainda precisa registro central e persistencia fisica. |
+| Achievement | Conquista catalogada em `achievements`. |
+| Badge | Premio visual catalogado em `badges`. |
+| Sad Path | Fluxo de excecao ou erro esperado. |
+| Domain Event | Evento emitido por uma mudanca relevante no dominio. |
+| Repository Pattern | Padrao que isola persistencia concreta das regras de dominio. |
+| Unit of Work | Padrao para agrupar mudancas em transacao atomica. |
