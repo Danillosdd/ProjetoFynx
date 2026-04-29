@@ -1,5 +1,5 @@
-import { ICategoryRepository } from '../../domains/financial/repositories/category.repository.js';
-import { TransactionCategory } from '../../domains/financial/transactions/transactions.types.js';
+import type { ICategoryRepository } from '../../domains/financial/repositories/category.repository.js';
+import type { TransactionCategory } from '../../domains/financial/transactions/transactions.types.js';
 import { database } from '../database/database.js';
 
 export class SQLiteCategoryRepository implements ICategoryRepository {

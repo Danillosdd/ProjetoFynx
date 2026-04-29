@@ -1,5 +1,5 @@
-import { ITransactionRepository } from '../../domains/financial/repositories/transaction.repository.js';
-import { Transaction, TransactionFilters } from '../../domains/financial/transactions/transactions.types.js';
+import type { ITransactionRepository } from '../../domains/financial/repositories/transaction.repository.js';
+import type { Transaction, TransactionFilters } from '../../domains/financial/transactions/transactions.types.js';
 import { database } from '../database/database.js';
 
 export class SQLiteTransactionRepository implements ITransactionRepository {

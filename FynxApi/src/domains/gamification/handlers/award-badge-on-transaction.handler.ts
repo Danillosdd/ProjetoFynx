@@ -1,5 +1,5 @@
 import { TransactionCreatedEvent } from '../../financial/events/transaction-created.event.js';
-import { IScoreRepository } from '../repositories/score.repository.js';
+import type { IScoreRepository } from '../repositories/score.repository.js';
 
 export class AwardBadgeOnTransactionHandler {
   constructor(private scoreRepo: IScoreRepository) {}

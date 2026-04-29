@@ -1,5 +1,5 @@
-import { IDomainEvent } from '../../../shared/infrastructure/event-bus.js';
-import { Transaction } from '../transactions/transactions.types.js';
+import type { IDomainEvent } from '../../../shared/infrastructure/event-bus.js';
+import type { Transaction } from '../transactions/transactions.types.js';
 
 export class TransactionCreatedEvent implements IDomainEvent {
   public dateTimeOccurred: Date;

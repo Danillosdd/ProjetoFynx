@@ -1,4 +1,4 @@
-import { Transaction, TransactionFilters } from '../transactions/transactions.types.js';
+import type { Transaction, TransactionFilters } from '../transactions/transactions.types.js';
 
 export interface ITransactionRepository {
   findById(id: string, userId: number): Promise<Transaction | null>;

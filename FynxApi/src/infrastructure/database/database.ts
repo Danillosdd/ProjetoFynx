@@ -100,10 +100,14 @@ class Database {
                 user_id INTEGER NOT NULL,
                 name TEXT NOT NULL,
                 total_amount DECIMAL(10,2) NOT NULL,
+                category TEXT NOT NULL DEFAULT 'Geral',
+                allocated_amount DECIMAL(10,2) NOT NULL,
                 spent_amount DECIMAL(10,2) DEFAULT 0,
-                period TEXT NOT NULL CHECK (period IN ('monthly', 'yearly')),
+                remaining_amount DECIMAL(10,2) DEFAULT 0,
+                period TEXT NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
                 start_date DATE NOT NULL,
                 end_date DATE NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users (id)
@@ -155,6 +159,27 @@ class Database {
                 await this.run("ALTER TABLE spending_goals ADD COLUMN goal_type TEXT DEFAULT 'spending'");
             }
         } catch (err) { console.error('Migration error (spending_goals):', err); }
+
+        // Migration: budgets fields expected by GoalsService
+        try {
+            const budgetCols = await this.all("PRAGMA table_info('budgets')");
+            if (!budgetCols.some((col: any) => col.name === 'category')) {
+                await this.run("ALTER TABLE budgets ADD COLUMN category TEXT NOT NULL DEFAULT 'Geral'");
+            }
+            if (!budgetCols.some((col: any) => col.name === 'allocated_amount')) {
+                await this.run("ALTER TABLE budgets ADD COLUMN allocated_amount DECIMAL(10,2) NOT NULL DEFAULT 0");
+                if (budgetCols.some((col: any) => col.name === 'total_amount')) {
+                    await this.run("UPDATE budgets SET allocated_amount = total_amount WHERE allocated_amount = 0");
+                }
+            }
+            if (!budgetCols.some((col: any) => col.name === 'remaining_amount')) {
+                await this.run("ALTER TABLE budgets ADD COLUMN remaining_amount DECIMAL(10,2) DEFAULT 0");
+                await this.run("UPDATE budgets SET remaining_amount = allocated_amount - COALESCE(spent_amount, 0) WHERE remaining_amount = 0");
+            }
+            if (!budgetCols.some((col: any) => col.name === 'status')) {
+                await this.run("ALTER TABLE budgets ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+            }
+        } catch (err) { console.error('Migration error (budgets):', err); }
     }
 
     private async seedInitialData() {

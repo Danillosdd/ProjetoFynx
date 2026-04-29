@@ -1,4 +1,4 @@
-import { IScoreRepository } from '../../domains/gamification/repositories/score.repository.js';
+import type { IScoreRepository } from '../../domains/gamification/repositories/score.repository.js';
 import { database } from '../database/database.js';
 
 export class SQLiteScoreRepository implements IScoreRepository {

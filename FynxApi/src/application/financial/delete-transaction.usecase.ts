@@ -1,4 +1,4 @@
-import { ITransactionRepository } from '../../domains/financial/repositories/transaction.repository.js';
+import type { ITransactionRepository } from '../../domains/financial/repositories/transaction.repository.js';
 
 export class DeleteTransactionUseCase {
   constructor(private transactionRepo: ITransactionRepository) {}

@@ -428,12 +428,13 @@ export class GoalsService {
 
       const result = await db.run(`
         INSERT INTO budgets (
-          user_id, name, category, allocated_amount, spent_amount, remaining_amount, 
+          user_id, name, total_amount, category, allocated_amount, spent_amount, remaining_amount, 
           period, start_date, end_date, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         userId,
         data.name,
+        data.allocatedAmount,
         data.category,
         data.allocatedAmount,
         0, // spentAmount starts at 0

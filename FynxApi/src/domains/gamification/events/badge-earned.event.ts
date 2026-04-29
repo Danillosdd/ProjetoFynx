@@ -1,4 +1,4 @@
-import { IDomainEvent } from '../../../shared/infrastructure/event-bus.js';
+import type { IDomainEvent } from '../../../shared/infrastructure/event-bus.js';
 
 export class BadgeEarnedEvent implements IDomainEvent {
   public dateTimeOccurred: Date;

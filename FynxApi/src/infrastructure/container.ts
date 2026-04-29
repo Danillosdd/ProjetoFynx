@@ -11,8 +11,7 @@ export const categoryRepository = new SQLiteCategoryRepository();
 
 // Use Cases
 export const createTransactionUseCase = new CreateTransactionUseCase(
-  transactionRepository,
-  scoreRepository
+  transactionRepository
 );
 
 export const deleteTransactionUseCase = new DeleteTransactionUseCase(

@@ -1,4 +1,4 @@
-import { TransactionCategory } from '../transactions/transactions.types.js';
+import type { TransactionCategory } from '../transactions/transactions.types.js';
 
 export interface ICategoryRepository {
   findAll(): Promise<TransactionCategory[]>;

@@ -1,5 +1,5 @@
-import { ITransactionRepository } from '../../domains/financial/repositories/transaction.repository.js';
-import { CreateTransactionRequest, Transaction } from '../../domains/financial/transactions/transactions.types.js';
+import type { ITransactionRepository } from '../../domains/financial/repositories/transaction.repository.js';
+import type { CreateTransactionRequest, Transaction } from '../../domains/financial/transactions/transactions.types.js';
 import { Money } from '../../domains/financial/value-objects/money.js';
 import { TransactionType } from '../../domains/financial/value-objects/transaction-type.js';
 import { EventBus } from '../../shared/infrastructure/event-bus.js';

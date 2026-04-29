@@ -19,6 +19,22 @@ const createTransactionSchema = z.object({
 // ... (schema updateTransactionSchema remains the same)
 
 export class TransactionsController {
+  static async getTransactionById(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
+      const transaction = await TransactionsService.getTransactionById(id, req.user!.id);
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transacao nao encontrada' });
+      }
+
+      res.json(transaction);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   static async getTransactions(req: AuthRequest, res: Response) {
     try {
       const userId = req.user!.id;
@@ -83,6 +99,32 @@ export class TransactionsController {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.issues });
       }
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async updateTransaction(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+
+      const transaction = await TransactionsService.updateTransaction(id, req.body, req.user!.id);
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transacao nao encontrada' });
+      }
+
+      res.json(transaction);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async bulkOperation(req: AuthRequest, res: Response) {
+    try {
+      const operation = req.body as BulkTransactionOperation;
+      const result = await TransactionsService.bulkOperation(operation, req.user!.id);
+      res.json(result);
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   }
