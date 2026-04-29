@@ -1,6 +1,6 @@
-# FYNX Rev. 06 - Documentacao Tecnica Global
+﻿# FYNX Rev. 06 - Documentacao Tecnica Global
 
-> Hub principal da documentacao Rev06. A revisao consolida a migracao do backend para uma organizacao orientada a dominios, mantendo uma estrutura hibrida: DDD para arquitetura e rastreabilidade classica para requisitos, fluxos, banco e API.
+> Hub principal da documentacao Rev06. A revisao consolida a migracao do backend para uma organizacao orientada a dominios, mantendo uma estrutura hibrida: DDD para arquitetura e rastreabilidade classica para requisitos, fluxos, banco, API e artefatos academicos.
 
 ---
 
@@ -9,7 +9,7 @@
 | Revisao | Data | Objetivo | Status |
 |---|---|---|---|
 | Rev05 | Abril/2026 | Documento tecnico monolitico, com padrao classico. | Referencia historica |
-| Rev06 | Abril/2026 | Documentacao modular alinhada ao backend DDD. | Ativa |
+| Rev06 | Abril/2026 | Documentacao modular alinhada ao backend DDD e as atividades do professor. | Ativa |
 
 ---
 
@@ -17,15 +17,39 @@
 
 | Documento | Quando usar | Status |
 |---|---|---|
-| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | Entender requisitos, regras, RNFs e rastreabilidade. | Refatorado |
-| [WORKFLOWS.md](./WORKFLOWS.md) | Entender casos de uso, sad paths e processos. | Refatorado |
-| [API_REFERENCE.md](./API_REFERENCE.md) | Consumir ou manter contratos HTTP. | Refatorado |
-| [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | Entender tabelas, migrations e lacunas de persistencia. | Refatorado |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Entender bounded contexts, pastas, patterns e ADRs. | Refatorado |
-| [GAMIFICATION_ENGINE.md](./GAMIFICATION_ENGINE.md) | Entender score, ranking, badges e temporadas. | Refatorado |
+| [Requisitos e Regras](./REQUISITOS_E_REGRAS.md) | Entender requisitos, regras, RNFs e rastreabilidade. | Refatorado |
+| [Fluxos e Casos de Uso](./FLUXOS_E_CASOS_DE_USO.md) | Entender casos de uso, sad paths, processos e diagramas. | Refatorado |
+| [Referencia da API](./REFERENCIA_DA_API.md) | Consumir ou manter contratos HTTP. | Refatorado |
+| [Banco de Dados](./BANCO_DE_DADOS.md) | Entender DER, modelo logico, modelo fisico, SQL e dicionario. | Refatorado |
+| [Arquitetura](./ARQUITETURA.md) | Entender arquitetura, camadas, UML, sequencias, modulos e ADRs. | Refatorado |
+| [Motor de Gamificacao](./MOTOR_DE_GAMIFICACAO.md) | Entender score, ranking, badges e temporadas. | Refatorado |
+| [Matriz de Rastreabilidade](./MATRIZ_DE_RASTREABILIDADE.md) | Validar compatibilidade com os artefatos academicos exigidos. | Novo |
+| [Prototipos e Telas](./PROTOTIPOS_E_TELAS.md) | Consultar prototipos, telas, navegacao e comparativo visual. | Novo |
+| [Evidencias da Implementacao](./EVIDENCIAS_DA_IMPLEMENTACAO.md) | Conferir evidencias de implementacao, CRUD, Git, SQL e camadas. | Novo |
+| [Roteiro de Apresentacao](./ROTEIRO_DE_APRESENTACAO.md) | Roteiro da apresentacao do documento de requisitos. | Novo |
 | [llms.txt](./llms.txt) | Dar contexto rapido para agentes de IA. | Refatorado |
 
-**Ordem recomendada de leitura:** regras, workflows, API, banco, arquitetura, gamificacao.
+**Ordem recomendada de leitura:** regras, workflows, API, banco, arquitetura, gamificacao, rastreabilidade, evidencias.
+
+### 2.1. Compatibilidade com as Atividades do Professor
+
+| Atividade | Artefato solicitado | Documento Rev06/FynxDocs | Status |
+|---|---|---|---|
+| 11/02/2026 | Documento de Requisitos Funcionais e Nao Funcionais | [Requisitos e Regras](./REQUISITOS_E_REGRAS.md) | Coberto |
+| 25/02/2026 | Apresentacao do Documento de Requisitos | [Roteiro de Apresentacao](./ROTEIRO_DE_APRESENTACAO.md) | Coberto |
+| 04/03/2026 | Termo de Abertura do Projeto | [termo_abertura.md](../../Termo-abertura/termo_abertura.md) | Coberto fora da Rev06 |
+| 04/03/2026 | Mapeamento de Processos | [Fluxos e Casos de Uso](./FLUXOS_E_CASOS_DE_USO.md) | Coberto |
+| 04/03/2026 | Prototipos UI/UX | [Prototipos e Telas](./PROTOTIPOS_E_TELAS.md) | Coberto por evidencias visuais |
+| 04/03/2026 | Diagrama de Caso de Uso | [Fluxos e Casos de Uso](./FLUXOS_E_CASOS_DE_USO.md) | Coberto |
+| 18/03/2026 | Diagrama de Classes | [Arquitetura](./ARQUITETURA.md) | Coberto |
+| 18/03/2026 | Especificacao detalhada de Casos de Uso | [Fluxos e Casos de Uso](./FLUXOS_E_CASOS_DE_USO.md) | Coberto |
+| 25/03/2026 | Arquitetura do Sistema | [Arquitetura](./ARQUITETURA.md) | Coberto |
+| 25/03/2026 | Projeto de Banco de Dados | [Banco de Dados](./BANCO_DE_DADOS.md) | Coberto |
+| 25/03/2026 | Prototipos refinados e fluxo de telas | [Prototipos e Telas](./PROTOTIPOS_E_TELAS.md) | Coberto |
+| 25/03/2026 | Sequencia/Comunicacao e Modulos | [Fluxos e Casos de Uso](./FLUXOS_E_CASOS_DE_USO.md), [Evidencias da Implementacao](./EVIDENCIAS_DA_IMPLEMENTACAO.md) | Coberto |
+| 15/04/2026 | Implementacao, camadas, CRUD, SQL, Git e comparativo | [Evidencias da Implementacao](./EVIDENCIAS_DA_IMPLEMENTACAO.md), [Prototipos e Telas](./PROTOTIPOS_E_TELAS.md) | Coberto |
+
+Detalhamento completo em [MATRIZ_DE_RASTREABILIDADE.md](./MATRIZ_DE_RASTREABILIDADE.md).
 
 ---
 
@@ -99,7 +123,7 @@ VITE_API_URL=http://localhost:3001/api/v1
 | SQLite | Persistencia atual | Baixo atrito local e seed simples. |
 | bcrypt | Hash de senha | Protege credenciais. |
 | JWT | Autenticacao stateless | Protege rotas sem sessao server-side. |
-| Zod/validacoes | Contrato de entrada | Deve ser usado para reduzir payload invalido. |
+| Zod/validacoes | Contrato de entrada | Reduz payload invalido nos controllers. |
 
 ### Frontend - `FynxV2`
 
@@ -119,22 +143,22 @@ VITE_API_URL=http://localhost:3001/api/v1
 
 ```text
 ProjetoFynx/
-├── FynxApi/
-│   ├── src/application/
-│   ├── src/domains/
-│   ├── src/infrastructure/
-│   └── src/shared/
-├── FynxV2/
-│   ├── src/components/
-│   ├── src/pages/
-│   ├── src/hooks/
-│   ├── src/refine/
-│   └── src/services/
-└── FynxDocs/
-    └── documento-software/Doc-Tecnica-Rev06/
+|-- FynxApi/
+|   |-- src/application/
+|   |-- src/domains/
+|   |-- src/infrastructure/
+|   `-- src/shared/
+|-- FynxV2/
+|   |-- src/components/
+|   |-- src/pages/
+|   |-- src/hooks/
+|   |-- src/refine/
+|   `-- src/services/
+`-- FynxDocs/
+    `-- documento-software/Doc-Tecnica-Rev06/
 ```
 
-Detalhes de pastas e responsabilidades estao em [ARCHITECTURE.md](./ARCHITECTURE.md).
+Detalhes de pastas e responsabilidades estao em [ARQUITETURA.md](./ARQUITETURA.md).
 
 ---
 
@@ -143,7 +167,7 @@ Detalhes de pastas e responsabilidades estao em [ARCHITECTURE.md](./ARCHITECTURE
 A Rev06 usa a seguinte cadeia:
 
 ```text
-RF/RN -> CSU -> Endpoint -> Tabela -> Codigo
+RF/RN -> CSU -> Endpoint -> Tabela -> Codigo -> Evidencia/Teste
 ```
 
 Exemplo:
@@ -154,7 +178,10 @@ RF003 Cadastro de transacao
 -> POST /api/v1/transactions
 -> transactions
 -> domains/financial/transactions/*
+-> FynxV2/tests/cadastrar-transacao-*.test.js
 ```
+
+A matriz completa fica em [MATRIZ_DE_RASTREABILIDADE.md](./MATRIZ_DE_RASTREABILIDADE.md).
 
 ---
 
@@ -162,13 +189,15 @@ RF003 Cadastro de transacao
 
 Ao alterar o sistema:
 
-1. Mudou rota: atualizar `API_REFERENCE.md`.
-2. Mudou regra de negocio: atualizar `BUSINESS_RULES.md`.
-3. Mudou fluxo de usuario: atualizar `WORKFLOWS.md`.
-4. Mudou tabela/migration: atualizar `DATABASE_SCHEMA.md`.
-5. Mudou arquitetura/pasta/pattern: atualizar `ARCHITECTURE.md`.
-6. Mudou score/ranking/badge: atualizar `GAMIFICATION_ENGINE.md`.
-7. Mudou contexto para agentes: atualizar `llms.txt`.
+1. Mudou rota: atualizar `REFERENCIA_DA_API.md`.
+2. Mudou regra de negocio: atualizar `REQUISITOS_E_REGRAS.md`.
+3. Mudou fluxo de usuario: atualizar `FLUXOS_E_CASOS_DE_USO.md`.
+4. Mudou tabela/migration: atualizar `BANCO_DE_DADOS.md`.
+5. Mudou arquitetura/pasta/pattern: atualizar `ARQUITETURA.md`.
+6. Mudou score/ranking/badge: atualizar `MOTOR_DE_GAMIFICACAO.md`.
+7. Mudou tela/prototipo: atualizar `PROTOTIPOS_E_TELAS.md`.
+8. Mudou evidencia academica: atualizar `EVIDENCIAS_DA_IMPLEMENTACAO.md` e `MATRIZ_DE_RASTREABILIDADE.md`.
+9. Mudou contexto para agentes: atualizar `llms.txt`.
 
 ---
 
@@ -192,5 +221,16 @@ Um documento da Rev06 so deve ser considerado atualizado quando:
 - diferencia implementado, parcial e planejado;
 - aponta para codigo real quando falar de implementacao;
 - nao inventa endpoint ou tabela;
-- possui rastreabilidade com RF, CSU, endpoint e tabela quando aplicavel;
+- possui rastreabilidade com RF, CSU, endpoint, tabela, codigo e evidencia quando aplicavel;
 - mantem linguagem tecnica consistente.
+
+### 10.1. Criterio Academico de Entrega
+
+Antes de entregar a Rev06 ao professor, validar:
+
+- todos os artefatos da tabela 2.1 possuem link direto;
+- todo diagrama exigido esta inserido no documento responsavel;
+- todo caso de uso possui ator, descricao, fluxo principal, fluxo alternativo, pre-condicoes e pos-condicoes;
+- banco de dados possui DER, modelo logico, modelo fisico, dicionario e SQL;
+- existe comparativo claro entre prototipo e sistema implementado;
+- recursos parciais ou planejados nao sao apresentados como concluidos.

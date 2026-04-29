@@ -1,6 +1,15 @@
 const { useEffect, useMemo, useState } = React;
 const h = React.createElement;
 
+const DOCS_SOURCE = new URLSearchParams(window.location.search).get("source") === "local" ? "local" : "github";
+const DOCS_LOCAL_ROOT = "../documento-software/Doc-Tecnica-Rev06/";
+const DOCS_GITHUB_RAW_ROOT =
+  "https://raw.githubusercontent.com/TheuusWmv/ProjetoFynx/main/FynxDocs/documento-software/Doc-Tecnica-Rev06/";
+
+function buildDocPath(file) {
+  return DOCS_SOURCE === "local" ? `${DOCS_LOCAL_ROOT}${file}` : `${DOCS_GITHUB_RAW_ROOT}${file}`;
+}
+
 const DOCS = [
   {
     id: "hub",
@@ -8,39 +17,39 @@ const DOCS = [
     description: "Hub global da documentacao",
     type: "Hub",
     status: "Base",
-    path: "../documento-software/Doc-Tecnica-Rev06/FynxRev06.md",
+    file: "FynxRev06.md",
   },
   {
     id: "business",
-    title: "Regras de Negocio",
-    description: "RF, RNF, RN e rastreabilidade",
+    title: "Requisitos e Regras",
+    description: "Requisitos funcionais, nao funcionais e regras",
     type: "Requisitos",
     status: "Core",
-    path: "../documento-software/Doc-Tecnica-Rev06/BUSINESS_RULES.md",
+    file: "REQUISITOS_E_REGRAS.md",
   },
   {
     id: "workflows",
-    title: "Workflows",
-    description: "Casos de uso, sad paths e processos",
+    title: "Fluxos e Casos de Uso",
+    description: "Casos de uso, processos e diagramas",
     type: "Processos",
     status: "Core",
-    path: "../documento-software/Doc-Tecnica-Rev06/WORKFLOWS.md",
+    file: "FLUXOS_E_CASOS_DE_USO.md",
   },
   {
     id: "api",
-    title: "API Reference",
+    title: "Referencia da API",
     description: "Contratos HTTP reais",
     type: "API",
     status: "Core",
-    path: "../documento-software/Doc-Tecnica-Rev06/API_REFERENCE.md",
+    file: "REFERENCIA_DA_API.md",
   },
   {
     id: "database",
-    title: "Database Schema",
-    description: "Tabelas, migrations e lacunas",
+    title: "Banco de Dados",
+    description: "DER, SQL, dicionario e persistencia",
     type: "Dados",
     status: "Core",
-    path: "../documento-software/Doc-Tecnica-Rev06/DATABASE_SCHEMA.md",
+    file: "BANCO_DE_DADOS.md",
   },
   {
     id: "architecture",
@@ -48,25 +57,57 @@ const DOCS = [
     description: "DDD, rotas, pastas e ADRs",
     type: "Arquitetura",
     status: "Core",
-    path: "../documento-software/Doc-Tecnica-Rev06/ARCHITECTURE.md",
+    file: "ARQUITETURA.md",
   },
   {
     id: "gamification",
-    title: "Gamificacao",
+    title: "Motor de Gamificacao",
     description: "Score, ranking, badges e temporadas",
     type: "Dominio",
     status: "Core",
-    path: "../documento-software/Doc-Tecnica-Rev06/GAMIFICATION_ENGINE.md",
+    file: "MOTOR_DE_GAMIFICACAO.md",
+  },
+  {
+    id: "traceability",
+    title: "Matriz de Rastreabilidade",
+    description: "Checklist academico e matriz RF -> evidencia",
+    type: "Academico",
+    status: "Novo",
+    file: "MATRIZ_DE_RASTREABILIDADE.md",
+  },
+  {
+    id: "uiux",
+    title: "Prototipos e Telas",
+    description: "Telas, navegacao e comparativo com sistema",
+    type: "Academico",
+    status: "Novo",
+    file: "PROTOTIPOS_E_TELAS.md",
+  },
+  {
+    id: "implementation",
+    title: "Evidencias da Implementacao",
+    description: "Implementacao, CRUD, Git, SQL e testes",
+    type: "Academico",
+    status: "Novo",
+    file: "EVIDENCIAS_DA_IMPLEMENTACAO.md",
+  },
+  {
+    id: "presentation",
+    title: "Roteiro de Apresentacao",
+    description: "Roteiro do documento de requisitos",
+    type: "Academico",
+    status: "Novo",
+    file: "ROTEIRO_DE_APRESENTACAO.md",
   },
   {
     id: "llms",
-    title: "LLM Context",
-    description: "Mapa compacto para agentes",
+    title: "Contexto para IA",
+    description: "Mapa compacto para agentes e LLMs",
     type: "Agentes",
     status: "Mapa",
-    path: "../documento-software/Doc-Tecnica-Rev06/llms.txt",
+    file: "llms.txt",
   },
-];
+].map((doc) => ({ ...doc, path: buildDocPath(doc.file) }));
 
 function escapeHtml(value) {
   return value
@@ -87,18 +128,46 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "");
 }
 
-function inlineMarkdown(value) {
+function docIdForHref(href) {
+  if (!href || /^(https?:|mailto:|#)/i.test(href)) return "";
+  const fileName = decodeURIComponent(href.split("#")[0].split("/").pop() || "");
+  return DOCS.find((doc) => doc.path.endsWith(`/${fileName}`))?.id || "";
+}
+
+function resolveDocumentHref(href, doc) {
+  const docId = docIdForHref(href);
+  if (docId) {
+    const heading = href.split("#")[1] || "";
+    return heading ? `#${docId}/${heading}` : `#${docId}`;
+  }
+  if (!href || /^(https?:|mailto:|#)/i.test(href)) return href;
+  return resolveAssetPath(href, doc);
+}
+
+function inlineMarkdown(value, doc) {
   let html = escapeHtml(value);
   html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, href) => {
-    const safeHref = escapeHtml(href);
-    return `<a href="${safeHref}" target="_blank" rel="noreferrer">${escapeHtml(text)}</a>`;
+    const resolvedHref = resolveDocumentHref(href, doc);
+    const safeHref = escapeHtml(resolvedHref);
+    const isInternalDoc = safeHref.startsWith("#");
+    const targetAttrs = isInternalDoc ? "" : ' target="_blank" rel="noreferrer"';
+    return `<a href="${safeHref}"${targetAttrs}>${escapeHtml(text)}</a>`;
   });
   return html;
 }
 
-function parseTable(lines, start) {
+function resolveAssetPath(href, doc) {
+  if (!href || /^(https?:|mailto:|#)/i.test(href)) return href;
+  const base = doc?.path ? doc.path.replace(/[^/]+$/, "") : "";
+  if (/^https?:/i.test(base)) {
+    return new URL(href, base).href;
+  }
+  return new URL(href, `${window.location.origin}/docs-site/${base}`).pathname;
+}
+
+function parseTable(lines, start, doc) {
   const tableLines = [];
   let index = start;
 
@@ -126,16 +195,16 @@ function parseTable(lines, start) {
   const html = [
     '<div class="table-wrap"><table>',
     "<thead><tr>",
-    ...head.map((cell) => `<th>${inlineMarkdown(cell)}</th>`),
+    ...head.map((cell) => `<th>${inlineMarkdown(cell, doc)}</th>`),
     "</tr></thead><tbody>",
-    ...body.map((row) => `<tr>${row.map((cell) => `<td>${inlineMarkdown(cell)}</td>`).join("")}</tr>`),
+    ...body.map((row) => `<tr>${row.map((cell) => `<td>${inlineMarkdown(cell, doc)}</td>`).join("")}</tr>`),
     "</tbody></table></div>",
   ].join("");
 
   return { html, next: index };
 }
 
-function parseMarkdown(markdown) {
+function parseMarkdown(markdown, doc) {
   const headings = [];
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   const html = [];
@@ -195,7 +264,7 @@ function parseMarkdown(markdown) {
       continue;
     }
 
-    const table = parseTable(lines, index);
+    const table = parseTable(lines, index, doc);
     if (table) {
       closeLists();
       closeBlockquote();
@@ -218,7 +287,7 @@ function parseMarkdown(markdown) {
         suffix += 1;
       }
       headings.push({ level, text: text.replace(/`|\*/g, ""), id });
-      html.push(`<h${level} id="${id}">${inlineMarkdown(text)}</h${level}>`);
+      html.push(`<h${level} id="${id}">${inlineMarkdown(text, doc)}</h${level}>`);
       index += 1;
       continue;
     }
@@ -227,6 +296,19 @@ function parseMarkdown(markdown) {
       closeLists();
       closeBlockquote();
       html.push("<hr />");
+      index += 1;
+      continue;
+    }
+
+    const image = /^\s*!\[([^\]]*)\]\(([^)]+)\)\s*$/.exec(line);
+    if (image) {
+      closeLists();
+      closeBlockquote();
+      const alt = image[1].trim();
+      const src = resolveAssetPath(image[2].trim(), doc);
+      html.push(
+        `<figure class="doc-figure"><img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" /><figcaption>${escapeHtml(alt)}</figcaption></figure>`,
+      );
       index += 1;
       continue;
     }
@@ -248,7 +330,7 @@ function parseMarkdown(markdown) {
         html.push("<blockquote>");
         inBlockquote = true;
       }
-      html.push(`<p>${inlineMarkdown(line.replace(/^\s*>\s?/, ""))}</p>`);
+      html.push(`<p>${inlineMarkdown(line.replace(/^\s*>\s?/, ""), doc)}</p>`);
       index += 1;
       continue;
     }
@@ -264,7 +346,7 @@ function parseMarkdown(markdown) {
         html.push("<ul>");
         inList = true;
       }
-      html.push(`<li>${inlineMarkdown(unordered[1])}</li>`);
+      html.push(`<li>${inlineMarkdown(unordered[1], doc)}</li>`);
       index += 1;
       continue;
     }
@@ -280,7 +362,7 @@ function parseMarkdown(markdown) {
         html.push("<ol>");
         inOrderedList = true;
       }
-      html.push(`<li>${inlineMarkdown(ordered[1])}</li>`);
+      html.push(`<li>${inlineMarkdown(ordered[1], doc)}</li>`);
       index += 1;
       continue;
     }
@@ -294,7 +376,7 @@ function parseMarkdown(markdown) {
 
     closeLists();
     closeBlockquote();
-    html.push(`<p>${inlineMarkdown(line.trim())}</p>`);
+    html.push(`<p>${inlineMarkdown(line.trim(), doc)}</p>`);
     index += 1;
   }
 
@@ -311,7 +393,7 @@ async function loadDocs() {
         throw new Error(`Falha ao carregar ${doc.path}`);
       }
       const markdown = await response.text();
-      const parsed = parseMarkdown(markdown);
+      const parsed = parseMarkdown(markdown, doc);
       return { ...doc, markdown, ...parsed };
     }),
   );
@@ -532,7 +614,8 @@ function DocumentView({ doc }) {
       { className: "document-meta" },
       h("span", { className: "meta-chip" }, doc.type),
       h("span", { className: "meta-chip" }, doc.status),
-      h("span", { className: "meta-chip" }, doc.path.replace("../", "")),
+      h("span", { className: "meta-chip" }, DOCS_SOURCE === "github" ? "GitHub" : "Local"),
+      h("span", { className: "meta-chip" }, doc.file),
     ),
     h("div", { className: "markdown-body", dangerouslySetInnerHTML: { __html: doc.html } }),
   );
@@ -589,7 +672,9 @@ function App() {
           { className: "markdown-body" },
           h("h1", null, "Falha ao carregar documentacao"),
           h("p", null, loadingError),
-          h("p", null, "Execute com npm run dev dentro de FynxDocs/docs-site."),
+          h("p", null, DOCS_SOURCE === "github"
+            ? "Verifique se o repositorio esta publico e se os arquivos ja foram enviados para a branch main."
+            : "Execute com npm run dev dentro de FynxDocs/docs-site."),
         ),
       ),
     );

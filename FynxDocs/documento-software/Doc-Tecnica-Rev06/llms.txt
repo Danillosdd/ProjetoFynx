@@ -1,4 +1,4 @@
-# Fynx LLM AI Context & Map
+﻿# Fynx LLM AI Context & Map
 
 Purpose: compact context for AI agents working on ProjetoFynx. Treat this file as an index, not as the full source of truth.
 
@@ -14,12 +14,16 @@ Purpose: compact context for AI agents working on ProjetoFynx. Treat this file a
 ## 2. Main Docs
 
 - `FynxRev06.md`: documentation hub.
-- `BUSINESS_RULES.md`: RF, RNF, RN, PI and traceability.
-- `WORKFLOWS.md`: use cases, sad paths and process flows.
-- `API_REFERENCE.md`: real HTTP contracts.
-- `DATABASE_SCHEMA.md`: real tables, migrations and persistence gaps.
-- `ARCHITECTURE.md`: bounded contexts, folders, patterns and ADRs.
-- `GAMIFICATION_ENGINE.md`: score, ranking, achievements and badges.
+- `REQUISITOS_E_REGRAS.md`: RF, RNF, RN, PI and traceability.
+- `FLUXOS_E_CASOS_DE_USO.md`: use cases, sad paths and process flows.
+- `REFERENCIA_DA_API.md`: real HTTP contracts.
+- `BANCO_DE_DADOS.md`: real tables, migrations and persistence gaps.
+- `ARQUITETURA.md`: bounded contexts, folders, patterns and ADRs.
+- `MOTOR_DE_GAMIFICACAO.md`: score, ranking, achievements and badges.
+- `MATRIZ_DE_RASTREABILIDADE.md`: academic artifact checklist and RF -> code/evidence matrix.
+- `PROTOTIPOS_E_TELAS.md`: prototypes, screenshots, navigation map and prototype-vs-implementation comparison.
+- `EVIDENCIAS_DA_IMPLEMENTACAO.md`: implementation evidence, layers, CRUD, SQL, Git and tests.
+- `ROTEIRO_DE_APRESENTACAO.md`: requirements presentation script.
 
 ## 3. Backend Map
 
@@ -90,6 +94,7 @@ Not implemented as physical tables in the inspected schema:
 - Check `routes/index.ts` before claiming an endpoint is publicly exposed.
 - Check `schema.ts` and `database.ts` before claiming a table exists.
 - Mark features as Implemented, Partial or Planned.
-- Keep traceability: RF/RN -> CSU -> endpoint -> table -> code.
+- Keep traceability: RF/RN -> CSU -> endpoint -> table -> code -> evidence/test.
 - Do not invent WhatsApp, audit or spending-limits persistence details.
 - If TypeScript types contain fields not in the database, document the divergence.
+- Every professor-required artifact must be linked from `FynxRev06.md` and mapped in `MATRIZ_DE_RASTREABILIDADE.md`.

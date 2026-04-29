@@ -1,4 +1,4 @@
-# API Reference - FYNX Rev. 06
+﻿# API Reference - FYNX Rev. 06
 
 > Referencia dos contratos HTTP reais do backend `FynxApi`, alinhada a arquitetura DDD da Rev06 e validada contra os arquivos de rotas em `FynxApi/src/domains`.
 
@@ -513,7 +513,7 @@ Retorna visao consolidada de metas, budgets e progresso.
 ]
 ```
 
-**Nota de seguranca:** `PUT /score/:userId` e `POST /reset-season` devem ser tratados como endpoints administrativos. Se a implementacao atual nao restringir perfil, registrar lacuna em `BUSINESS_RULES.md` e `ARCHITECTURE.md`.
+**Nota de seguranca:** `PUT /score/:userId` e `POST /reset-season` devem ser tratados como endpoints administrativos. Se a implementacao atual nao restringir perfil, registrar lacuna em `REQUISITOS_E_REGRAS.md` e `ARQUITETURA.md`.
 
 ---
 

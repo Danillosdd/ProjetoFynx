@@ -1,4 +1,4 @@
-# Motor de Gamificacao - FYNX Rev. 06
+﻿# Motor de Gamificacao - FYNX Rev. 06
 
 > Documento especializado do contexto de gamificacao. Consolida score, ranking, ligas, achievements e badges com base em `domains/gamification`, `user_scores`, `achievements`, `user_achievements`, `badges` e `user_badges`.
 
@@ -107,6 +107,17 @@ As ligas sao a representacao competitiva do score.
 | Diamante | Elite competitiva. | Evitar criterio impossivel ou arbitrario. |
 
 **Regra documental:** os limites numericos de cada liga so devem ser fixados aqui se estiverem fixos no codigo ou em arquivo de config. Caso contrario, documentar como calculo dinamico.
+
+### 4.1. Fonte atual dos limites
+
+No codigo atual, existem duas estrategias registradas em `ranking.service.ts`:
+
+| Fonte no codigo | Regra | Observacao |
+|---|---|---|
+| `calculateLeague(score)` | Bronze abaixo de 2500, Prata a partir de 2500, Ouro a partir de 5000, Platina a partir de 7500, Diamante a partir de 10000. | Faixa absoluta por pontos. |
+| `calculateUserLeague(userId, score)` | Diamante ate 1% superior, Platina ate 5%, Ouro ate 20%, Prata ate 50%, Bronze acima disso. | Faixa relativa por percentile do ranking. |
+
+Essa duplicidade deve ser consolidada em uma unica politica antes de tratar a regra de ligas como governanca final. O arquivo `ranking.config.ts` existe, mas nao define thresholds no estado atual inspecionado.
 
 ---
 
@@ -249,7 +260,7 @@ Esses elementos devem consumir `/api/v1/ranking` e endpoints auxiliares, sem rec
 
 ## 12. Checklist de Consistencia
 
-- `GAMIFICATION_ENGINE.md` deve bater com `ranking.service.ts`.
+- `MOTOR_DE_GAMIFICACAO.md` deve bater com `ranking.service.ts`.
 - Limites de ligas nao devem ser inventados se nao estiverem fixos no codigo.
 - Achievements e badges devem bater com `schema.ts` e `seed.ts`.
 - Endpoints administrativos devem ser marcados como sensiveis.

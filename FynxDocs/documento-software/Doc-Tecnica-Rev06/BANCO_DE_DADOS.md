@@ -1,4 +1,4 @@
-# Projeto de Persistencia e Banco de Dados - FYNX Rev. 06
+﻿# Projeto de Persistencia e Banco de Dados - FYNX Rev. 06
 
 > Documento do modelo de dados da Rev06, validado contra `FynxApi/src/infrastructure/database/schema.ts` e `database.ts`.
 
@@ -41,6 +41,10 @@ O desenho arquitetural usa uma diretriz DDD: controllers e dominio nao devem dep
 
 ## 3. Modelo Conceitual
 
+Artefato visual DER herdado/revisado para a Rev06:
+
+![DER Banco de Dados](./imagens/DER-BancoDeDados.svg)
+
 ```mermaid
 erDiagram
     USERS ||--o{ TRANSACTIONS : owns
@@ -73,9 +77,25 @@ erDiagram
 
 ---
 
-## 4. Dicionario de Dados
+## 4. Modelo Logico e Modelo Fisico
 
-### 4.1. `users`
+### 4.1. Modelo Logico
+
+Artefato visual do modelo logico relacional:
+
+![Modelo Logico Banco de Dados](./imagens/Modelo%20Logico%20-%20Banco%20de%20dados.svg)
+
+No modelo logico, as entidades centrais sao `users`, `transactions`, `spending_goals`, `budgets`, `custom_categories`, `user_scores`, `achievements` e `badges`. Relacionamentos multiusuario usam `user_id` como chave estrangeira ou criterio obrigatorio de isolamento.
+
+### 4.2. Modelo Fisico
+
+O modelo fisico e a implementacao SQLite descrita em `schema.ts` e `database.ts`. Tipos `DECIMAL(10,2)`, `TEXT`, `DATE`, `DATETIME` e `INTEGER` sao usados conforme suporte do SQLite. Tabelas criadas fora de `SCHEMA`, como `custom_categories` e `budgets`, continuam documentadas porque fazem parte da inicializacao real.
+
+---
+
+## 5. Dicionario de Dados
+
+### 5.1. `users`
 
 | Coluna | Tipo | Null | Default | Regra |
 |---|---|---|---|---|
@@ -86,7 +106,7 @@ erDiagram
 | `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
 | `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
 
-### 4.2. `categories`
+### 5.2. `categories`
 
 | Coluna | Tipo | Null | Default | Regra |
 |---|---|---|---|---|
@@ -97,7 +117,7 @@ erDiagram
 | `icon` | TEXT | Sim | - | Uso de UI. |
 | `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
 
-### 4.3. `transactions`
+### 5.3. `transactions`
 
 | Coluna | Tipo | Null | Default | Regra |
 |---|---|---|---|---|
@@ -116,7 +136,7 @@ erDiagram
 
 **Nota:** `transactions.types.ts` possui campos ricos como `paymentMethod`, `tags`, `location`, `recurring` e `attachments`. Esses campos nao aparecem no schema fisico atual. Devem ser documentados como contrato de tipo em evolucao, nao como colunas persistidas.
 
-### 4.4. `spending_goals`
+### 5.4. `spending_goals`
 
 | Coluna | Tipo | Null | Default | Regra |
 |---|---|---|---|---|
@@ -135,7 +155,7 @@ erDiagram
 | `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
 | `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
 
-### 4.5. `user_scores`
+### 5.5. `user_scores`
 
 | Coluna | Tipo | Null | Default | Regra |
 |---|---|---|---|---|
@@ -150,7 +170,7 @@ erDiagram
 | `last_checkin` | DATE | Sim | - | Ultimo check-in. |
 | `updated_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Atualizacao. |
 
-### 4.6. `achievements` e `user_achievements`
+### 5.6. `achievements` e `user_achievements`
 
 `achievements` e o catalogo de conquistas. `user_achievements` registra quais usuarios ganharam cada conquista.
 
@@ -159,7 +179,7 @@ erDiagram
 | `achievements` | `id`, `name`, `description`, `icon`, `points` | Catalogo sem user_id. |
 | `user_achievements` | `user_id`, `achievement_id`, `earned_at` | `UNIQUE(user_id, achievement_id)`. |
 
-### 4.7. `badges` e `user_badges`
+### 5.7. `badges` e `user_badges`
 
 `badges` e o catalogo visual. `user_badges` guarda os badges obtidos por usuario.
 
@@ -168,7 +188,7 @@ erDiagram
 | `badges` | `id`, `name`, `description`, `icon`, `category`, `requirements` | `id` textual como PK. |
 | `user_badges` | `user_id`, `badge_id`, `earned_at` | `UNIQUE(user_id, badge_id)`. |
 
-### 4.8. `custom_categories`
+### 5.8. `custom_categories`
 
 | Coluna | Tipo | Null | Default | Regra |
 |---|---|---|---|---|
@@ -179,7 +199,7 @@ erDiagram
 | `created_at` | DATETIME | Sim | CURRENT_TIMESTAMP | Criacao. |
 | `is_active` | INTEGER | Sim | 1 | Arquivamento logico. |
 
-### 4.9. `budgets`
+### 5.9. `budgets`
 
 | Coluna | Tipo | Null | Default | Regra |
 |---|---|---|---|---|
@@ -198,33 +218,149 @@ erDiagram
 
 ---
 
-## 5. DDL Atual Consolidado
+## 6. DDL Atual Consolidado
 
-O DDL fonte fica em `schema.ts` e `database.ts`. A regra documental e nao duplicar SQL completo sem necessidade; o trecho abaixo resume a divisao:
+O DDL fonte fica em `schema.ts` e `database.ts`. Para atender ao artefato academico de script SQL, a Rev06 apresenta o extrato consolidado abaixo e mantem `schema.ts`/`database.ts` como fonte de verdade executavel.
 
-```text
-schema.ts
-- users
-- categories
-- transactions
-- spending_goals
-- user_scores
-- achievements
-- user_achievements
-- badges
-- user_badges
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
-database.ts
-- custom_categories
-- budgets
-- migrations de user_scores
-- migrations de transactions
-- migrations de spending_goals.goal_type
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+  color TEXT,
+  icon TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL,
+  date DATE NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+  notes TEXT,
+  spending_goal_id INTEGER,
+  saving_goal_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  FOREIGN KEY (spending_goal_id) REFERENCES spending_goals (id),
+  FOREIGN KEY (saving_goal_id) REFERENCES spending_goals (id)
+);
+
+CREATE TABLE IF NOT EXISTS spending_goals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  goal_type TEXT DEFAULT 'spending',
+  target_amount DECIMAL(10,2) NOT NULL,
+  current_amount DECIMAL(10,2) DEFAULT 0,
+  period TEXT NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
+  start_date DATE,
+  end_date DATE,
+  status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'paused')),
+  description TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE TABLE IF NOT EXISTS user_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL UNIQUE,
+  total_score INTEGER DEFAULT 0,
+  carry_over_score INTEGER DEFAULT 0,
+  level INTEGER DEFAULT 1,
+  league TEXT DEFAULT 'Bronze',
+  current_streak INTEGER DEFAULT 0,
+  max_streak INTEGER DEFAULT 0,
+  last_checkin DATE,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE TABLE IF NOT EXISTS achievements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  points INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_achievements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  achievement_id INTEGER NOT NULL,
+  earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  FOREIGN KEY (achievement_id) REFERENCES achievements (id),
+  UNIQUE(user_id, achievement_id)
+);
+
+CREATE TABLE IF NOT EXISTS badges (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  category TEXT,
+  requirements TEXT
+);
+
+CREATE TABLE IF NOT EXISTS user_badges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  badge_id TEXT NOT NULL,
+  earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  FOREIGN KEY (badge_id) REFERENCES badges (id),
+  UNIQUE(user_id, badge_id)
+);
+```
+
+Tabelas complementares criadas em `database.ts`:
+
+```sql
+CREATE TABLE IF NOT EXISTS custom_categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  is_active INTEGER DEFAULT 1,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE TABLE IF NOT EXISTS budgets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  total_amount DECIMAL(10,2) NOT NULL,
+  spent_amount DECIMAL(10,2) DEFAULT 0,
+  period TEXT NOT NULL CHECK (period IN ('monthly', 'yearly')),
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
 ```
 
 ---
 
-## 6. Migrations Atuais
+## 7. Migrations Atuais
 
 | Migration | Arquivo | Objetivo |
 |---|---|---|
@@ -239,13 +375,13 @@ database.ts
 
 ---
 
-## 7. Migrations Recomendadas
+## 8. Migrations Recomendadas
 
-### 7.1. Consolidar `custom_categories` e `budgets` em `schema.ts`
+### 8.1. Consolidar `custom_categories` e `budgets` em `schema.ts`
 
 Motivo: reduzir divergencia entre schema base e tabelas complementares.
 
-### 7.2. Criar `spending_limits`, se o modulo continuar separado de goals
+### 8.2. Criar `spending_limits`, se o modulo continuar separado de goals
 
 ```sql
 CREATE TABLE IF NOT EXISTS spending_limits (
@@ -264,14 +400,14 @@ CREATE TABLE IF NOT EXISTS spending_limits (
 );
 ```
 
-### 7.3. Alinhar `budgets` ao contrato TypeScript
+### 8.3. Alinhar `budgets` ao contrato TypeScript
 
 Opcoes:
 
 - adaptar `goals.types.ts` ao schema fisico atual; ou
 - migrar banco para `allocated_amount`, `remaining_amount`, `status` e `weekly`.
 
-### 7.4. WhatsApp e auditoria
+### 8.4. WhatsApp e auditoria
 
 Criar apenas quando houver rota e service reais:
 
@@ -281,7 +417,7 @@ Criar apenas quando houver rota e service reais:
 
 ---
 
-## 8. Indices Recomendados
+## 9. Indices Recomendados
 
 | Indice | Tabela | Justificativa |
 |---|---|---|
@@ -294,7 +430,7 @@ Criar apenas quando houver rota e service reais:
 
 ---
 
-## 9. Checklist de Integridade
+## 10. Checklist de Integridade
 
 - Toda tabela multiusuario deve ter `user_id`.
 - Toda query multiusuario deve filtrar por `user_id`.

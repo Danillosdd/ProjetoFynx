@@ -1,4 +1,4 @@
-# Workflows e Mapeamento de Processos - FYNX Rev. 06
+﻿# Workflows e Mapeamento de Processos - FYNX Rev. 06
 
 > Documento operacional dos casos de uso da Rev06. Cada fluxo conecta experiencia do usuario, endpoint, camada DDD, regra de negocio e persistencia.
 
@@ -23,6 +23,18 @@
 
 ## 2. Casos de Uso
 
+### Diagrama geral de Caso de Uso
+
+O diagrama abaixo e o artefato academico principal de Caso de Uso da Rev06. Ele deve ser mantido coerente com `REQUISITOS_E_REGRAS.md` e com a matriz `MATRIZ_DE_RASTREABILIDADE.md`.
+
+![Diagrama de Caso de Uso Rev06](./imagens/caso-de-uso-rev06.png)
+
+**Checklist de validade do diagrama:** os atores devem representar Visitante, Usuario autenticado, Sistema e atores planejados apenas quando marcados como planejados; os casos de uso devem corresponder aos CSUs documentados; WhatsApp/IA e Spending Limits nao devem aparecer como totalmente implementados enquanto permanecerem com status planejado/parcial.
+
+### Padrao de especificacao detalhada
+
+Cada caso de uso da Rev06 deve possuir, no minimo: nome, ator, descricao, fluxo principal, fluxos alternativos, pre-condicoes e pos-condicoes. Os CSUs abaixo seguem esse formato e indicam o status quando a funcionalidade e parcial ou planejada.
+
 ### CSU01 - Autenticacao de usuario
 
 | Item | Descricao |
@@ -30,6 +42,7 @@
 | RF | RF001 |
 | Endpoint | `POST /api/v1/auth/login` |
 | Ator primario | Usuario registrado |
+| Descricao | Permite que um usuario existente acesse o sistema com email e senha. |
 | Pre-condicoes | Conta existente em `users`; senha cadastrada. |
 | Pos-condicoes | JWT emitido; usuario pode acessar rotas protegidas. |
 
@@ -57,6 +70,7 @@
 | RF | RF002 |
 | Endpoint | `POST /api/v1/auth/register` |
 | Ator primario | Visitante |
+| Descricao | Permite criar uma nova conta local e inicializar seu estado de gamificacao. |
 | Pre-condicoes | Email ainda nao cadastrado. |
 | Pos-condicoes | Conta criada; score inicial deve existir. |
 
@@ -84,6 +98,7 @@
 | RF | RF003 |
 | Endpoint | `POST /api/v1/transactions` |
 | Ator primario | Usuario autenticado |
+| Descricao | Registra uma receita ou despesa para alimentar historico, dashboard e gamificacao. |
 | Pre-condicoes | JWT valido; categoria informada. |
 | Pos-condicoes | Transacao persistida; dashboard e ranking passam a considerar o lancamento. |
 
@@ -107,7 +122,7 @@
 - Token ausente/expirado: `401`.
 - Meta vinculada inexistente: `404` ou `409`, conforme implementacao.
 
-**Eventos relacionados:** criacao de transacao deve ser elegivel a recalculo de score e badges, conforme `GAMIFICATION_ENGINE.md`.
+**Eventos relacionados:** criacao de transacao deve ser elegivel a recalculo de score e badges, conforme `MOTOR_DE_GAMIFICACAO.md`.
 
 ### CSU04 - Criar meta de gasto
 
@@ -116,6 +131,7 @@
 | RF | RF007 |
 | Endpoint | `POST /api/v1/goals/spending-goals` |
 | Ator primario | Usuario autenticado |
+| Descricao | Cria uma meta para controlar gasto por categoria e periodo. |
 | Pre-condicoes | Categoria e periodo definidos. |
 | Pos-condicoes | Meta ativa para acompanhamento de gasto. |
 
@@ -144,6 +160,7 @@
 | RF | RF006 |
 | Endpoint | `POST /api/v1/goals/spending-goals` com `goalType = saving` |
 | Ator primario | Usuario autenticado |
+| Descricao | Cria uma meta de economia com valor alvo e acompanhamento de progresso. |
 | Pre-condicoes | Valor alvo e datas definidos. |
 | Pos-condicoes | Meta de economia disponivel para progresso manual ou por transacao. |
 
@@ -170,7 +187,10 @@
 |---|---|
 | RF | RF003, RF006, RF007 |
 | Endpoint | `POST /api/v1/transactions` ou `PATCH /api/v1/goals/spending-goals/:id/progress-transaction` |
+| Descricao | Associa o impacto financeiro de uma transacao a uma meta ativa. |
 | Relacao | Extensao de CSU03 |
+| Pre-condicoes | Usuario autenticado; meta existente e pertencente ao usuario. |
+| Pos-condicoes | Transacao registrada e progresso da meta atualizado quando aplicavel. |
 
 **Fluxo principal:**
 
@@ -194,6 +214,9 @@
 | RF | RF008 |
 | Endpoints | `GET /api/v1/dashboard`, `GET /api/v1/dashboard/overview`, `GET /api/v1/dashboard/transactions` |
 | Ator primario | Usuario autenticado |
+| Descricao | Exibe indicadores financeiros consolidados e historico do usuario. |
+| Pre-condicoes | JWT valido. |
+| Pos-condicoes | Dashboard renderizado com totais, categorias, historico e graficos. |
 
 **Fluxo principal:**
 
@@ -218,6 +241,9 @@
 | RF | RF010, RF011, RF012 |
 | Endpoints | `/api/v1/ranking/*` |
 | Ator primario | Usuario autenticado e sistema |
+| Descricao | Exibe score, ranking, ligas, achievements e badges do usuario. |
+| Pre-condicoes | JWT valido; usuario com registro em `user_scores` ou fallback de criacao/default. |
+| Pos-condicoes | Ranking e progresso de gamificacao apresentados ao usuario. |
 
 **Fluxo principal:**
 
@@ -242,6 +268,10 @@
 | RF | RF016 |
 | Status | Planejado |
 | Endpoint | Nao registrado |
+| Ator primario | Usuario autenticado |
+| Descricao | Planeja vincular um numero de WhatsApp ao usuario por OTP. |
+| Pre-condicoes | Modulo WhatsApp implementado e provedor configurado. |
+| Pos-condicoes | Numero verificado e apto a receber comandos/notificacoes. |
 
 **Fluxo planejado:**
 
@@ -265,6 +295,10 @@
 | RF | RF017 |
 | Status | Planejado |
 | Endpoint | Nao registrado |
+| Ator primario | Usuario com WhatsApp verificado |
+| Descricao | Planeja registrar transacoes a partir de mensagens em linguagem natural. |
+| Pre-condicoes | Numero verificado e motor de extracao configurado. |
+| Pos-condicoes | Transacao persistida somente apos confirmacao do usuario. |
 
 **Fluxo planejado:**
 
@@ -289,6 +323,10 @@
 |---|---|
 | RF | RF018 |
 | Status | Planejado |
+| Ator primario | Usuario com WhatsApp verificado |
+| Descricao | Planeja responder consultas financeiras por WhatsApp. |
+| Pre-condicoes | Numero verificado e webhook implementado. |
+| Pos-condicoes | Resposta enviada sem alterar dados financeiros. |
 
 **Fluxo planejado:**
 
@@ -308,6 +346,10 @@
 |---|---|
 | RF | RF018 |
 | Status | Planejado |
+| Ator primario | Sistema |
+| Descricao | Planeja enviar notificacoes automaticas sobre metas, limites e eventos relevantes. |
+| Pre-condicoes | Opt-in do usuario, scheduler e provedor configurados. |
+| Pos-condicoes | Notificacao enviada ou falha registrada para retry/auditoria. |
 
 **Fluxo planejado:**
 
@@ -329,6 +371,9 @@
 | RF | RF013 |
 | Endpoint | `/api/v1/categories/custom` |
 | Ator primario | Usuario autenticado |
+| Descricao | Permite gerenciar categorias personalizadas para uso em transacoes. |
+| Pre-condicoes | JWT valido. |
+| Pos-condicoes | Categoria criada, atualizada, arquivada ou removida logicamente. |
 
 **Fluxo principal:**
 
@@ -353,6 +398,10 @@
 | RF | RF014 |
 | Status | Parcial |
 | Endpoint | Arquivo de rotas existe, mas nao registrado em `routes/index.ts`. |
+| Ator primario | Usuario autenticado |
+| Descricao | Define limite de gasto por categoria e periodo. |
+| Pre-condicoes | Rota registrada e tabela `spending_limits` criada. |
+| Pos-condicoes | Limite persistido e progresso atualizado por despesas. |
 
 **Fluxo esperado apos conclusao:**
 
@@ -366,6 +415,35 @@
 
 - Prefixo `/api/v1/spending-limits` nao esta exposto.
 - Tabela `spending_limits` nao foi encontrada no schema atual.
+
+### CSU15 - Operacoes em lote de transacoes
+
+| Item | Descricao |
+|---|---|
+| RF | RF005 |
+| Endpoint | `POST /api/v1/transactions/bulk` |
+| Ator primario | Usuario autenticado |
+| Descricao | Executa operacoes em lote sobre transacoes, como criacao ou remocao multipla conforme contrato da API. |
+| Pre-condicoes | JWT valido; todos os itens do lote devem pertencer ao usuario autenticado ou conter dados validos para criacao. |
+| Pos-condicoes | Itens validos processados conforme regra da operacao; falhas devem ser retornadas de forma rastreavel. |
+
+**Fluxo principal:**
+
+1. Usuario ou interface seleciona varias transacoes ou envia varios lancamentos.
+2. Frontend envia `POST /api/v1/transactions/bulk`.
+3. Middleware autentica e injeta `userId`.
+4. Controller valida payload basico do lote.
+5. Service valida ownership, tipo, valor e categoria de cada item.
+6. Service executa a operacao definida para o lote.
+7. API retorna resumo de sucesso/falha.
+8. Frontend atualiza listagem e indicadores.
+
+**Sad paths:**
+
+- Lote vazio ou malformado: `400`.
+- Item pertencente a outro usuario: `403` ou `404`.
+- Falha parcial: retornar itens afetados e itens recusados, quando a implementacao suportar resposta granular.
+- Operacao multi-item sem atomicidade: registrar risco de estado parcial.
 
 ---
 
@@ -460,6 +538,41 @@ flowchart TD
     D -- Sim --> F[Criar limite e acompanhar progresso]
 ```
 
+### Processo 6 - Login e emissao de JWT
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Usuario
+    participant FE as Frontend
+    participant API as AuthController
+    participant SV as AuthService
+    participant DB as SQLite
+
+    U->>FE: Informa email e senha
+    FE->>API: POST /api/v1/auth/login
+    API->>SV: login(email, password)
+    SV->>DB: SELECT users WHERE email
+    DB-->>SV: Usuario + hash
+    SV->>SV: Compara senha com bcrypt
+    SV-->>API: JWT + dados publicos
+    API-->>FE: 200 OK
+    FE-->>U: Redireciona para dashboard
+```
+
+### Processo 7 - Atualizacao de score e badges
+
+```mermaid
+flowchart TD
+    A[Evento financeiro ou acesso ao ranking] --> B[RankingService consulta usuario]
+    B --> C[Calcula score, liga e streak]
+    C --> D{Criterio de achievement/badge atingido?}
+    D -- Sim --> E[Registra conquista se ainda nao existir]
+    D -- Nao --> F[Mantem estado atual]
+    E --> G[Retorna ranking atualizado]
+    F --> G
+```
+
 ---
 
 ## 4. Referencias Visuais
@@ -476,6 +589,18 @@ A pasta `imagens/` da Rev06 contem artefatos herdados da Rev05. Ao usar uma imag
 | `DA - Robo de Gamificacao.svg` | Score e ranking. | Reutilizavel com validacao. |
 | `DA - Registro por Voz.svg` | WhatsApp/IA. | Planejado. |
 | `DA - Vinculacao de Numero.svg` | OTP WhatsApp. | Planejado. |
+
+### Imagens inseridas como evidencias academicas
+
+![Fluxograma de usuario](./imagens/DF%20-%20Fluxograma%20de%20usuario.svg)
+
+![Cadastro de Transacao](./imagens/DA%20-%20Cadastro%20de%20Transacao.svg)
+
+![Exclusao de Transacao](./imagens/DA%20-%20Exclusao%20de%20Transacao.svg)
+
+![Meta de Gastos](./imagens/DA%20-%20Meta%20de%20Gastos.svg)
+
+![Robo de Gamificacao](./imagens/DA%20-%20Robo%20de%20Gamificacao.svg)
 
 ---
 

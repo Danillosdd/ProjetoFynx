@@ -1,4 +1,4 @@
-# Engenharia de Requisitos e Regras de Negocio - FYNX Rev. 06
+﻿# Engenharia de Requisitos e Regras de Negocio - FYNX Rev. 06
 
 > Documento de requisitos da Rev06. Mantem a estrutura de Domain-Driven Design, mas recupera a rastreabilidade classica da Rev05: requisito, regra de negocio, caso de uso, endpoint, tabela e arquivo de codigo.
 
@@ -12,7 +12,7 @@
 | `RNF` | Requisito nao funcional. |
 | `RN` | Regra de negocio. |
 | `PI` | Politica de integridade de dados. |
-| `CSU` | Caso de uso em `WORKFLOWS.md`. |
+| `CSU` | Caso de uso em `FLUXOS_E_CASOS_DE_USO.md`. |
 | `BC` | Bounded Context. |
 
 **Status permitidos:** Implementado, Parcial, Planejado, Legado, Nao registrado.
@@ -231,7 +231,7 @@
 
 - Score deve ser derivado de dados financeiros do usuario.
 - Alteracoes relevantes devem atualizar `user_scores`.
-- Formula documentada em `GAMIFICATION_ENGINE.md` deve bater com `ranking.service.ts`.
+- Formula documentada em `MOTOR_DE_GAMIFICACAO.md` deve bater com `ranking.service.ts`.
 
 ### RF011 - Ranking e ligas
 
@@ -453,17 +453,18 @@
 
 | Requisito | CSU | Endpoint | Tabela principal | Documento complementar |
 |---|---|---|---|---|
-| RF001 | CSU01 | `/auth/login` | `users` | `API_REFERENCE.md` |
-| RF002 | CSU02 | `/auth/register` | `users`, `user_scores` | `DATABASE_SCHEMA.md` |
-| RF003 | CSU03 | `/transactions` | `transactions` | `WORKFLOWS.md` |
-| RF004 | CSU07 | `/transactions`, `/dashboard` | `transactions` | `API_REFERENCE.md` |
-| RF006 | CSU05 | `/goals/spending-goals` | `spending_goals` | `DATABASE_SCHEMA.md` |
-| RF007 | CSU04 | `/goals/budgets` | `budgets` | `DATABASE_SCHEMA.md` |
-| RF010 | CSU08 | `/ranking/score/:userId` | `user_scores` | `GAMIFICATION_ENGINE.md` |
-| RF012 | CSU08 | `/ranking/achievements/:userId`, `/ranking/badges/:userId` | `achievements`, `badges` | `GAMIFICATION_ENGINE.md` |
-| RF013 | CSU13 | `/categories/custom` | `custom_categories` | `API_REFERENCE.md` |
-| RF014 | CSU14 | Nao registrado | Pendente | `API_REFERENCE.md` |
-| RF016-RF018 | CSU09-CSU12 | Planejado | Planejado | `WORKFLOWS.md` |
+| RF001 | CSU01 | `/auth/login` | `users` | `REFERENCIA_DA_API.md` |
+| RF002 | CSU02 | `/auth/register` | `users`, `user_scores` | `BANCO_DE_DADOS.md` |
+| RF003 | CSU03 | `/transactions` | `transactions` | `FLUXOS_E_CASOS_DE_USO.md` |
+| RF004 | CSU07 | `/transactions`, `/dashboard` | `transactions` | `REFERENCIA_DA_API.md` |
+| RF005 | CSU15 | `/transactions/bulk` | `transactions` | `REFERENCIA_DA_API.md` |
+| RF006 | CSU05 | `/goals/spending-goals` | `spending_goals` | `BANCO_DE_DADOS.md` |
+| RF007 | CSU04 | `/goals/budgets` | `budgets` | `BANCO_DE_DADOS.md` |
+| RF010 | CSU08 | `/ranking/score/:userId` | `user_scores` | `MOTOR_DE_GAMIFICACAO.md` |
+| RF012 | CSU08 | `/ranking/achievements/:userId`, `/ranking/badges/:userId` | `achievements`, `badges` | `MOTOR_DE_GAMIFICACAO.md` |
+| RF013 | CSU13 | `/categories/custom` | `custom_categories` | `REFERENCIA_DA_API.md` |
+| RF014 | CSU14 | Nao registrado | Pendente | `REFERENCIA_DA_API.md` |
+| RF016-RF018 | CSU09-CSU12 | Planejado | Planejado | `FLUXOS_E_CASOS_DE_USO.md` |
 
 ---
 
